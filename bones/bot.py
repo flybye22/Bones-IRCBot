@@ -13,7 +13,8 @@ class BonesBot(irc.IRCClient):
     nickname = property(_get_nickname)
     
     def signedOn(self):
-        self.join(self.factory.channel)
+        for channel in self.factory.channels:
+            self.join(channel)
         print "Signed on as %s." % (self.nickname,)
     
     def joined(self, channel):
@@ -33,8 +34,8 @@ class BonesBotFactory(protocol.ClientFactory):
     protocol = BonesBot
     modules = []
     
-    def __init__(self, channel, nickname="Bones"):
-        self.channel = channel
+    def __init__(self, channels, nickname="Bones"):
+        self.channels = channels
         self.nickname = nickname
     
     def clientConnectionLost(self, connector, reason):
