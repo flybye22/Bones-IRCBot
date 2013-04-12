@@ -27,7 +27,7 @@ class BonesBot(irc.IRCClient):
             print "Received trigger %s." % (trigger,)
             for module in self.factory.modules:
                 if trigger in module.triggerMap and callable(module.triggerMap[trigger]):
-                    module.triggerMap[trigger](module, self, data, channel)
+                    module.triggerMap[trigger](module, self, user=user, channel=channel, args=data, msg=msg)
 
 
 class BonesBotFactory(protocol.ClientFactory):
