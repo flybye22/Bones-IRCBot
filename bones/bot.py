@@ -39,6 +39,9 @@ class BonesBot(irc.IRCClient):
     sourceURL = property(_get_sourceURL)
     
     def signedOn(self):
+        if self.factory.settings.get("server", "nickserv") == "true":
+            print "Identifying with NickServ."
+            self.msg("NickServ", "IDENTIFY %s" % self.factory.settings.get("server", "nickserv.password"))
         for channel in self.factory.channels:
             self.join(channel)
         print "Signed on as %s." % (self.nickname,)
@@ -72,6 +75,7 @@ class BonesBotFactory(protocol.ClientFactory):
     modules = []
     
     def __init__(self, settings, nickname="Bones"):
+        self.settings = settings
         self.channels = settings.get("bot", "channel").split("\n")
         self.nickname = settings.get("bot", "nickname")
         self.realname = settings.get("bot", "realname")
