@@ -35,9 +35,9 @@ class BonesBotFactory(protocol.ClientFactory):
     protocol = BonesBot
     modules = []
     
-    def __init__(self, channels, nickname="Bones"):
-        self.channels = channels
-        self.nickname = nickname
+    def __init__(self, settings, nickname="Bones"):
+        self.channels = settings.get("bot", "channel").split("\n")
+        self.nickname = settings.get("bot", "nickname")
     
     def clientConnectionLost(self, connector, reason):
         print "Lost connection (%s), reconnecting." % (reason,)
