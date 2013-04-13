@@ -50,6 +50,10 @@ class BonesBot(irc.IRCClient):
         print "Joined %s." % (channel,)
     
     def privmsg(self, user, channel, msg):
+        event = "privmsg"
+        for module in self.factory.modules:
+            if event in module.eventMap and callable(module.eventMap[event]):
+                module.eventMap[event](module, self, user, channel, msg)
         data = reCommand.match(msg)
         if data:
             trigger = data.group(1)
