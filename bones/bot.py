@@ -54,6 +54,12 @@ class BonesBot(irc.IRCClient):
             for module in self.factory.modules:
                 if trigger in module.triggerMap and callable(module.triggerMap[trigger]):
                     module.triggerMap[trigger](module, self, user=user, channel=channel, args=data, msg=msg)
+    
+    def pong(self, user, secs):
+        event = "pong"
+        for module in self.factory.modules:
+            if event in module.eventMap and callable(module.eventMap[event]):
+                module.eventMap[event](module, self, user, secs)
 
 
 class BonesBotFactory(protocol.ClientFactory):
@@ -69,6 +75,7 @@ class BonesBotFactory(protocol.ClientFactory):
         self.channels = settings.get("bot", "channel").split("\n")
         self.nickname = settings.get("bot", "nickname")
         self.realname = settings.get("bot", "realname")
+        self.username = settings.get("bot", "username")
     
     def clientConnectionLost(self, connector, reason):
         print "Lost connection (%s), reconnecting." % (reason,)
@@ -79,3 +86,4 @@ class BonesBotFactory(protocol.ClientFactory):
 
 class Module():
     triggerMap = {}
+    eventMap = {}

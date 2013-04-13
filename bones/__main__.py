@@ -8,6 +8,7 @@ from bones.bot import BonesBotFactory
 from bones.modules import (
         MinecraftServerList,
         UselessResponses,
+        Utilities,
     )
 
 
@@ -18,6 +19,7 @@ if __name__ == "__main__":
     botFactory = BonesBotFactory(settings)
     botFactory.modules.append(MinecraftServerList())
     botFactory.modules.append(UselessResponses())
+    botFactory.modules.append(Utilities())
 
     serverHost = settings.get("server", "host")
     serverPort = int(settings.get("server", "port"))

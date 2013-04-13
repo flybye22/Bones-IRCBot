@@ -20,3 +20,29 @@ class UselessResponses(Module):
         "hue": cmdHue,
         "huehue": cmdHueHue,
     }
+
+class Utilities(Module):
+    ongoingPings = {}
+
+    def cmdPing(self, client, args=None, channel=None, user=None, msg=None):
+        nick = user.split("!")[0]
+        if nick not in self.ongoingPings:
+            self.ongoingPings[nick] = channel
+            client.ping(nick)
+        else:
+            client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
+
+    def eventPingResponseReceive(self, client, user, secs):
+        nick = user.split("!")[0]
+        if nick in self.ongoingPings:
+            channel = self.ongoingPings[nick]
+            client.msg(channel, "%s: Your response time was %.3f seconds." % (nick, secs))
+            del self.ongoingPings[nick]
+    
+    triggerMap = {
+        "ping": cmdPing,
+    }
+
+    eventMap = {
+        "pong": eventPingResponseReceive,
+    }
