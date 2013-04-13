@@ -1,3 +1,4 @@
+# -*- encoding: utf8 -*-
 import re
 
 from twisted.words.protocols import irc
