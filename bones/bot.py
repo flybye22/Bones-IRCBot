@@ -1,5 +1,6 @@
 # -*- encoding: utf8 -*-
 import re
+import sys
 
 from twisted.words.protocols import irc
 from twisted.internet import protocol
@@ -12,6 +13,22 @@ class BonesBot(irc.IRCClient):
     def _get_nickname(self):
         return self.factory.nickname
     nickname = property(_get_nickname)
+
+    def _get_versionName(self):
+        return self.factory.versionName
+    versionName = property(_get_versionName)
+    
+    def _get_versionNum(self):
+        return self.factory.versionNum
+    versionNum = property(_get_versionNum)
+    
+    def _get_versionEnv(self):
+        return self.factory.versionEnv
+    versionEnv = property(_get_versionEnv)
+    
+    def _get_sourceURL(self):
+        return self.factory.sourceURL
+    sourceURL = property(_get_sourceURL)
     
     def signedOn(self):
         for channel in self.factory.channels:
@@ -32,6 +49,11 @@ class BonesBot(irc.IRCClient):
 
 
 class BonesBotFactory(protocol.ClientFactory):
+    versionName = "Bones-IRCBot"
+    versionNum = "0.0"
+    versionEnv = sys.platform
+    sourceURL = "https://github.com/404d/Bones-IRCBot"
+
     protocol = BonesBot
     modules = []
     
