@@ -61,7 +61,6 @@ class BonesBotFactory(protocol.ClientFactory):
     versionName = "Bones-IRCBot"
     versionNum = "0.0"
     versionEnv = sys.platform
-    realname = "Bones IRC Bot %s" % versionNum
 
     protocol = BonesBot
     modules = []
@@ -69,6 +68,7 @@ class BonesBotFactory(protocol.ClientFactory):
     def __init__(self, settings, nickname="Bones"):
         self.channels = settings.get("bot", "channel").split("\n")
         self.nickname = settings.get("bot", "nickname")
+        self.realname = settings.get("bot", "realname")
     
     def clientConnectionLost(self, connector, reason):
         print "Lost connection (%s), reconnecting." % (reason,)
