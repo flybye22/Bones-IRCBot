@@ -14,6 +14,14 @@ class BonesBot(irc.IRCClient):
         return self.factory.nickname
     nickname = property(_get_nickname)
 
+    def _get_realname(self):
+        return self.factory.realname
+    realname = property(_get_realname)
+    
+    def _get_username(self):
+        return self.factory.username
+    username = property(_get_username)
+
     def _get_versionName(self):
         return self.factory.versionName
     versionName = property(_get_versionName)
@@ -49,10 +57,11 @@ class BonesBot(irc.IRCClient):
 
 
 class BonesBotFactory(protocol.ClientFactory):
+    sourceURL = "https://github.com/404d/Bones-IRCBot"
     versionName = "Bones-IRCBot"
     versionNum = "0.0"
     versionEnv = sys.platform
-    sourceURL = "https://github.com/404d/Bones-IRCBot"
+    realname = "Bones IRC Bot %s" % versionNum
 
     protocol = BonesBot
     modules = []
