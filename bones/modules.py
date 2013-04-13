@@ -48,7 +48,7 @@ class Utilities(Module):
                 html = urllib.urlopen(url).read()
                 data = re.search("<meta name=\"title\" content=\"(.+)\">", html)
                 if data:
-                    client.msg(channel, "\x031You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (str(self.h.unescape(data.group(1))), url))
+                    client.msg(channel, "\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (str(self.h.unescape(data.group(1))), url))
                 
 
     def eventPingResponseReceive(self, client, user, secs):
