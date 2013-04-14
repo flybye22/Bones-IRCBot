@@ -9,6 +9,14 @@ from twisted.internet import protocol
 reCommand = re.compile("\.([a-zA-Z0-9]*)( .+)*?")
 
 
+class InvalidBonesModuleException(Exception):
+    pass
+
+
+class NoSuchBonesModuleException(Exception):
+    pass
+
+
 class BonesBot(irc.IRCClient):
     def _get_nickname(self):
         return self.factory.nickname
@@ -84,6 +92,30 @@ class BonesBotFactory(protocol.ClientFactory):
         self.nickname = settings.get("bot", "nickname")
         self.realname = settings.get("bot", "realname")
         self.username = settings.get("bot", "username")
+        
+        modules = settings.get("bot", "modules").split("\n")
+        for module in modules:
+            self.loadModule(module)
+
+    def loadModule(self, path):
+        """
+        Loads the specified module and adds it to the bot.
+        """
+        tmppath = path.split(".")
+        package = ".".join(tmppath[:len(tmppath)-1])
+        name = tmppath[len(tmppath)-1:len(tmppath)][0]
+        
+        module = __import__(package, fromlist=[name])
+        try:
+            module = getattr(module, name)
+        except AttributeError:
+            raise NoSuchBonesModuleException(path)
+
+        if issubclass(module, Module):
+            self.modules.append(module())
+            print "Loaded module %s" % path
+        else:
+            raise InvalidBonesModuleException(path)
     
     def clientConnectionLost(self, connector, reason):
         print "Lost connection (%s), reconnecting." % (reason,)
@@ -91,6 +123,7 @@ class BonesBotFactory(protocol.ClientFactory):
     
     def clientConnectionFailed(self, connector, reason):
         print "Could not connect: %s" % (reason,)
+
 
 class Module():
     triggerMap = {}

@@ -17,9 +17,6 @@ if __name__ == "__main__":
     settings.read(sys.argv[1])
 
     botFactory = BonesBotFactory(settings)
-    botFactory.modules.append(MinecraftServerList())
-    botFactory.modules.append(UselessResponses())
-    botFactory.modules.append(Utilities())
 
     serverHost = settings.get("server", "host")
     serverPort = int(settings.get("server", "port"))
