@@ -82,7 +82,7 @@ class Utilities(Module):
                 html = urllib.urlopen(url).read()
                 data = re.search("<meta name=\"title\" content=\"(.+)\">", html)
                 if data:
-                    client.msg(channel, "\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (str(unescape(data.group(1))), url))
+                    client.msg(channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(data.group(1)), url)))
         
         if "open.spotify" in msg and "http" in msg:
             data = self.reSpotifyLink.search(msg)
@@ -94,25 +94,25 @@ class Utilities(Module):
                     songtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     artist = re.search("<h2> by <a.+>(.+)</a", html).group(1)
                     if data:
-                        client.msg(channel, "\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (str(unescape(songtitle)), str(unescape(artist))))
+                        client.msg(channel, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))))
                 elif type == "album":
                     albumtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     artist = re.search("<h2>by <a.+>(.+)</a", html).group(1)
                     if data:
-                        client.msg(channel, "\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (str(unescape(albumtitle)), str(unescape(artist))))
+                        client.msg(channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle)), unescape(artist))))
                 elif type == "artist":
                     artist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     if data:
-                        client.msg(channel, "\x031,3Spotify\x03 Artist \x033::\x03 %s" % (str(unescape(artist))))
+                        client.msg(channel, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))))
                 elif type == "user" and data.group(3) is not None:
                     playlist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     user = re.search("<h2>by <a.+>(.+)</a", html).group(1)
                     if data:
-                        client.msg(channel, "\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (str(unescape(playlist)), str(unescape(user))))
+                        client.msg(channel, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))))
                 elif type == "user":
                     user = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     if data:
-                        client.msg(channel, "\x031,3Spotify\x03 User \x033::\x03 %s" % (str(unescape(user))))
+                        client.msg(channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))))
                 
 
     def eventPingResponseReceive(self, client, user, secs):
