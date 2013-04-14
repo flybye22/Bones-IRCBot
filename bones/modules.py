@@ -1,9 +1,43 @@
 # -*- encoding: utf8 -*-
 import re
 import urllib
-import HTMLParser
+import htmlentitydefs
 
 from bones.bot import Module
+
+
+##
+# Removes HTML or XML character references and entities from a text string.
+#
+# 404d edit start:
+# Code snippet obtained from http://effbot.org/zone/re-sub.htm#unescape-html
+# This code snippet have been slightly altered to fix some issues with htmlparser and/or htmlentitydefs choking on some UTF-8 characters.
+# 404d edit end
+#
+# @param text The HTML (or XML) source text.
+# @return The plain text, as a Unicode string, if necessary.
+
+def unescape(text):
+    def fixup(m):
+        text = m.group(0)
+        if text[:2] == "&#":
+            # character reference
+            try:
+                if text[:3] == "&#x":
+                    return unichr(int(text[3:-1], 16))
+                else:
+                    return unichr(int(text[2:-1]))
+            except ValueError:
+                pass
+        else:
+            # named entity
+            try:
+                text = chr(htmlentitydefs.name2codepoint[text[1:-1]])
+            except KeyError:
+                pass
+        return text # leave as is
+    return re.sub(ur"&#?\w+;", fixup, text, re.UNICODE)
+
 
 class MinecraftServerList(Module):
     def cmdMc(self, client, args=None, channel=None, user=None, msg=None):
@@ -27,7 +61,6 @@ class UselessResponses(Module):
 
 class Utilities(Module):
     ongoingPings = {}
-    h = HTMLParser.HTMLParser()
     
     reYouTubeLink = re.compile("http(s)?\:\/\/(www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
 
@@ -48,7 +81,7 @@ class Utilities(Module):
                 html = urllib.urlopen(url).read()
                 data = re.search("<meta name=\"title\" content=\"(.+)\">", html)
                 if data:
-                    client.msg(channel, "\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (str(self.h.unescape(data.group(1))), url))
+                    client.msg(channel, "\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(data.group(1)), url))
                 
 
     def eventPingResponseReceive(self, client, user, secs):
