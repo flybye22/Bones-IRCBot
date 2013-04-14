@@ -63,6 +63,7 @@ class Utilities(Module):
     ongoingPings = {}
     
     reYouTubeLink = re.compile("http(s)?\:\/\/(www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
+    reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
 
     def cmdPing(self, client, args=None, channel=None, user=None, msg=None):
         nick = user.split("!")[0]
@@ -72,7 +73,7 @@ class Utilities(Module):
         else:
             client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
             
-    def eventPrivmsgYouTube(self, client, user, channel, msg):
+    def eventPrivmsg(self, client, user, channel, msg):
         if "youtu" in msg and "http" in msg:
             data = self.reYouTubeLink.search(msg)
             if data:
@@ -82,6 +83,36 @@ class Utilities(Module):
                 data = re.search("<meta name=\"title\" content=\"(.+)\">", html)
                 if data:
                     client.msg(channel, "\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (str(unescape(data.group(1))), url))
+        
+        if "open.spotify" in msg and "http" in msg:
+            data = self.reSpotifyLink.search(msg)
+            if data:
+                url = data.group(0)
+                html = urllib.urlopen(url).read()
+                type = data.group(2)
+                if type == "track":
+                    songtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
+                    artist = re.search("<h2> by <a.+>(.+)</a", html).group(1)
+                    if data:
+                        client.msg(channel, "\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (str(unescape(songtitle)), str(unescape(artist))))
+                elif type == "album":
+                    albumtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
+                    artist = re.search("<h2>by <a.+>(.+)</a", html).group(1)
+                    if data:
+                        client.msg(channel, "\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (str(unescape(albumtitle)), str(unescape(artist))))
+                elif type == "artist":
+                    artist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
+                    if data:
+                        client.msg(channel, "\x031,3Spotify\x03 Artist \x033::\x03 %s" % (str(unescape(artist))))
+                elif type == "user" and data.group(3) is not None:
+                    playlist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
+                    user = re.search("<h2>by <a.+>(.+)</a", html).group(1)
+                    if data:
+                        client.msg(channel, "\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (str(unescape(playlist)), str(unescape(user))))
+                elif type == "user":
+                    user = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
+                    if data:
+                        client.msg(channel, "\x031,3Spotify\x03 User \x033::\x03 %s" % (str(unescape(user))))
                 
 
     def eventPingResponseReceive(self, client, user, secs):
@@ -97,5 +128,5 @@ class Utilities(Module):
 
     eventMap = {
         "pong": eventPingResponseReceive,
-        "privmsg": eventPrivmsgYouTube,
+        "privmsg": eventPrivmsg,
     }
