@@ -99,7 +99,7 @@ class Utilities(Module):
                     albumtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     artist = re.search("<h2>by <a.+>(.+)</a", html).group(1)
                     if data:
-                        client.msg(channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle)), unescape(artist))))
+                        client.msg(channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle)), unescape(artist)))
                 elif type == "artist":
                     artist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     if data:
