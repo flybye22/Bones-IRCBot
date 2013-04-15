@@ -48,6 +48,10 @@ class MinecraftServerList(Module):
     }
 
 class UselessResponses(Module):
+
+    def cmdHi5(self, client, args=None, channel=None, user=None, msg=None):
+        client.msg(channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % args[0])
+    
     def cmdHue(self, client,  args=None, channel=None, user=None, msg=None):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
 
@@ -55,6 +59,7 @@ class UselessResponses(Module):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
 
     triggerMap = {
+        "hi5": cmdHi5,
         "hue": cmdHue,
         "huehue": cmdHueHue,
     }
