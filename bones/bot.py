@@ -65,10 +65,11 @@ class BonesBot(irc.IRCClient):
         data = reCommand.match(msg)
         if data:
             trigger = data.group(1)
+            args = msg.split(" ")[1:]
             print "Received trigger %s." % (trigger,)
             for module in self.factory.modules:
                 if trigger in module.triggerMap and callable(module.triggerMap[trigger]):
-                    module.triggerMap[trigger](module, self, user=user, channel=channel, args=data, msg=msg)
+                    module.triggerMap[trigger](module, self, user=user, channel=channel, args=args, msg=msg)
     
     def pong(self, user, secs):
         event = "pong"
