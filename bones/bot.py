@@ -50,8 +50,13 @@ class BonesBot(irc.IRCClient):
         if self.factory.settings.get("server", "nickserv") == "true":
             print "Identifying with NickServ."
             self.msg("NickServ", "IDENTIFY %s" % self.factory.settings.get("server", "nickserv.password"))
+
+        if self.factory.settings.get("server", "setBot") == "true":
+            self.mode(self.nickname, True, "B")
+
         for channel in self.factory.channels:
             self.join(channel)
+
         print "Signed on as %s." % (self.nickname,)
     
     def joined(self, channel):
