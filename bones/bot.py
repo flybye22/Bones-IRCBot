@@ -134,7 +134,7 @@ class BonesBotFactory(protocol.ClientFactory):
 
         if issubclass(module, Module):
             self.modules.append(module())
-            print "Loaded module %s" % path
+            log.info("Loaded module %s", path)
         else:
             raise InvalidBonesModuleException(path)
     
