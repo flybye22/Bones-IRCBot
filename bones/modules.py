@@ -5,6 +5,7 @@ import htmlentitydefs
 import random
 import logging
 
+from bones import event
 from bones.bot import Module
 
 
@@ -139,6 +140,7 @@ class UselessResponses(Module):
     }
 
 
+@event.module
 class Utilities(Module):
     ongoingPings = {}
     
@@ -152,7 +154,8 @@ class Utilities(Module):
             client.ping(nick)
         else:
             client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
-            
+
+    @event.handler(event="privmsg")
     def eventPrivmsg(self, client, user, channel, msg):
         if "youtu" in msg and "http" in msg:
             data = self.reYouTubeLink.search(msg)
@@ -194,6 +197,7 @@ class Utilities(Module):
                     if data:
                         client.msg(channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))))
 
+    @event.handler(event="pong")
     def eventPingResponseReceive(self, client, user, secs):
         nick = user.split("!")[0]
         if nick in self.ongoingPings:
@@ -203,9 +207,4 @@ class Utilities(Module):
     
     triggerMap = {
         "ping": cmdPing,
-    }
-
-    eventMap = {
-        "pong": eventPingResponseReceive,
-        "privmsg": eventPrivmsg,
     }

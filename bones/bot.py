@@ -8,6 +8,8 @@ import logging.config
 from twisted.words.protocols import irc
 from twisted.internet import protocol
 
+from bones import event
+
 
 logging.config.fileConfig(sys.argv[1])
 log = logging.getLogger(__name__)
@@ -69,21 +71,14 @@ class BonesBot(irc.IRCClient):
         log.info("Joined channel %s.", channel)
     
     def userJoin(self, user, channel):
-        event = "userJoin"
         log.debug("Event userJoin: %s %s", user, channel)
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, self, user, channel)
-        data = reCommand.match(msg)
+        event.fire("userJoin", self, user, channel)
     
     def privmsg(self, user, channel, msg):
-        event = "privmsg"
         log.debug("Event privmsg: %s %s :%s", user, channel, msg)
         if channel[0:1] != "#":
             channel = user.split("!")[0]
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, self, user, channel, msg)
+        event.fire("privmsg", self, user, channel, msg)
         data = reCommand.match(msg)
         if data:
             trigger = data.group(1)
@@ -98,21 +93,15 @@ class BonesBot(irc.IRCClient):
                         module.triggerMap[altTrigger](module, self, user=user, channel=channel, args=args, msg=msg)
     
     def pong(self, user, secs):
-        event = "pong"
         log.debug("CTCP pong: %fs from %s", secs, user)
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, self, user, secs)
+        event.fire("pong", self, user, secs)
     
     def irc_unknown(self, prefix, command, params):
         log.debug("Unknown RAW: %s; %s; %s", prefix, command, params)
         if command.lower() == "invite" and self.factory.settings.get("bot", "joinOnInvite") == "true":
             log.info("Got invited to %s, joining.", params[1])
             self.join(params[1])
-        event = "irc_unknown"
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, prefix, command, params)
+        event.fire("irc_unknown", self, prefix, command, params)
 
 
 class BonesBotFactory(protocol.ClientFactory):
@@ -157,7 +146,9 @@ class BonesBotFactory(protocol.ClientFactory):
             raise ex
 
         if issubclass(module, Module):
-            self.modules.append(module(self.settings))
+            instance = module(self.settings)
+            event.injectInstance(instance)
+            self.modules.append(instance)
             log.info("Loaded module %s", path)
         else:
             ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)
