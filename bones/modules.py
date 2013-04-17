@@ -41,7 +41,7 @@ def unescape(text):
         return text # leave as is
     return re.sub(ur"&#?\w+;", fixup, text, re.UNICODE)
 
-
+@event.module
 class QDB(Module):
     try:    
         from bs4 import BeautifulSoup
@@ -58,7 +58,8 @@ class QDB(Module):
             raise ex
         self.settings = settings
         self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote"))
-
+    
+    @event.trigger(trigger="qdb")
     def cmdQdb(self, client, args=None, channel=None, user=None, msg=None):
         if len(args) > 0 and args[0].lower() == "read":
             if len(args) <= 1:
@@ -105,39 +106,31 @@ class QDB(Module):
             self.log.debug("Got %i new quotes", len(self.quotesCache))
             random.shuffle(self.quotesCache, random.random)
 
-    triggerMap = {
-        "qdb": cmdQdb,
-    }
 
-
+@event.module
 class MinecraftServerList(Module):
+    @event.trigger(trigger="mc")
     def cmdMc(self, client, args=None, channel=None, user=None, msg=None):
         client.msg(channel, "%s: Wait wait, I'm charging my batteries!" % user.split("!")[0])
-        
-    triggerMap = {
-        "mcservers": cmdMc,
-    }
 
 
+@event.module
 class UselessResponses(Module):
 
+    @event.trigger(trigger="hi5")
     def cmdHi5(self, client, args=None, channel=None, user=None, msg=None):
         target = ""
         if len(args) > 0:
             target = args[0]
         client.msg(channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
     
+    @event.trigger(trigger="hue")
     def cmdHue(self, client,  args=None, channel=None, user=None, msg=None):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
 
+    @event.trigger(trigger="huehue")
     def cmdHueHue(self, client,  args=None, channel=None, user=None, msg=None):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
-
-    triggerMap = {
-        "hi5": cmdHi5,
-        "hue": cmdHue,
-        "huehue": cmdHueHue,
-    }
 
 
 @event.module
@@ -147,6 +140,7 @@ class Utilities(Module):
     reYouTubeLink = re.compile("http(s)?\:\/\/(www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
     reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
 
+    @event.trigger(trigger="ping")
     def cmdPing(self, client, args=None, channel=None, user=None, msg=None):
         nick = user.split("!")[0]
         if nick not in self.ongoingPings:
@@ -206,7 +200,3 @@ class Utilities(Module):
             channel = self.ongoingPings[nick]
             client.msg(channel, "%s: Your response time was %.3f seconds." % (nick, secs))
             del self.ongoingPings[nick]
-    
-    triggerMap = {
-        "ping": cmdPing,
-    }

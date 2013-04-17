@@ -84,13 +84,7 @@ class BonesBot(irc.IRCClient):
             trigger = data.group(1)
             args = msg.split(" ")[1:]
             log.info("Received trigger %s." % (trigger,))
-            for module in self.factory.modules:
-                if trigger in module.triggerMap and callable(module.triggerMap[trigger]):
-                    module.triggerMap[trigger](module, self, user=user, channel=channel, args=args, msg=msg)
-                else:
-                    altTrigger = trigger.lower()
-                    if trigger.lower() in module.triggerMap and callable(module.triggerMap[altTrigger]):
-                        module.triggerMap[altTrigger](module, self, user=user, channel=channel, args=args, msg=msg)
+            event.fireTrigger(trigger.lower(), self, user=user, channel=channel, args=args, msg=msg)
     
     def pong(self, user, secs):
         log.debug("CTCP pong: %fs from %s", secs, user)
