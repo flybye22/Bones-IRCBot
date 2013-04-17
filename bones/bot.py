@@ -92,7 +92,7 @@ class BonesBot(irc.IRCClient):
     
     def pong(self, user, secs):
         event = "pong"
-        log.debug("CTCP pong: %is from %s", secs, user)
+        log.debug("CTCP pong: %fs from %s", secs, user)
         for module in self.factory.modules:
             if event in module.eventMap and callable(module.eventMap[event]):
                 module.eventMap[event](module, self, user, secs)
