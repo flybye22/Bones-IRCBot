@@ -59,7 +59,7 @@ class QDB(Module):
         self.settings = settings
         self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote"))
     
-    @event.trigger(trigger="qdb")
+    @event.handler(trigger="qdb")
     def cmdQdb(self, client, args=None, channel=None, user=None, msg=None):
         if len(args) > 0 and args[0].lower() == "read":
             if len(args) <= 1:
@@ -109,7 +109,7 @@ class QDB(Module):
 
 @event.module
 class MinecraftServerList(Module):
-    @event.trigger(trigger="mc")
+    @event.handler(trigger="mc")
     def cmdMc(self, client, args=None, channel=None, user=None, msg=None):
         client.msg(channel, "%s: Wait wait, I'm charging my batteries!" % user.split("!")[0])
 
@@ -117,18 +117,18 @@ class MinecraftServerList(Module):
 @event.module
 class UselessResponses(Module):
 
-    @event.trigger(trigger="hi5")
+    @event.handler(trigger="hi5")
     def cmdHi5(self, client, args=None, channel=None, user=None, msg=None):
         target = ""
         if len(args) > 0:
             target = args[0]
         client.msg(channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
     
-    @event.trigger(trigger="hue")
+    @event.handler(trigger="hue")
     def cmdHue(self, client,  args=None, channel=None, user=None, msg=None):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
 
-    @event.trigger(trigger="huehue")
+    @event.handler(trigger="huehue")
     def cmdHueHue(self, client,  args=None, channel=None, user=None, msg=None):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
 
@@ -140,7 +140,7 @@ class Utilities(Module):
     reYouTubeLink = re.compile("http(s)?\:\/\/(www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
     reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
 
-    @event.trigger(trigger="ping")
+    @event.handler(trigger="ping")
     def cmdPing(self, client, args=None, channel=None, user=None, msg=None):
         nick = user.split("!")[0]
         if nick not in self.ongoingPings:

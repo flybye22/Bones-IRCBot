@@ -11,17 +11,14 @@ def fireTrigger(trigger, *args, **kwargs):
         for h in triggerHandlers[trigger]:
             h['f'](h['c'], *args, **kwargs)
 
-def handler(event=None):
+def handler(event=None, trigger=None):
     def realHandler(func):
-        func._event = event
+        if event is not None:
+            func._event = event
+        if trigger is not None:
+            func._trigger = trigger.lower()
         return func
     return realHandler
-
-def trigger(trigger=None):
-    def realTrigger(func):
-        func._trigger = trigger.lower()
-        return func
-    return realTrigger
 
 def module(klass):
     for name, item in klass.__dict__.iteritems():
