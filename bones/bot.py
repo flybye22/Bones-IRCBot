@@ -153,7 +153,7 @@ class BonesBotFactory(protocol.ClientFactory):
             raise ex
 
         if issubclass(module, Module):
-            self.modules.append(module())
+            self.modules.append(module(self.settings))
             log.info("Loaded module %s", path)
         else:
             ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)
@@ -169,5 +169,8 @@ class BonesBotFactory(protocol.ClientFactory):
 
 
 class Module():
+    def __init__(self, settings):
+        self.settings = settings
+    
     triggerMap = {}
     eventMap = {}

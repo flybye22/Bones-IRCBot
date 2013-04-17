@@ -2,6 +2,8 @@
 import re
 import urllib
 import htmlentitydefs
+import random
+import logging
 
 from bones.bot import Module
 
@@ -39,13 +41,75 @@ def unescape(text):
     return re.sub(ur"&#?\w+;", fixup, text, re.UNICODE)
 
 
+class QDB(Module):
+    from bs4 import BeautifulSoup
+
+    quotesCache = []
+    
+    def __init__(self, settings):
+        self.log = logging.getLogger(".".join([__name__,"QDB"]))
+        self.settings = settings
+        self.maxLinesPerQuote = self.settings.get("module.qdb", "maxLinesPerQuote")
+
+    def cmdQdb(self, client, args=None, channel=None, user=None, msg=None):
+        if len(args) > 0 and args[0].lower() == "read":
+            if len(args) <= 1:
+                return
+            id = int(args[1])
+            self.log.debug("Fetching qdb.us/%i", id)
+            data = urllib.urlopen("http://qdb.us/%i" % id)
+            if data.getcode() == 404:
+                client.msg(channel, str("[QDB #%s] Quote not found." % id))
+                return
+            if data.getcode() == 200:
+                html = data.read()
+                soup = self.BeautifulSoup(html)
+                quote = soup.find("span", {"class":"qt"}).text
+                self.sendQuote(client, channel, (id, quote))
+                return
+            self.log.error("Got unknown HTTP error code %i when fetching qdb.us/%i", data.getcode(), id)
+            client.msg(channel, str("[QDB] An unknown exception occurred. Please notify the bot master and try again later."))
+            return
+
+        if len(args) <= 0 or args[0].lower() == "random":
+            self.cacheIfNeeded()
+            quote = self.quotesCache.pop()
+            self.sendQuote(client, channel, quote)
+            return
+    
+    def sendQuote(self, client, channel, quote):
+        lines = quote[1].split("\n")
+        if len(lines) > self.maxLinesPerQuote:
+            client.msg(channel, str("[QDB #%s] Quote too long, read it at QDB instead: http://qdb.us/%s" % (quote[0], quote[0])))
+            return
+        for line in lines:
+            client.msg(channel, str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
+
+    def cacheIfNeeded(self):
+        if not self.quotesCache:
+            self.log.debug("Fetching new quotes from qdb.us/random")
+            html = urllib.urlopen("http://qdb.us/random").read()
+            soup = self.BeautifulSoup(html)
+            data = soup.findAll("span", {"class":"qt"})
+            for item in data:
+                id = item["id"].split("qt")[1]
+                self.quotesCache.append((id, item.text))
+            self.log.debug("Got %i new quotes", len(self.quotesCache))
+            random.shuffle(self.quotesCache, random.random)
+
+    triggerMap = {
+        "qdb": cmdQdb,
+    }
+
+
 class MinecraftServerList(Module):
     def cmdMc(self, client, args=None, channel=None, user=None, msg=None):
         client.msg(channel, "%s: Wait wait, I'm charging my batteries!" % user.split("!")[0])
         
     triggerMap = {
-        "mcservers": cmdMc
+        "mcservers": cmdMc,
     }
+
 
 class UselessResponses(Module):
 
@@ -63,6 +127,7 @@ class UselessResponses(Module):
         "hue": cmdHue,
         "huehue": cmdHueHue,
     }
+
 
 class Utilities(Module):
     ongoingPings = {}
@@ -118,7 +183,6 @@ class Utilities(Module):
                     user = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     if data:
                         client.msg(channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))))
-                
 
     def eventPingResponseReceive(self, client, user, secs):
         nick = user.split("!")[0]
