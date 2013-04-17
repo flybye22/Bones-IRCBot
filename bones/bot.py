@@ -1,10 +1,16 @@
 # -*- encoding: utf8 -*-
 import re
 import sys
+import os
+import logging
+import logging.config
 
 from twisted.words.protocols import irc
 from twisted.internet import protocol
 
+
+logging.config.fileConfig(sys.argv[1])
+log = logging.getLogger(__name__)
 
 reCommand = re.compile("\.([a-zA-Z0-9]*)( .+)*?")
 
