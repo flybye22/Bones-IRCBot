@@ -23,7 +23,12 @@ if __name__ == "__main__":
     serverPort = int(settings.get("server", "port"))
     if settings.get("server", "useSSL") == "true":
         log.info("Connecting to server %s:+%i", serverHost, serverPort)
-        from twisted.internet import ssl
+        try:
+            from twisted.internet import ssl
+        except ImportError:
+            ex = Exception("Unmet dependency: pyOpenSSL not installed. This dependency needs to be installed before you can use SSL server connections")
+            log.exception(ex)
+            raise ex
         reactor.connectSSL(serverHost, serverPort, botFactory, ssl.ClientContextFactory())
     else:
         log.info("Connecting to server %s:%i", serverHost, serverPort)
