@@ -54,7 +54,7 @@ class BonesBot(irc.IRCClient):
     
     def signedOn(self):
         if self.factory.settings.get("server", "nickserv") == "true":
-            print "Identifying with NickServ."
+            log.info("Identifying with NickServ.")
             self.msg("NickServ", "IDENTIFY %s" % self.factory.settings.get("server", "nickserv.password"))
 
         if self.factory.settings.get("server", "setBot") == "true":
@@ -63,13 +63,14 @@ class BonesBot(irc.IRCClient):
         for channel in self.factory.channels:
             self.join(channel)
 
-        print "Signed on as %s." % (self.nickname,)
+        log.info("Signed on as %s.", self.nickname)
     
     def joined(self, channel):
-        print "Joined %s." % (channel,)
+        log.info("Joined channel %s.", channel)
     
     def userJoin(self, user, channel):
         event = "userJoin"
+        log.debug("Event userJoin: %s %s", user, channel)
         for module in self.factory.modules:
             if event in module.eventMap and callable(module.eventMap[event]):
                 module.eventMap[event](module, self, user, channel)
@@ -84,13 +85,14 @@ class BonesBot(irc.IRCClient):
         if data:
             trigger = data.group(1)
             args = msg.split(" ")[1:]
-            print "Received trigger %s." % (trigger,)
+            log.info("Received trigger %s." % (trigger,))
             for module in self.factory.modules:
                 if trigger in module.triggerMap and callable(module.triggerMap[trigger]):
                     module.triggerMap[trigger](module, self, user=user, channel=channel, args=args, msg=msg)
     
     def pong(self, user, secs):
         event = "pong"
+        log.debug("CTCP pong: %is from %s", secs, user)
         for module in self.factory.modules:
             if event in module.eventMap and callable(module.eventMap[event]):
                 module.eventMap[event](module, self, user, secs)
@@ -137,11 +139,11 @@ class BonesBotFactory(protocol.ClientFactory):
             raise InvalidBonesModuleException(path)
     
     def clientConnectionLost(self, connector, reason):
-        print "Lost connection (%s), reconnecting." % (reason,)
+        log.info("Lost connection (%s), reconnecting.", reason)
         connector.connect()
     
     def clientConnectionFailed(self, connector, reason):
-        print "Could not connect: %s" % (reason,)
+        log.info("Could not connect: %s", reason)
 
 
 class Module():
