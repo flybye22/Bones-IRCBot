@@ -1,5 +1,6 @@
 # -*- encoding: utf8 -*-
 import sys
+import logging
 from ConfigParser import SafeConfigParser
 
 from twisted.internet import reactor
@@ -11,8 +12,8 @@ from bones.modules import (
         Utilities,
     )
 
-
 if __name__ == "__main__":
+    log = logging.getLogger(__package__)
     settings = SafeConfigParser()
     settings.read(sys.argv[1])
 
@@ -21,9 +22,10 @@ if __name__ == "__main__":
     serverHost = settings.get("server", "host")
     serverPort = int(settings.get("server", "port"))
     if settings.get("server", "useSSL") == "true":
-        print "Using SSL."
+        log.info("Connecting to server %s:+%i", serverHost, serverPort)
         from twisted.internet import ssl
         reactor.connectSSL(serverHost, serverPort, botFactory, ssl.ClientContextFactory())
     else:
+        log.info("Connecting to server %s:%i", serverHost, serverPort)
         reactor.connectTCP(serverHost, serverPort, botFactory)
     reactor.run()
