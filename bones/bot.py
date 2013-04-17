@@ -78,6 +78,7 @@ class BonesBot(irc.IRCClient):
     
     def privmsg(self, user, channel, msg):
         event = "privmsg"
+        log.debug("Event privmsg: %s %s :%s", user, channel, msg)
         for module in self.factory.modules:
             if event in module.eventMap and callable(module.eventMap[event]):
                 module.eventMap[event](module, self, user, channel, msg)
