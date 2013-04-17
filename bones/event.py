@@ -1,8 +1,9 @@
 eventHandlers = {}
 
 def fire(event, *args, **kwargs):
-    for h in eventHandlers[event]:
-        h['f'](h['c'], *args, **kwargs)
+    if event in eventHandlers:
+        for h in eventHandlers[event]:
+            h['f'](h['c'], *args, **kwargs)
 
 def handler(event=None):
     def realHandler(func):
