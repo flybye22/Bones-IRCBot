@@ -43,7 +43,7 @@ def unescape(text):
 
 class QDB(Module):
     try:    
-        from bse4 import BeautifulSoup
+        from bs4 import BeautifulSoup
     except ImportError:
         BeautifulSoup = None
 
