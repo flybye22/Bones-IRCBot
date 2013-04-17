@@ -56,7 +56,7 @@ class QDB(Module):
             self.log.error(ex)
             raise ex
         self.settings = settings
-        self.maxLinesPerQuote = self.settings.get("module.qdb", "maxLinesPerQuote")
+        self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote"))
 
     def cmdQdb(self, client, args=None, channel=None, user=None, msg=None):
         if len(args) > 0 and args[0].lower() == "read":
