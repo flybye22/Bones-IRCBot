@@ -156,7 +156,7 @@ class Utilities(Module):
             client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
 
     @event.handler(event="privmsg")
-    def eventPrivmsg(self, client, user, channel, msg):
+    def eventURLInfo_YouTube(self, client, user, channel, msg):
         if "youtu" in msg and "http" in msg:
             data = self.reYouTubeLink.search(msg)
             if data:
@@ -167,6 +167,8 @@ class Utilities(Module):
                 if data:
                     client.msg(channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(data.group(1)), url)))
         
+    @event.handler(event="privmsg")
+    def eventURLInfo_Spotify(self, client, user, channel, msg):
         if "open.spotify" in msg and "http" in msg:
             data = self.reSpotifyLink.search(msg)
             if data:
