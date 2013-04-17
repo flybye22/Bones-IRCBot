@@ -121,7 +121,10 @@ class MinecraftServerList(Module):
 class UselessResponses(Module):
 
     def cmdHi5(self, client, args=None, channel=None, user=None, msg=None):
-        client.msg(channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % args[0])
+        target = ""
+        if len(args) > 0:
+            target = args[0]
+        client.msg(channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
     
     def cmdHue(self, client,  args=None, channel=None, user=None, msg=None):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
