@@ -1,8 +1,8 @@
 # Bones IRC Bot
-A barebones IRC bot made to be easy to configure and to write modules for.
+A barebones IRC bot made to be easy to configure and write modules for.
 
 ## Getting started
-To get started, clone this repo and take a look at the `config.ini` file where you'll find all the settings of the bot. We advice you to make a copy of this file before editing it, and then edit the copy rather than the original.
+To get started, clone this repo and take a look at the `config.ini` file where you'll find all the settings of the bot. I advice you to make a copy of this file before editing it, and then edit the copy rather than the original.
 
 Before you can get started however, there's some dependencies that needs to be installed:
 
@@ -11,5 +11,7 @@ Before you can get started however, there's some dependencies that needs to be i
 - Optional, required by the QDB module: `beautifulsoup4`
 
 When you've installed the dependencies, you can make the bot run by using the following command from the repo root:
+
 `python -m bones <path-to-config>`
+
 Remember to replace `<path-to-config>` with your config file!
