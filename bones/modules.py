@@ -42,12 +42,19 @@ def unescape(text):
 
 
 class QDB(Module):
-    from bs4 import BeautifulSoup
+    try:    
+        from bse4 import BeautifulSoup
+    except ImportError:
+        BeautifulSoup = None
 
     quotesCache = []
     
     def __init__(self, settings):
         self.log = logging.getLogger(".".join([__name__,"QDB"]))
+        if not self.BeautifulSoup:
+            ex = Exception("Unmet dependency: BeautifulSoup 4 not installed. This dependency needs to be installed before you can use the module %s" % ".".join([__name__,"QDB"]))
+            self.log.error(ex)
+            raise ex
         self.settings = settings
         self.maxLinesPerQuote = self.settings.get("module.qdb", "maxLinesPerQuote")
 
