@@ -126,17 +126,26 @@ class BonesBotFactory(protocol.ClientFactory):
         package = ".".join(tmppath[:len(tmppath)-1])
         name = tmppath[len(tmppath)-1:len(tmppath)][0]
         
-        module = __import__(package, fromlist=[name])
+        try:
+            module = __import__(package, fromlist=[name])
+        except ImportError:
+            ex = NoSuchBonesModuleException("Could not load module %s: No such package" % path)
+            log.exception(ex)
+            raise ex
         try:
             module = getattr(module, name)
         except AttributeError:
-            raise NoSuchBonesModuleException(path)
+            ex = NoSuchBonesModuleException("Could not load module %s: No such class" % path)
+            log.exception(ex)
+            raise ex
 
         if issubclass(module, Module):
             self.modules.append(module())
             log.info("Loaded module %s", path)
         else:
-            raise InvalidBonesModuleException(path)
+            ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)
+            log.exception(ex)
+            raise ex
     
     def clientConnectionLost(self, connector, reason):
         log.info("Lost connection (%s), reconnecting.", reason)
