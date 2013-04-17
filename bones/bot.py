@@ -99,6 +99,16 @@ class BonesBot(irc.IRCClient):
         for module in self.factory.modules:
             if event in module.eventMap and callable(module.eventMap[event]):
                 module.eventMap[event](module, self, user, secs)
+    
+    def irc_unknown(self, prefix, command, params):
+        log.debug("Unknown RAW: %s; %s; %s", prefix, command, params)
+        if command.lower() == "invite" and self.factory.settings.get("bot", "joinOnInvite") == "true":
+            log.info("Got invited to %s, joining.", params[1])
+            self.join(params[1])
+        event = "irc_unknown"
+        for module in self.factory.modules:
+            if event in module.eventMap and callable(module.eventMap[event]):
+                module.eventMap[event](module, prefix, command, params)
 
 
 class BonesBotFactory(protocol.ClientFactory):
