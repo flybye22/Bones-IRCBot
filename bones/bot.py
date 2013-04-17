@@ -92,6 +92,10 @@ class BonesBot(irc.IRCClient):
             for module in self.factory.modules:
                 if trigger in module.triggerMap and callable(module.triggerMap[trigger]):
                     module.triggerMap[trigger](module, self, user=user, channel=channel, args=args, msg=msg)
+                else:
+                    altTrigger = trigger.lower()
+                    if trigger.lower() in module.triggerMap and callable(module.triggerMap[altTrigger]):
+                        module.triggerMap[altTrigger](module, self, user=user, channel=channel, args=args, msg=msg)
     
     def pong(self, user, secs):
         event = "pong"
