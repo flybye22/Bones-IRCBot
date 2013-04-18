@@ -1,3 +1,6 @@
+import logging
+log = logging.getLogger(__name__)
+
 eventHandlers = {}
 triggerHandlers = {}
 
@@ -21,25 +24,18 @@ def handler(event=None, trigger=None):
     return realHandler
 
 def module(klass):
+    log.warning("Decorator @event.module is deprecated and will be removed in the future")
+    return klass
+
+def register(obj):
+    klass = obj.__class__
     for name, item in klass.__dict__.iteritems():
         if getattr(item, '_event', None) is not None:
             if item._event not in eventHandlers:
                 eventHandlers[item._event] = []
-            eventHandlers[item._event].append({"c":klass, "f":item})
+            eventHandlers[item._event].append({"c":obj, "f":item})
         
         if getattr(item, '_trigger', None) is not None:
             if item._trigger not in triggerHandlers:
                 triggerHandlers[item._trigger] = []
-            triggerHandlers[item._trigger].append({"c":klass, "f":item})
-    return klass
-
-def injectInstance(klass):
-    for event in eventHandlers:
-        for handler in eventHandlers[event]:
-            if handler['c'] == klass.__class__:
-                handler['c'] = klass
-
-    for trigger in triggerHandlers:
-        for handler in triggerHandlers[trigger]:
-            if handler['c'] == klass.__class__:
-                handler['c'] = klass
+            triggerHandlers[item._trigger].append({"c":obj, "f":item})

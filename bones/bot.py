@@ -141,8 +141,8 @@ class BonesBotFactory(protocol.ClientFactory):
 
         if issubclass(module, Module):
             instance = module(self.settings)
-            event.injectInstance(instance)
             self.modules.append(instance)
+            event.register(instance)
             log.info("Loaded module %s", path)
         else:
             ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)

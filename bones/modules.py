@@ -41,7 +41,6 @@ def unescape(text):
         return text # leave as is
     return re.sub(ur"&#?\w+;", fixup, text, re.UNICODE)
 
-@event.module
 class QDB(Module):
     try:    
         from bs4 import BeautifulSoup
@@ -107,14 +106,12 @@ class QDB(Module):
             random.shuffle(self.quotesCache, random.random)
 
 
-@event.module
 class MinecraftServerList(Module):
     @event.handler(trigger="mc")
     def cmdMc(self, client, args=None, channel=None, user=None, msg=None):
         client.msg(channel, "%s: Wait wait, I'm charging my batteries!" % user.split("!")[0])
 
 
-@event.module
 class UselessResponses(Module):
 
     @event.handler(trigger="hi5")
@@ -133,7 +130,6 @@ class UselessResponses(Module):
         client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
 
 
-@event.module
 class Utilities(Module):
     ongoingPings = {}
     
