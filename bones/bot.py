@@ -8,6 +8,8 @@ import logging.config
 from twisted.words.protocols import irc
 from twisted.internet import protocol
 
+from bones import event
+
 
 logging.config.fileConfig(sys.argv[1])
 log = logging.getLogger(__name__)
@@ -63,56 +65,44 @@ class BonesBot(irc.IRCClient):
         for channel in self.factory.channels:
             self.join(channel)
 
+        thisEvent = event.BotSignedOnEvent(self)
         log.info("Signed on as %s.", self.nickname)
-    
+
     def joined(self, channel):
+        thisEvent = event.BotJoinEvent(self, channel)
+        event.fire("joined", thisEvent)
         log.info("Joined channel %s.", channel)
     
     def userJoin(self, user, channel):
-        event = "userJoin"
+        thisEvent = event.UserJoinEvent(self, user, channel)
+        event.fire("userJoin", event)
         log.debug("Event userJoin: %s %s", user, channel)
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, self, user, channel)
-        data = reCommand.match(msg)
     
     def privmsg(self, user, channel, msg):
-        event = "privmsg"
         log.debug("Event privmsg: %s %s :%s", user, channel, msg)
         if channel[0:1] != "#":
             channel = user.split("!")[0]
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, self, user, channel, msg)
+        thisEvent = event.PrivmsgEvent(self, user, channel, msg)
+        event.fire("privmsg", thisEvent)
         data = reCommand.match(msg)
         if data:
             trigger = data.group(1)
             args = msg.split(" ")[1:]
             log.info("Received trigger %s." % (trigger,))
-            for module in self.factory.modules:
-                if trigger in module.triggerMap and callable(module.triggerMap[trigger]):
-                    module.triggerMap[trigger](module, self, user=user, channel=channel, args=args, msg=msg)
-                else:
-                    altTrigger = trigger.lower()
-                    if trigger.lower() in module.triggerMap and callable(module.triggerMap[altTrigger]):
-                        module.triggerMap[altTrigger](module, self, user=user, channel=channel, args=args, msg=msg)
+            triggerEvent = event.TriggerEvent(self, user=user, channel=channel, msg=msg, args=args)
+            event.fireTrigger(trigger.lower(), triggerEvent)
     
     def pong(self, user, secs):
-        event = "pong"
         log.debug("CTCP pong: %fs from %s", secs, user)
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, self, user, secs)
+        thisEvent = event.CTCPPongEvent(self, user, secs)
+        event.fire("pong", thisEvent)
     
     def irc_unknown(self, prefix, command, params):
         log.debug("Unknown RAW: %s; %s; %s", prefix, command, params)
         if command.lower() == "invite" and self.factory.settings.get("bot", "joinOnInvite") == "true":
             log.info("Got invited to %s, joining.", params[1])
             self.join(params[1])
-        event = "irc_unknown"
-        for module in self.factory.modules:
-            if event in module.eventMap and callable(module.eventMap[event]):
-                module.eventMap[event](module, prefix, command, params)
+        event.fire("irc_unknown", self, prefix, command, params)
 
 
 class BonesBotFactory(protocol.ClientFactory):
@@ -157,7 +147,9 @@ class BonesBotFactory(protocol.ClientFactory):
             raise ex
 
         if issubclass(module, Module):
-            self.modules.append(module(self.settings))
+            instance = module(self.settings)
+            self.modules.append(instance)
+            event.register(instance)
             log.info("Loaded module %s", path)
         else:
             ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)
