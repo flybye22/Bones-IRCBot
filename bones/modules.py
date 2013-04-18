@@ -59,30 +59,30 @@ class QDB(Module):
         self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote"))
     
     @event.handler(trigger="qdb")
-    def cmdQdb(self, client, args=None, channel=None, user=None, msg=None):
-        if len(args) > 0 and args[0].lower() == "read":
-            if len(args) <= 1:
+    def cmdQdb(self, event):
+        if len(event.args) > 0 and event.args[0].lower() == "read":
+            if len(event.args) <= 1:
                 return
-            id = int(args[1])
+            id = int(event.args[1])
             self.log.debug("Fetching qdb.us/%i", id)
             data = urllib.urlopen("http://qdb.us/%i" % id)
             if data.getcode() == 404:
-                client.msg(channel, str("[QDB #%s] Quote not found." % id))
+                event.client.msg(event.channel, str("[QDB #%s] Quote not found." % id))
                 return
             if data.getcode() == 200:
                 html = data.read()
                 soup = self.BeautifulSoup(html)
                 quote = soup.find("span", {"class":"qt"}).text
-                self.sendQuote(client, channel, (id, quote))
+                self.sendQuote(event.client, event.channel, (id, quote))
                 return
             self.log.error("Got unknown HTTP error code %i when fetching qdb.us/%i", data.getcode(), id)
-            client.msg(channel, str("[QDB] An unknown exception occurred. Please notify the bot master and try again later."))
+            event.client.msg(event.channel, str("[QDB] An unknown exception occurred. Please notify the bot master and try again later."))
             return
 
         if len(args) <= 0 or args[0].lower() == "random":
             self.cacheIfNeeded()
             quote = self.quotesCache.pop()
-            self.sendQuote(client, channel, quote)
+            self.sendQuote(event.client, event.channel, quote)
             return
     
     def sendQuote(self, client, channel, quote):
@@ -108,26 +108,26 @@ class QDB(Module):
 
 class MinecraftServerList(Module):
     @event.handler(trigger="mc")
-    def cmdMc(self, client, args=None, channel=None, user=None, msg=None):
-        client.msg(channel, "%s: Wait wait, I'm charging my batteries!" % user.split("!")[0])
+    def cmdMc(self, event):
+        event.client.msg(event.channel, "%s: Wait wait, I'm charging my batteries!" % event.user.nickname)
 
 
 class UselessResponses(Module):
 
     @event.handler(trigger="hi5")
-    def cmdHi5(self, client, args=None, channel=None, user=None, msg=None):
+    def cmdHi5(self, event):
         target = ""
-        if len(args) > 0:
-            target = args[0]
-        client.msg(channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
+        if len(event.args) > 0:
+            target = event.args[0]
+        event.client.msg(event.channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
     
     @event.handler(trigger="hue")
-    def cmdHue(self, client,  args=None, channel=None, user=None, msg=None):
-        client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
+    def cmdHue(self, event):
+        event.client.msg(event.channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
 
     @event.handler(trigger="huehue")
-    def cmdHueHue(self, client,  args=None, channel=None, user=None, msg=None):
-        client.msg(channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
+    def cmdHueHue(self, event):
+        event.client.msg(event.channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
 
 
 class Utilities(Module):
@@ -137,30 +137,30 @@ class Utilities(Module):
     reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
 
     @event.handler(trigger="ping")
-    def cmdPing(self, client, args=None, channel=None, user=None, msg=None):
-        nick = user.split("!")[0]
+    def cmdPing(self, event):
+        nick = event.user.nickname
         if nick not in self.ongoingPings:
-            self.ongoingPings[nick] = channel
-            client.ping(nick)
+            self.ongoingPings[nick] = event.channel
+            event.client.ping(nick)
         else:
-            client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
+            event.client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
 
     @event.handler(event="privmsg")
-    def eventURLInfo_YouTube(self, client, user, channel, msg):
-        if "youtu" in msg and "http" in msg:
-            data = self.reYouTubeLink.search(msg)
+    def eventURLInfo_YouTube(self, event):
+        if "youtu" in event.msg and "http" in event.msg:
+            data = self.reYouTubeLink.search(event.msg)
             if data:
                 vid = data.group(5)
                 url = "http://youtu.be/%s" % vid
                 html = urllib.urlopen(url).read()
                 data = re.search("<meta name=\"title\" content=\"(.+)\">", html)
                 if data:
-                    client.msg(channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(data.group(1)), url)))
+                    event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(data.group(1)), url)))
         
     @event.handler(event="privmsg")
-    def eventURLInfo_Spotify(self, client, user, channel, msg):
-        if "open.spotify" in msg and "http" in msg:
-            data = self.reSpotifyLink.search(msg)
+    def eventURLInfo_Spotify(self, event):
+        if "open.spotify" in event.msg and "http" in event.msg:
+            data = self.reSpotifyLink.search(event.msg)
             if data:
                 url = data.group(0)
                 html = urllib.urlopen(url).read()
@@ -169,30 +169,30 @@ class Utilities(Module):
                     songtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     artist = re.search("<h2> by <a.+>(.+)</a", html).group(1)
                     if data:
-                        client.msg(channel, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))))
+                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))))
                 elif type == "album":
                     albumtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     artist = re.search("<h2>by <a.+>(.+)</a", html).group(1)
                     if data:
-                        client.msg(channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle)), unescape(artist)))
+                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle)), unescape(artist)))
                 elif type == "artist":
                     artist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     if data:
-                        client.msg(channel, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))))
+                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))))
                 elif type == "user" and data.group(3) is not None:
                     playlist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     user = re.search("<h2>by <a.+>(.+)</a", html).group(1)
                     if data:
-                        client.msg(channel, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))))
+                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))))
                 elif type == "user":
                     user = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
                     if data:
-                        client.msg(channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))))
+                        event.client.msg(event.channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))))
 
     @event.handler(event="pong")
-    def eventPingResponseReceive(self, client, user, secs):
-        nick = user.split("!")[0]
+    def eventPingResponseReceive(self, event):
+        nick = event.user.nickname
         if nick in self.ongoingPings:
             channel = self.ongoingPings[nick]
-            client.msg(channel, "%s: Your response time was %.3f seconds." % (nick, secs))
+            event.client.msg(channel, "%s: Your response time was %.3f seconds." % (nick, event.secs))
             del self.ongoingPings[nick]

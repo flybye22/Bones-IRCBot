@@ -65,30 +65,37 @@ class BonesBot(irc.IRCClient):
         for channel in self.factory.channels:
             self.join(channel)
 
+        thisEvent = event.BotSignedOnEvent(self)
         log.info("Signed on as %s.", self.nickname)
-    
+
     def joined(self, channel):
+        thisEvent = event.BotJoinEvent(self, channel)
+        event.fire("joined", thisEvent)
         log.info("Joined channel %s.", channel)
     
     def userJoin(self, user, channel):
+        thisEvent = event.UserJoinEvent(self, user, channel)
+        event.fire("userJoin", event)
         log.debug("Event userJoin: %s %s", user, channel)
-        event.fire("userJoin", self, user, channel)
     
     def privmsg(self, user, channel, msg):
         log.debug("Event privmsg: %s %s :%s", user, channel, msg)
         if channel[0:1] != "#":
             channel = user.split("!")[0]
-        event.fire("privmsg", self, user, channel, msg)
+        thisEvent = event.PrivmsgEvent(self, user, channel, msg)
+        event.fire("privmsg", thisEvent)
         data = reCommand.match(msg)
         if data:
             trigger = data.group(1)
             args = msg.split(" ")[1:]
             log.info("Received trigger %s." % (trigger,))
-            event.fireTrigger(trigger.lower(), self, user=user, channel=channel, args=args, msg=msg)
+            triggerEvent = event.TriggerEvent(self, user=user, channel=channel, msg=msg, args=args)
+            event.fireTrigger(trigger.lower(), triggerEvent)
     
     def pong(self, user, secs):
         log.debug("CTCP pong: %fs from %s", secs, user)
-        event.fire("pong", self, user, secs)
+        thisEvent = event.CTCPPongEvent(self, user, secs)
+        event.fire("pong", thisEvent)
     
     def irc_unknown(self, prefix, command, params):
         log.debug("Unknown RAW: %s; %s; %s", prefix, command, params)

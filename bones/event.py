@@ -1,4 +1,5 @@
 import logging
+
 log = logging.getLogger(__name__)
 
 eventHandlers = {}
@@ -39,3 +40,37 @@ def register(obj):
             if item._trigger not in triggerHandlers:
                 triggerHandlers[item._trigger] = []
             triggerHandlers[item._trigger].append({"c":obj, "f":item})
+
+
+class User():
+    def __init__(self, mask):
+        self.mask = mask
+        tmp = mask.split("!")
+        self.nickname = tmp[0]
+        tmp = tmp[1].split("@")
+        self.username = tmp[0]
+        self.hostname = tmp[1]
+
+
+class Event():
+    pass
+
+
+class PrivmsgEvent(Event):
+    def __init__(self, client, user, channel, msg):
+        self.client = client
+        self.channel = channel
+        self.user = User(user)
+        self.msg = msg
+
+
+class TriggerEvent(PrivmsgEvent):
+    def __init__(self, client, args=None, channel=None, user=None, msg=None):
+        PrivmsgEvent.__init__(self, client, user, channel, msg)
+        self.args = args
+
+class CTCPPongEvent(Event):
+    def __init__(self, client, user, secs):
+        self.client = client
+        self.secs = secs
+        self.user = User(user)
