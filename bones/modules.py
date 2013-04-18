@@ -41,6 +41,7 @@ def unescape(text):
         return text # leave as is
     return re.sub(ur"&#?\w+;", fixup, text, re.UNICODE)
 
+
 class QDB(Module):
     try:    
         from bs4 import BeautifulSoup
@@ -60,10 +61,12 @@ class QDB(Module):
     
     @event.handler(trigger="qdb")
     def cmdQdb(self, event):
-        if len(event.args) > 0 and event.args[0].lower() == "read":
-            if len(event.args) <= 1:
-                return
-            id = int(event.args[1])
+        if len(event.args) == 1 and event.args[0].isdigit() \
+        or len(event.args) >= 2 and event.args[0].lower() == "read":
+            if event.args[0].isdigit():
+                id = int(event.args[0])
+            else:
+                id = int(event.args[1])
             self.log.debug("Fetching qdb.us/%i", id)
             data = urllib.urlopen("http://qdb.us/%i" % id)
             if data.getcode() == 404:
