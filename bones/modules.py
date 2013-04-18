@@ -79,7 +79,7 @@ class QDB(Module):
             event.client.msg(event.channel, str("[QDB] An unknown exception occurred. Please notify the bot master and try again later."))
             return
 
-        if len(args) <= 0 or args[0].lower() == "random":
+        if len(event.args) <= 0 or event.args[0].lower() == "random":
             self.cacheIfNeeded()
             quote = self.quotesCache.pop()
             self.sendQuote(event.client, event.channel, quote)
