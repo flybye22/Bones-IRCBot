@@ -56,6 +56,24 @@ class Event():
     pass
 
 
+class UserJoinEvent(Event):
+    def __init__(self, client, channel):
+        self.client = client
+        self.channel = channel
+
+
+class BotJoinEvent(Event):
+    def __init__(self, client, user, channel):
+        self.client = client
+        self.channel = channel
+        self.user = User(user)
+
+
+class BotSignedOnEvent(Event):
+    def __init__(self, client):
+        self.client = client
+
+
 class PrivmsgEvent(Event):
     def __init__(self, client, user, channel, msg):
         self.client = client
