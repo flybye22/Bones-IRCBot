@@ -116,7 +116,7 @@ class CTCPPongEvent(Event):
 class ModeChangedEvent(Event):
     def __init__(self, client, user, channel, set, modes, args):
         self.client = client
-        self.user = User(user)
+        self.user = user
         self.channel = channel
         self.set = set
         self.modes = modes
