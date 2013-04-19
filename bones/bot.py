@@ -55,14 +55,11 @@ class BonesBot(irc.IRCClient):
     sourceURL = property(_get_sourceURL)
     
     def signedOn(self):
-        if self.factory.settings.get("server", "nickserv") == "true":
-            log.info("Identifying with NickServ.")
-            self.msg("NickServ", "IDENTIFY %s" % self.factory.settings.get("server", "nickserv.password"))
-
         if self.factory.settings.get("server", "setBot") == "true":
             self.mode(self.nickname, True, "B")
 
         thisEvent = event.BotSignedOnEvent(self)
+        event.fire("signedOn", thisEvent)
         log.info("Signed on as %s.", self.nickname)
 
         for channel in self.factory.channels:
@@ -176,6 +173,12 @@ class BonesBot(irc.IRCClient):
         event.fire("joined", thisEvent)
         log.info("Joined channel %s.", channel)
     
+    def join(self, channel):
+        thisEvent = event.BotPreJoinEvent(self, channel)
+        event.fire("preJoin", thisEvent)
+        if thisEvent.isCancelled is False:
+            irc.IRCClient.join(self, channel)
+    
     def userJoin(self, user, channel):
         thisEvent = event.UserJoinEvent(self, user, channel)
         event.fire("userJoin", event)
@@ -201,7 +204,7 @@ class BonesBot(irc.IRCClient):
         event.fire("pong", thisEvent)
     
     def irc_unknown(self, prefix, command, params):
-        #log.debug("Unknown RAW: %s; %s; %s", prefix, command, params)
+        log.debug("Unknown RAW: %s; %s; %s", prefix, command, params)
         if command.lower() == "invite" and self.factory.settings.get("bot", "joinOnInvite") == "true":
             log.info("Got invited to %s, joining.", params[1])
             self.join(params[1])

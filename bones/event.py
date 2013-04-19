@@ -93,6 +93,13 @@ class BotNickChangedEvent(Event):
         self.nick = nick
 
 
+class BotPreJoinEvent(Event):
+    def __init__(self, client, channel):
+        self.isCancelled = False
+        self.client = client
+        self.channel = channel
+
+
 class BotSignedOnEvent(Event):
     def __init__(self, client):
         self.client = client
