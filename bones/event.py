@@ -8,12 +8,18 @@ triggerHandlers = {}
 def fire(event, *args, **kwargs):
     if event in eventHandlers:
         for h in eventHandlers[event]:
-            h['f'](h['c'], *args, **kwargs)
+            try:
+                h['f'](h['c'], *args, **kwargs)
+            except Exception, ex:
+                log.exception(ex)
 
 def fireTrigger(trigger, *args, **kwargs):
     if trigger in triggerHandlers:
         for h in triggerHandlers[trigger]:
-            h['f'](h['c'], *args, **kwargs)
+            try:
+                h['f'](h['c'], *args, **kwargs)
+            except Exception, ex:
+                log.exception(ex)
 
 def handler(event=None, trigger=None):
     def realHandler(func):
