@@ -5,6 +5,8 @@ import htmlentitydefs
 import random
 import logging
 
+from twisted.internet import reactor
+
 from bones import event
 from bones.bot import Module
 
@@ -116,6 +118,22 @@ class MinecraftServerList(Module):
 
 
 class UselessResponses(Module):
+
+    @event.handler(event="privmsg")
+    def DANCE(self, event, step=0):
+        if "DANCE" in event.msg:
+            if step == 0:
+                event.client.ctcpMakeQuery(event.channel, [('ACTION', "dances")])
+                reactor.callLater(1.5, self.DANCE, event, step=1)
+            elif step == 1:
+                event.client.msg(event.channel, r":D\-<")
+                reactor.callLater(1.0, self.DANCE, event, step=2)
+            elif step == 2:
+                event.client.msg(event.channel, r":D|-<")
+                reactor.callLater(1.0, self.DANCE, event, step=3)
+            elif step == 3:
+                event.client.msg(event.channel, r":D/-<")
+            
 
     @event.handler(trigger="hi5")
     def cmdHi5(self, event):
