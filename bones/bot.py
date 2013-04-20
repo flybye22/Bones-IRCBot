@@ -273,6 +273,3 @@ class BonesBotFactory(protocol.ClientFactory):
 class Module():
     def __init__(self, settings):
         self.settings = settings
-    
-    triggerMap = {}
-    eventMap = {}
