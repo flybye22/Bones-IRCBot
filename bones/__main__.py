@@ -13,6 +13,7 @@ from bones.modules import (
     )
 
 if __name__ == "__main__":
+    logging.config.fileConfig(sys.argv[1])
     log = logging.getLogger(__package__)
     settings = SafeConfigParser()
     settings.read(sys.argv[1])

@@ -10,8 +10,6 @@ from twisted.internet import protocol
 
 from bones import event
 
-
-logging.config.fileConfig(sys.argv[1])
 log = logging.getLogger(__name__)
 
 reCommand = re.compile("\.([a-zA-Z0-9]*)( .+)*?")
