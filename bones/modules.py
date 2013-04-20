@@ -4,6 +4,7 @@ import urllib
 import htmlentitydefs
 import random
 import logging
+from datetime import datetime
 
 from twisted.internet import reactor
 
@@ -118,11 +119,24 @@ class MinecraftServerList(Module):
 
 
 class UselessResponses(Module):
+    danceCooldown = {}
+    danceCooldownTime = None
 
     @event.handler(event="privmsg")
     def DANCE(self, event, step=0):
         if "DANCE" in event.msg:
+            if not self.danceCooldownTime:
+                self.danceCooldownTime = int(self.settings.get("module.UselessResponses", "dance.cooldown"))
             if step == 0:
+                if event.channel in self.danceCooldown:
+                    last = self.danceCooldown[event.channel]
+                    now = datetime.utcnow()
+                    delta = now - last
+                    if delta.seconds < self.danceCooldownTime:
+                        wait = self.danceCooldownTime - delta.seconds
+                        event.client.notice(event.user.nickname, "Please wait %s more seconds." % wait)
+                        return
+                self.danceCooldown[event.channel] = datetime.utcnow()
                 event.client.ctcpMakeQuery(event.channel, [('ACTION', "dances")])
                 reactor.callLater(1.5, self.DANCE, event, step=1)
             elif step == 1:
