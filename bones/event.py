@@ -238,7 +238,7 @@ class UserPartEvent(Event):
 class UserQuitEvent(Event):
     def __init__(self, client, user, quitMessage):
         self.client = client
-        self.user = User(user)
+        self.user = user
         self.quitMessage = quitMessage
 
 class UserKickedEvent(Event):
