@@ -232,7 +232,7 @@ class UserNickChangedEvent(Event):
 class UserPartEvent(Event):
     def __init__(self, client, user, channel):
         self.client = client
-        self.user = User(user)
+        self.user = user
         self.channel = channel
 
 class UserQuitEvent(Event):
