@@ -118,6 +118,24 @@ class MinecraftServerList(Module):
         event.client.msg(event.channel, "%s: Wait wait, I'm charging my batteries!" % event.user.nickname)
 
 
+class NickFix(Module):
+    nickIWant = None
+
+    @event.handler(event="userQuit")
+    @event.handler(event="userRenamed")
+    def somethingHappened(self, myEvent):
+        user = None
+        if self.nickIWant == None:
+            self.nickIWant = self.settings.get("bot", "nickname")
+
+        if isinstance(myEvent, event.UserNickChangedEvent) is True:
+            user = myEvent.oldname
+        else:
+            user = myEvent.user
+
+        if user.lower() == self.nickIWant.lower():
+            myEvent.client.setNick(self.nickIWant)
+
 class UselessResponses(Module):
     danceCooldown = {}
     danceCooldownTime = None
