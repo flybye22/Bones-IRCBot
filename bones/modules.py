@@ -142,7 +142,8 @@ class UselessResponses(Module):
 
     @event.handler(event="privmsg")
     def DANCE(self, event, step=0):
-        if "DANCE" in event.msg:
+        msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "", event.msg)
+        if "DANCE" in msg:
             if not self.danceCooldownTime:
                 self.danceCooldownTime = int(self.settings.get("module.UselessResponses", "dance.cooldown"))
             if step == 0:
