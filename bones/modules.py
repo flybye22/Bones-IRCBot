@@ -188,6 +188,7 @@ class Utilities(Module):
     
     reYouTubeLink = re.compile("http(s)?\:\/\/(www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
     reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
+    reTwitterLink = re.compile("https?\:\/\/twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
 
     @event.handler(trigger="ping")
     def cmdPing(self, event):
@@ -197,6 +198,25 @@ class Utilities(Module):
             event.client.ping(nick)
         else:
             event.client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
+            
+    @event.handler(event="privmsg")
+    def eventURLInfo_Twitter(self, event):
+        if "twitter" in event.msg and "http" in event.msg:
+            data = self.reTwitterLink.search(event.msg)
+            if data:
+                url = data.group(0)
+                html = urllib.urlopen(url).read()
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(html)
+                tweet = soup.find("p", {"class":"tweet-text"}).text
+                user = soup.find("span", {"class":"username js-action-profile-name"}).text
+                print tweet
+                print user
+                msg = u"\x030,10Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s" % (tweet, user)
+                msg = unescape(msg)
+                msg = msg.encode("utf-8")
+                msg = str(msg)
+                event.client.msg(event.channel, msg)
 
     @event.handler(event="privmsg")
     def eventURLInfo_YouTube(self, event):
