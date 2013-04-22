@@ -24,9 +24,13 @@ def fireTrigger(trigger, *args, **kwargs):
 def handler(event=None, trigger=None):
     def realHandler(func):
         if event is not None:
-            func._event = event
+            if getattr(func, '_event', None) is None:
+                func._event = []
+            func._event.append(event)
         if trigger is not None:
-            func._trigger = trigger.lower()
+            if getattr(func, '_trigger', None) is None:
+                func._trigger = []
+            func._trigger.append(trigger.lower())
         return func
     return realHandler
 
@@ -38,14 +42,16 @@ def register(obj):
     klass = obj.__class__
     for name, item in klass.__dict__.iteritems():
         if getattr(item, '_event', None) is not None:
-            if item._event not in eventHandlers:
-                eventHandlers[item._event] = []
-            eventHandlers[item._event].append({"c":obj, "f":item})
+            for event in item._event:
+                if event not in eventHandlers:
+                    eventHandlers[event] = []
+                eventHandlers[event].append({"c":obj, "f":item})
         
         if getattr(item, '_trigger', None) is not None:
-            if item._trigger not in triggerHandlers:
-                triggerHandlers[item._trigger] = []
-            triggerHandlers[item._trigger].append({"c":obj, "f":item})
+            for trigger in item._trigger:
+                if trigger not in triggerHandlers:
+                    triggerHandlers[trigger] = []
+                triggerHandlers[trigger].append({"c":obj, "f":item})
 
 
 class User():
