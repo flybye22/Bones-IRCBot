@@ -6,11 +6,6 @@ from ConfigParser import SafeConfigParser
 from twisted.internet import reactor
 
 from bones.bot import BonesBotFactory
-from bones.modules import (
-        MinecraftServerList,
-        UselessResponses,
-        Utilities,
-    )
 
 if __name__ == "__main__":
     logging.config.fileConfig(sys.argv[1])
