@@ -121,8 +121,8 @@ class MinecraftServerList(Module):
 class NickFix(Module):
     nickIWant = None
 
-    @event.handler(event="userQuit")
-    @event.handler(event="userRenamed")
+    @event.handler(event="UserQuit")
+    @event.handler(event="UserNickChanged")
     def somethingHappened(self, myEvent):
         user = None
         if self.nickIWant == None:
@@ -140,7 +140,7 @@ class UselessResponses(Module):
     danceCooldown = {}
     danceCooldownTime = None
 
-    @event.handler(event="privmsg")
+    @event.handler(event="Privmsg")
     def DANCE(self, event, step=0):
         msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "", event.msg)
         if "DANCE" in msg:
@@ -270,7 +270,7 @@ class Utilities(Module):
                     if data:
                         event.client.msg(event.channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))))
 
-    @event.handler(event="pong")
+    @event.handler(event="CTCPPong")
     def eventPingResponseReceive(self, event):
         nick = event.user.nickname
         if nick in self.ongoingPings:

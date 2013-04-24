@@ -5,7 +5,7 @@ from bones import event as events
 from bones.bot import Module
 
 class NickServ(Module):
-    @events.handler(event="signedOn")
+    @events.handler(event="BotSignedOn")
     def identifySignOn(self, event):
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice") == "false":
@@ -13,7 +13,7 @@ class NickServ(Module):
             log.info("Identifying with NickServ")
             event.client.msg("NickServ", "IDENTIFY %s" % self.settings.get("services", "nickserv.password"))
 
-    @events.handler(event="noticed")
+    @events.handler(event="BotNoticeReceive")
     def identifyNotice(self, event):
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice") == "true" \
@@ -32,7 +32,7 @@ class HostServ(Module):
         Module.__init__(self, *args, **kwargs)
         log.info("HostServ module enabled, all joins will be cancelled until we have received a vhost.")
 
-    @events.handler(event="preJoin")
+    @events.handler(event="BotPreJoin")
     def preventUncloakedJoins(self, event):
         # One of the most important things we need to do is prevent
         # joining while we do not have a vhost

@@ -6,8 +6,8 @@ eventHandlers = {}
 triggerHandlers = {}
 
 def fire(event, *args, **kwargs):
-    if event in eventHandlers:
-        for h in eventHandlers[event]:
+    if event.lower() in eventHandlers:
+        for h in eventHandlers[event.lower()]:
             try:
                 h['f'](h['c'], *args, **kwargs)
             except Exception, ex:
@@ -26,7 +26,7 @@ def handler(event=None, trigger=None):
         if event is not None:
             if getattr(func, '_event', None) is None:
                 func._event = []
-            func._event.append(event)
+            func._event.append(event.lower())
         if trigger is not None:
             if getattr(func, '_trigger', None) is None:
                 func._trigger = []

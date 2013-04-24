@@ -57,7 +57,7 @@ class BonesBot(irc.IRCClient):
             self.mode(self.nickname, True, "B")
 
         thisEvent = event.BotSignedOnEvent(self)
-        event.fire("signedOn", thisEvent)
+        event.fire("BotSignedOn", thisEvent)
         log.info("Signed on as %s.", self.nickname)
 
         for channel in self.factory.channels:
@@ -66,52 +66,52 @@ class BonesBot(irc.IRCClient):
     def created(self, when):
         log.debug("Received server creation info: %s", when)
         thisEvent = event.ServerCreatedEvent(self, when)
-        event.fire("created", thisEvent)
+        event.fire("ServerCreated", thisEvent)
     
     def yourHost(self, info):
         log.debug("Received server host info: %s", info)
         thisEvent = event.ServerHostInfoEvent(self, info)
-        event.fire("yourHost", thisEvent)
+        event.fire("ServerHostInfo", thisEvent)
     
     def myInfo(self, servername, version, umodes, cmodes):
         log.debug("Received server info from %s: Version %s, Usermodes %s, Channelmodes %s", servername, version, umodes, cmodes)
         thisEvent = event.ServerInfoEvent(self, servername, version, umodes, cmodes)
-        event.fire("myInfo", thisEvent)
+        event.fire("ServerInfo", thisEvent)
 
     def luserClient(self, info):
         log.debug("Received client info from server: %s", info)
         thisEvent = event.ServerClientInfoEvent(self, info)
-        event.fire("luserClient", thisEvent)
+        event.fire("ServerClientInfo", thisEvent)
     
     def bounce(self, info):
         log.debug("Received bounce info: %s", info)
         thisEvent = event.BounceEvent(self, info)
-        event.fire("bounce", thisEvent)
+        event.fire("Bounce", thisEvent)
     
     def isupport(self, options):
         log.debug("Received server support flags: %s", " ".join(options))
         thisEvent = event.ServerSupportEvent(self, options)
-        event.fire("isupport", thisEvent)
+        event.fire("ServerSupport", thisEvent)
 
     def luserChannels(self, channels):
         log.debug("This server have %s channels", channels)
         thisEvent = event.ServerChannelCountEvent(self, channels)
-        event.fire("luserChannels", thisEvent)
+        event.fire("ServerChannelCount", thisEvent)
     
     def luserOp(self, ops):
         log.debug("There's currently %s opered clients on this server", ops)
         thisEvent = event.ServerOpCountEvent(self, ops)
-        event.fire("luserOp", thisEvent)
+        event.fire("ServerOpCount", thisEvent)
 
     def luserMe(self, info):
         log.debug("Received local server info: %s", info)
         thisEvent = event.ServerLocalInfoEvent(self, info)
-        event.fire("luserMe", thisEvent)
+        event.fire("ServerLocalInfo", thisEvent)
     
     def noticed(self, user, channel, message):
         log.debug("NOTICE in %s from %s: %s", channel, user, message)
         thisEvent = event.BotNoticeReceivedEvent(self, user, channel, message)
-        event.fire("noticed", thisEvent)
+        event.fire("BotNoticeReceived", thisEvent)
     
     def modeChanged(self, user, channel, set, modes, args):
         if set:
@@ -120,66 +120,66 @@ class BonesBot(irc.IRCClient):
             setString = "-"
         log.debug("Mode change in %s: %s set %s%s (%s)", channel, user, setString, modes, args)
         thisEvent = event.ModeChangedEvent(self, user, channel, set, modes, args)
-        event.fire("modeChanged", thisEvent)
+        event.fire("ModeChanged", thisEvent)
     
     def kickedFrom(self, channel, kicker, message):
         log.info("Kicked from channel %s by %s. Reason: %s", channel, kicker, message)
         thisEvent = event.BotKickedEvent(self, channel, kicker, message)
-        event.fire("kickedFrom", thisEvent)
+        event.fire("BotKicked", thisEvent)
 
     def nickChanged(self, nick):
         thisEvent = event.BotNickChangedEvent(self, nick)
         log.info("Changed nick to %s", nick)
-        event.fire("nickChanged", thisEvent)
+        event.fire("BotNickChanged", thisEvent)
     
     def userLeft(self, user, channel):
         log.debug("User %s parted from %s", user, channel)
         thisEvent = event.UserPartEvent(self, user, channel)
-        event.fire("userLeft", thisEvent)
+        event.fire("UserPart", thisEvent)
     
     def userQuit(self, user, quitMessage):
         log.debug("User %s quit (Reason: %s)", user, quitMessage)
         thisEvent = event.UserQuitEvent(self, user, quitMessage)
-        event.fire("userQuit", thisEvent)
+        event.fire("UserQuit", thisEvent)
     
     def userKicked(self, kickee, channel, kicker, message):
         log.debug("User %s was kicked from %s by %s (Reason: %s)", kickee, channel, kicker, message)
         thisEvent = event.UserKickedEvent(self, kickee, channel, kicker, message)
-        event.fire("userKicked", thisEvent)
+        event.fire("UserKicked", thisEvent)
     
     def action(self, user, channel, data):
         log.debug("User %s actioned in %s: %s", user, channel, data)
         thisEvent = event.UserActionEvent(self, user, channel, data)
-        event.fire("action", thisEvent)
+        event.fire("UserAction", thisEvent)
     
     def topicUpdated(self, user, channel, newTopic):
         log.debug("User %s changed topic of %s to %s", user, channel, newTopic)
         thisEvent = event.ChannelTopicChangedEvent(self, user, channel, newTopic)
-        event.fire("topicUpdated", thisEvent)
+        event.fire("ChannelTopicChanged", thisEvent)
     
     def userRenamed(self, oldname, newname):
         log.debug("User %s changed nickname to %s", oldname, newname)
         thisEvent = event.UserNickChangedEvent(self, oldname, newname)
-        event.fire("userRenamed", thisEvent)
+        event.fire("UerNickChanged", thisEvent)
     
     def receivedMOTD(self, motd):
         thisEvent = event.ServerMOTDReceivedEvent(self, motd)
-        event.fire("receivedMOTD", thisEvent)
+        event.fire("ServerMOTDReceived", thisEvent)
 
     def joined(self, channel):
         thisEvent = event.BotJoinEvent(self, channel)
-        event.fire("joined", thisEvent)
+        event.fire("BotJoin", thisEvent)
         log.info("Joined channel %s.", channel)
     
     def join(self, channel):
         thisEvent = event.BotPreJoinEvent(self, channel)
-        event.fire("preJoin", thisEvent)
+        event.fire("BotPreJoin", thisEvent)
         if thisEvent.isCancelled is False:
             irc.IRCClient.join(self, channel)
     
     def userJoin(self, user, channel):
         thisEvent = event.UserJoinEvent(self, user, channel)
-        event.fire("userJoin", event)
+        event.fire("UserJoin", event)
         log.debug("Event userJoin: %s %s", user, channel)
     
     def privmsg(self, user, channel, msg):
@@ -187,7 +187,7 @@ class BonesBot(irc.IRCClient):
         if channel[0:1] != "#":
             channel = user.split("!")[0]
         thisEvent = event.PrivmsgEvent(self, user, channel, msg)
-        event.fire("privmsg", thisEvent)
+        event.fire("Privmsg", thisEvent)
         data = reCommand.match(msg)
         if data:
             trigger = data.group(1)
@@ -199,7 +199,7 @@ class BonesBot(irc.IRCClient):
     def pong(self, user, secs):
         log.debug("CTCP pong: %fs from %s", secs, user)
         thisEvent = event.CTCPPongEvent(self, user, secs)
-        event.fire("pong", thisEvent)
+        event.fire("CTCPPong", thisEvent)
     
     def irc_unknown(self, prefix, command, params):
         log.debug("Unknown RAW: %s; %s; %s", prefix, command, params)
