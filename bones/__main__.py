@@ -1,6 +1,8 @@
 # -*- encoding: utf8 -*-
 import sys
+import os
 import logging
+import subprocess
 from ConfigParser import SafeConfigParser
 
 from twisted.internet import reactor
@@ -14,6 +16,8 @@ if __name__ == "__main__":
     settings.read(sys.argv[1])
 
     botFactory = BonesBotFactory(settings)
+    if settings.get("bot", "exposeCVS") == "true" and os.path.exists(".git"):
+        botFactory.versionEnv = subprocess.check_output(["git", "describe", "--long", "--all"])
 
     serverHost = settings.get("server", "host")
     serverPort = int(settings.get("server", "port"))

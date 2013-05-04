@@ -208,12 +208,29 @@ class BonesBot(irc.IRCClient):
             self.join(params[1])
         event.fire("irc_unknown", self, prefix, command, params)
 
+    def ctcpQuery_VERSION(self, user, channel, data):
+        """
+        Reimplement irc.IRCClient.ctcpQuery_VERSION
+        so that it'll work better with for instance
+        Denora stats. (Not colon-separated anymore!)
+        """
+        if data is not None:
+            self.quirkyMessage("Why did %s send '%s' with a VERSION query?"
+                               % (user, data))
+        
+        if self.versionName:
+            nick = user.split("!")[0]
+            self.ctcpMakeReply(nick, [('VERSION', "%s %s %s" %
+                                        (self.versionName,
+                                         self.versionNum,
+                                         self.versionEnv))])
+
 
 class BonesBotFactory(protocol.ClientFactory):
     sourceURL = "https://github.com/404d/Bones-IRCBot"
-    versionName = "Bones-IRCBot"
+    versionName = "Bones IRCBot"
     versionNum = "0.0"
-    versionEnv = sys.platform
+    versionEnv = ""
 
     protocol = BonesBot
     modules = []
