@@ -13,7 +13,7 @@ class NickServ(Module):
             log.info("Identifying with NickServ")
             event.client.msg("NickServ", "IDENTIFY %s" % self.settings.get("services", "nickserv.password"))
 
-    @events.handler(event="BotNoticeReceive")
+    @events.handler(event="BotNoticeReceived")
     def identifyNotice(self, event):
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice") == "true" \
