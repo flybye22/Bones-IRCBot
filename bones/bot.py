@@ -12,8 +12,6 @@ from bones import event
 
 log = logging.getLogger(__name__)
 
-reCommand = re.compile("\.([a-zA-Z0-9]*)( .+)*?")
-
 
 class InvalidBonesModuleException(Exception):
     pass
@@ -188,7 +186,7 @@ class BonesBot(irc.IRCClient):
             channel = user.split("!")[0]
         thisEvent = event.PrivmsgEvent(self, user, channel, msg)
         event.fire("Privmsg", thisEvent)
-        data = reCommand.match(msg)
+        data = self.factory.reCommand.match(msg.decode("utf-8"))
         if data:
             trigger = data.group(1)
             args = msg.split(" ")[1:]
@@ -241,6 +239,10 @@ class BonesBotFactory(protocol.ClientFactory):
         self.nickname = settings.get("bot", "nickname")
         self.realname = settings.get("bot", "realname")
         self.username = settings.get("bot", "username")
+        
+        prefixChars = settings.get("bot", "triggerPrefixes").decode("utf-8")
+        regex = "[%s]([a-zA-Z0-9]*)( .+)*?" % prefixChars
+        self.reCommand = re.compile(regex, re.UNICODE)
         
         modules = settings.get("bot", "modules").split("\n")
         for module in modules:
