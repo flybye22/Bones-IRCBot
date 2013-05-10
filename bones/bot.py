@@ -4,13 +4,18 @@ import sys
 import os
 import logging
 import logging.config
+import urllib2
 
 from twisted.words.protocols import irc
 from twisted.internet import protocol
 
 from bones import event
 
+
 log = logging.getLogger(__name__)
+
+urllib = urllib2.build_opener()
+urllib.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.0')]
 
 
 class InvalidBonesModuleException(Exception):

@@ -1,6 +1,5 @@
 # -*- encoding: utf8 -*-
 import re
-import urllib
 import htmlentitydefs
 import random
 import logging
@@ -9,7 +8,7 @@ from datetime import datetime
 from twisted.internet import reactor
 
 from bones import event
-from bones.bot import Module
+from bones.bot import Module, urllib
 
 
 ##
