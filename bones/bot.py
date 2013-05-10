@@ -14,8 +14,8 @@ from bones import event
 
 log = logging.getLogger(__name__)
 
-urllib = urllib2.build_opener()
-urllib.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.0')]
+urlopener = urllib2.build_opener()
+urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.0')]
 
 
 class InvalidBonesModuleException(Exception):

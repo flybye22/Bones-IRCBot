@@ -4,7 +4,7 @@ import htmlentitydefs
 import logging
 
 from bones import event
-from bones.bot import Module, urllib
+from bones.bot import Module, urlopener
 
 
 ##
@@ -91,7 +91,7 @@ class Utilities(Module):
                 data = self.reTwitterLink.search(event.msg)
                 if data:
                     url = data.group(0)
-                    html = urllib.urlopen(url).read()
+                    html = urlopener.urlopen(url).read()
                     soup = self.bs(html)
                     tweet = soup.find("p", {"class":"tweet-text"}).text
                     user = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("span", {"class":"username js-action-profile-name"}).text
@@ -108,7 +108,7 @@ class Utilities(Module):
             if data:
                 vid = data.group(5)
                 url = "http://youtu.be/%s" % vid
-                html = urllib.urlopen(url).read()
+                html = urlopener.urlopen(url).read()
                 data = re.search("<meta name=\"title\" content=\"(.+)\">", html)
                 if data:
                     event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(data.group(1)), url)))
@@ -119,7 +119,7 @@ class Utilities(Module):
             data = self.reSpotifyLink.search(event.msg)
             if data:
                 url = data.group(0)
-                html = urllib.urlopen(url).read()
+                html = urlopener.urlopen(url).read()
                 type = data.group(2)
                 if type == "track":
                     songtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)

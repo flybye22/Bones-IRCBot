@@ -8,7 +8,7 @@ from datetime import datetime
 from twisted.internet import reactor
 
 from bones import event
-from bones.bot import Module, urllib
+from bones.bot import Module, urlopener
 
 
 ##
@@ -70,7 +70,7 @@ class QDB(Module):
             else:
                 id = int(event.args[1])
             self.log.debug("Fetching qdb.us/%i", id)
-            data = urllib.urlopen("http://qdb.us/%i" % id)
+            data = urlopener.urlopen("http://qdb.us/%i" % id)
             if data.getcode() == 404:
                 event.client.msg(event.channel, str("[QDB #%s] Quote not found." % id))
                 return
@@ -101,7 +101,7 @@ class QDB(Module):
     def cacheIfNeeded(self):
         if not self.quotesCache:
             self.log.debug("Fetching new quotes from qdb.us/random")
-            html = urllib.urlopen("http://qdb.us/random").read()
+            html = urlopener.urlopen("http://qdb.us/random").read()
             soup = self.BeautifulSoup(html)
             data = soup.findAll("span", {"class":"qt"})
             for item in data:
