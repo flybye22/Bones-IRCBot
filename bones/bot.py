@@ -252,6 +252,7 @@ class BonesBotFactory(protocol.ClientFactory):
         modules = settings.get("bot", "modules").split("\n")
         for module in modules:
             self.loadModule(module)
+        event.fire("BotInitialized", self)
 
     def loadModule(self, path):
         """
@@ -279,6 +280,7 @@ class BonesBotFactory(protocol.ClientFactory):
             self.modules.append(instance)
             event.register(instance)
             log.info("Loaded module %s", path)
+            event.fire("ModuleLoaded", module)
         else:
             ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)
             log.exception(ex)
