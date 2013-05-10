@@ -19,12 +19,7 @@ from bones import event
 Base = declarative_base()
 
 class Database(Module):
-    try:
-        from zope.sqlalchemy import ZopeTransactionExtension
-        session = scoped_session(sessionmaker(extension=ZopeTransactionExtension(),autocommit=True))
-    except ImportError:
-        log.warning("zope.sqlalchemy unavailable, won't use ZopeTransactionExtension()")
-        session = scoped_session(sessionmaker(autocommit=True))
+    session = scoped_session(sessionmaker(autocommit=True))
 
     def __init__(self, settings):
         self.settings = settings
