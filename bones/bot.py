@@ -188,10 +188,10 @@ class BonesBot(irc.IRCClient):
         event.fire("Privmsg", thisEvent)
         data = self.factory.reCommand.match(msg.decode("utf-8"))
         if data:
-            trigger = data.group(1)
+            trigger = data.group(2)
             args = msg.split(" ")[1:]
-            log.info("Received trigger %s." % (trigger,))
-            triggerEvent = event.TriggerEvent(self, user=user, channel=channel, msg=msg, args=args)
+            log.info("Received trigger %s%s." % (data.group(1),trigger))
+            triggerEvent = event.TriggerEvent(self, user=user, channel=channel, msg=msg, args=args, match=data)
             event.fireTrigger(trigger.lower(), triggerEvent)
     
     def pong(self, user, secs):
@@ -241,7 +241,7 @@ class BonesBotFactory(protocol.ClientFactory):
         self.username = settings.get("bot", "username")
         
         prefixChars = settings.get("bot", "triggerPrefixes").decode("utf-8")
-        regex = "[%s]([a-zA-Z0-9]*)( .+)*?" % prefixChars
+        regex = "([%s])([a-zA-Z0-9]*)( .+)*?" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
         
         modules = settings.get("bot", "modules").split("\n")

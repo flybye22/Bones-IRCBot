@@ -208,9 +208,10 @@ class ServerSupportEvent(Event):
 
 
 class TriggerEvent(PrivmsgEvent):
-    def __init__(self, client, args=None, channel=None, user=None, msg=None):
+    def __init__(self, client, args=None, channel=None, user=None, msg=None, match=None):
         PrivmsgEvent.__init__(self, client, user, channel, msg)
         self.args = args
+        self.match = match
 
 
 class UserActionEvent(Event):

@@ -156,6 +156,12 @@ class UselessResponses(Module):
         if len(event.args) > 0:
             target = event.args[0]
         event.client.msg(event.channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
+
+    @event.handler(trigger="kira")
+    def cmdKira(self, event):
+        prefix = event.match.group(1)
+        if prefix.encode("utf-8") in "★✫✦✧✩✪✫✬✭✮✯✰✴✵✶✷✸✹⭑⭒⭐🌟":
+            event.client.msg(event.channel, "(ﾉゝ∀・)\x038~キラ%s" % prefix.encode("utf-8"))
     
     @event.handler(trigger="hue")
     def cmdHue(self, event):
