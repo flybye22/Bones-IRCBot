@@ -2,6 +2,7 @@
 import re
 import htmlentitydefs
 import logging
+log = logging.getLogger(__name__)
 
 from bones import event
 from bones.bot import Module, urlopener
