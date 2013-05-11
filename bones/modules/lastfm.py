@@ -60,7 +60,7 @@ class Lastfm(Module):
 
         elif action == "-r":
             if not nickname:
-                event.client.msg(event.channel, str("%s: You need to provide a Last.fm username." % event.user.nickname))
+                event.client.notice(event.user.nickname, str("[Last.fm] You need to provide a Last.fm username."))
                 return
                 
             user = self.session.query(User).filter(User.nickname==event.user.nickname).first()
@@ -68,17 +68,17 @@ class Lastfm(Module):
                 user = User(event.user.nickname)
             user.username = nickname
             self.session.add(user)
-            event.client.msg(event.channel, str("%s: Registered '%s' to your nick" % (event.user.nickname, nickname)))
+            event.client.notice(event.user.nickname, str("[Last.fm] Registered '%s' to your nick" % nickname))
             return
 
         elif action == "-d":
             user = self.session.query(User).filter(User.nickname==event.user.nickname).first()
             if not user:
-                event.client.msg(event.channel, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname)))
+                event.client.notice(event.user.nickname, str("[Last.fm] No user registered for nick '%s'" % nickname))
                 return
             
             self.session.delete(user)
-            event.client.msg(event.channel, str("%s: Unregistered your nick from '%s'" % (event.user.nickname, user.username)))
+            event.client.notice(event.user.nickname, str("[Last.fm] Unregistered your nick from '%s'" % user.username))
             return
 
 
