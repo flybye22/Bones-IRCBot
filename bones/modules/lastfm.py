@@ -27,13 +27,15 @@ class Lastfm(Module):
     def trigger(self, event):
         argc = len(event.args)
         action = None
+        nickname = None
         if argc <= 0:
             nickname = event.user.nickname
-        elif argc == 1:
-            nickname = event.args[0].decode("utf-8")
-        elif argc == 2:
+        elif event.args[0] in ["-r","-d"]:
             action = event.args[0]
-            nickname = event.args[1]
+            if len(event.args) >= 2:
+                nickname = event.args[1]
+        else:
+            nickname = event.args[0].decode("utf-8")
 
         if action == None:
             user = self.session.query(User).filter(User.nickname==nickname).first()
@@ -44,9 +46,11 @@ class Lastfm(Module):
             data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
             soup = BeautifulSoup(data, "lxml")
             track = soup.find("track")
+            if not track:
+                event.client.msg(event.channel, str("%s: No tracks found for user '%s'. Are you sure that the user exists?" % (event.user.nickname, user.username)))
+                return
             artist = track.find("artist").text
             tracktitle = track.find("name").text
-            print track.__dict__
             if "nowplaying" in track.attrs and track.attrs["nowplaying"] == "true":
                 msg = "'%s' is now playing: %s - %s" % (user.username, artist, tracktitle)
             else:
@@ -55,12 +59,26 @@ class Lastfm(Module):
             return
 
         elif action == "-r":
+            if not nickname:
+                event.client.msg(event.channel, str("%s: You need to provide a Last.fm username." % event.user.nickname))
+                return
+                
             user = self.session.query(User).filter(User.nickname==event.user.nickname).first()
             if not user:
                 user = User(event.user.nickname)
             user.username = nickname
             self.session.add(user)
             event.client.msg(event.channel, str("%s: Registered '%s' to your nick" % (event.user.nickname, nickname)))
+            return
+
+        elif action == "-d":
+            user = self.session.query(User).filter(User.nickname==event.user.nickname).first()
+            if not user:
+                event.client.msg(event.channel, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname)))
+                return
+            
+            self.session.delete(user)
+            event.client.msg(event.channel, str("%s: Unregistered your nick from '%s'" % (event.user.nickname, user.username)))
             return
 
 
