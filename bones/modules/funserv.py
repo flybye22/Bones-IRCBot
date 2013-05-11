@@ -70,7 +70,7 @@ class QDB(Module):
             else:
                 id = int(event.args[1])
             self.log.debug("Fetching qdb.us/%i", id)
-            data = urlopener.urlopen("http://qdb.us/%i" % id)
+            data = urlopener.open("http://qdb.us/%i" % id)
             if data.getcode() == 404:
                 event.client.msg(event.channel, str("[QDB #%s] Quote not found." % id))
                 return
@@ -101,7 +101,7 @@ class QDB(Module):
     def cacheIfNeeded(self):
         if not self.quotesCache:
             self.log.debug("Fetching new quotes from qdb.us/random")
-            html = urlopener.urlopen("http://qdb.us/random").read()
+            html = urlopener.open("http://qdb.us/random").read()
             soup = self.BeautifulSoup(html)
             data = soup.findAll("span", {"class":"qt"})
             for item in data:
