@@ -68,7 +68,9 @@ class Lastfm(Module):
             if not user:
                 user = User(event.user.nickname)
             user.username = nickname
+            session.begin()
             session.add(user)
+            session.commit()
             event.client.notice(event.user.nickname, str("[Last.fm] Registered '%s' to your nick" % nickname))
             return
 
@@ -78,7 +80,9 @@ class Lastfm(Module):
                 event.client.notice(event.user.nickname, str("[Last.fm] No user registered for nick '%s'" % nickname))
                 return
             
+            session.begin()
             session.delete(user)
+            session.commit()
             event.client.notice(event.user.nickname, str("[Last.fm] Unregistered your nick from '%s'" % user.username))
             return
 
