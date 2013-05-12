@@ -20,8 +20,8 @@ class Lastfm(Module):
         self.apikey = settings.get("module.Lastfm", "apikey")
 
     @events.handler(event="storage.Database:init")
-    def gotDB(self, session, engine):
-        self.session = session
+    def gotDB(self, db):
+        self.db = db
 
     @events.handler(trigger="lastfm")
     def trigger(self, event):
@@ -37,8 +37,9 @@ class Lastfm(Module):
         else:
             nickname = event.args[0].decode("utf-8")
 
+        session = self.db.new_session()
         if action == None:
-            user = self.session.query(User).filter(User.nickname==nickname).first()
+            user = session.query(User).filter(User.nickname==nickname).first()
             if not user:
                 event.client.msg(event.channel, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname)))
                 return
@@ -63,21 +64,21 @@ class Lastfm(Module):
                 event.client.notice(event.user.nickname, str("[Last.fm] You need to provide a Last.fm username."))
                 return
                 
-            user = self.session.query(User).filter(User.nickname==event.user.nickname).first()
+            user = session.query(User).filter(User.nickname==event.user.nickname).first()
             if not user:
                 user = User(event.user.nickname)
             user.username = nickname
-            self.session.add(user)
+            session.add(user)
             event.client.notice(event.user.nickname, str("[Last.fm] Registered '%s' to your nick" % nickname))
             return
 
         elif action == "-d":
-            user = self.session.query(User).filter(User.nickname==event.user.nickname).first()
+            user = session.query(User).filter(User.nickname==event.user.nickname).first()
             if not user:
                 event.client.notice(event.user.nickname, str("[Last.fm] No user registered for nick '%s'" % nickname))
                 return
             
-            self.session.delete(user)
+            session.delete(user)
             event.client.notice(event.user.nickname, str("[Last.fm] Unregistered your nick from '%s'" % user.username))
             return
 
