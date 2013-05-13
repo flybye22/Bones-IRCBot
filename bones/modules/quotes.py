@@ -1,10 +1,13 @@
+from datetime import datetime
 import urllib
-from bs4 import BeautifulSoup
 
+from bs4 import BeautifulSoup
 from sqlalchemy import (
     Column,
     Integer,
     Text,
+    Enum,
+    DateTime,
     )
 from sqlalchemy.orm import (
     scoped_session,
@@ -39,14 +42,22 @@ class RandomQuote(Module):
         event.client.msg(event.channel, str(("%s: %s" % (quote.nickname, quote.quote)).encode("utf-8")))
 
     @events.handler(event="Privmsg")
+    @events.handler(event="UserAction")
     def logQuote(self, event):
-        tmp = event.msg.strip()
+        if isinstance(event, events.UserActionEvent):
+            eventtype = "action"
+            msg = event.data
+        else:
+            eventtype = "privmsg"
+            msg = event.msg
+        tmp = msg.strip()
         if tmp[1:].lower() != "quoterandom":
             session = self.db.new_session()
             quote = RandomUserQuote(
                     event.user.nickname,
                     event.channel,
-                    event.msg,
+                    msg,
+                    eventtype
                 )
             session.begin()
             session.add(quote)
@@ -61,8 +72,12 @@ class RandomUserQuote(Base):
     nickname = Column(Text)
     channel = Column(Text)
     quote = Column(Text)
+    type = Column(Enum('privmsg','mode','notice','ctcp','action','quit','leave','nick','dcc'))
+    timestamp = Column(DateTime(timezone=True))
 
-    def __init__(self, nickname, channel, quote):
+    def __init__(self, nickname, channel, quote, msgtype):
         self.nickname = nickname
         self.channel = channel
         self.quote = quote
+        self.type = msgtype
+        self.timestamp = datetime.now()
