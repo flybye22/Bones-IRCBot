@@ -24,6 +24,10 @@ class InvalidBonesModuleException(Exception):
 
 class NoSuchBonesModuleException(Exception):
     pass
+    
+    
+class BonesModuleAlreadyLoadedException(Exception):
+    pass
 
 
 class BonesBot(irc.IRCClient):
@@ -244,8 +248,9 @@ class BonesBotFactory(protocol.ClientFactory):
         self.nickname = settings.get("bot", "nickname")
         self.realname = settings.get("bot", "realname")
         self.username = settings.get("bot", "username")
-        
-        prefixChars = settings.get("bot", "triggerPrefixes").decode("utf-8")
+
+        # Build the trigger regex using the trigger prefixes specified in settings
+        prefixChars = settings.get("bot", "triggerPrefixes").decode("utf-8") # UTF-8 fix
         regex = "([%s])([a-zA-Z0-9]*)( .+)*?" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
         
@@ -254,20 +259,21 @@ class BonesBotFactory(protocol.ClientFactory):
             self.loadModule(module)
         event.fire("BotInitialized", self)
 
-    def loadModule(self, path):
+    def loadModule(self, path, userloaded=False):
         """
         Loads the specified module and adds it to the bot.
         """
         tmppath = path.split(".")
         package = ".".join(tmppath[:len(tmppath)-1])
         name = tmppath[len(tmppath)-1:len(tmppath)][0]
-        
+
         try:
             module = __import__(package, fromlist=[name])
         except ImportError as ex_raised:
             ex = NoSuchBonesModuleException("Could not load module %s: No such package. (ImportException: %s)" % (path, ex_raised.message))
             log.exception(ex)
             raise ex
+
         try:
             module = getattr(module, name)
         except AttributeError as ex_raised:
@@ -276,11 +282,15 @@ class BonesBotFactory(protocol.ClientFactory):
             raise ex
 
         if issubclass(module, Module):
+            if module in [m.__class__ for m in self.modules]:
+                ex = BonesModuleAlreadyLoadedException("Could not load module %s: Module already loaded" % path)
+                log.exception(ex)
+                raise ex
             instance = module(self.settings)
             self.modules.append(instance)
             event.register(instance)
             log.info("Loaded module %s", path)
-            event.fire("ModuleLoaded", module)
+            event.fire("ModuleLoaded", module, userloaded)
         else:
             ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)
             log.exception(ex)
