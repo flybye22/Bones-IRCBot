@@ -126,7 +126,7 @@ class ChannelQuotes(Module):
             return
         date = []
         dateThen = quote.timestamp.replace(tzinfo=None)
-        dateNow = datetime.utcnow()
+        dateNow = datetime.now()
         diff = dateNow - dateThen
 
         if diff.days > 0:
