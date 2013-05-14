@@ -124,7 +124,33 @@ class ChannelQuotes(Module):
         if not quote:
             event.client.msg(event.channel, str(("[Quote] No such quote '%s'" % event.args[1]).encode("utf-8")))
             return
-        event.client.msg(event.channel, str(("[Quote] Quote #%i added %s ago by %s:" % (quote.id, "%%s", quote.submitter)).encode("utf-8")))
+        date = []
+        dateThen = quote.timestamp.replace(tzinfo=None)
+        dateNow = datetime.utcnow()
+        diff = dateNow - dateThen
+
+        if diff.days > 0:
+            if diff.days != 1:
+                suffix = "s"
+            else:
+                suffix = ""
+            date.append("%s day%s" % (diff.days, suffix))
+
+        hours = (diff.seconds//3600)%24
+        if hours > 0:
+            if hours != 1:
+                suffix = "s"
+            else:
+                suffix = ""
+            date.append("%s hour%s" % (hours, suffix))
+
+        minutes = (diff.seconds//60)%60
+        if minutes != 1:
+            suffix = "s"
+        else:
+            suffix = ""
+        date.append("%s minute%s" % (minutes, suffix))
+        event.client.msg(event.channel, str(("[Quote] Quote #%i added %s ago by %s:" % (quote.id, ", ".join(date), quote.submitter)).encode("utf-8")))
         event.client.msg(event.channel, str(("[Quote] %s" % quote.quote).encode("utf-8")))
 
 
