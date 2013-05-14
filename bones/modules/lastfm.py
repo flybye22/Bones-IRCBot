@@ -61,7 +61,7 @@ class Lastfm(Module):
                 if timestamp and "uts" in timestamp.attrs:
 
                     dateThen = datetime.fromtimestamp(float(timestamp.attrs["uts"]))
-                    dateNow = datetime.utcnow()
+                    dateNow = datetime.now()
                     diff = dateNow - dateThen
 
                     if diff.days > 0:
