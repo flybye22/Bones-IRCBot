@@ -264,14 +264,14 @@ class BonesBotFactory(protocol.ClientFactory):
         
         try:
             module = __import__(package, fromlist=[name])
-        except ImportError:
-            ex = NoSuchBonesModuleException("Could not load module %s: No such package" % path)
+        except ImportError as ex_raised:
+            ex = NoSuchBonesModuleException("Could not load module %s: No such package. (ImportException: %s)" % (path, ex_raised.message))
             log.exception(ex)
             raise ex
         try:
             module = getattr(module, name)
-        except AttributeError:
-            ex = NoSuchBonesModuleException("Could not load module %s: No such class" % path)
+        except AttributeError as ex_raised:
+            ex = NoSuchBonesModuleException("Could not load module %s: No such class. (AttributeException: %s)" % (path, ex_raised.message))
             log.exception(ex)
             raise ex
 
