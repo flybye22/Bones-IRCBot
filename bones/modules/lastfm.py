@@ -1,6 +1,7 @@
+from datetime import datetime
 import urllib
-from bs4 import BeautifulSoup
 
+from bs4 import BeautifulSoup
 from sqlalchemy import (
     Column,
     Integer,
@@ -55,7 +56,36 @@ class Lastfm(Module):
             if "nowplaying" in track.attrs and track.attrs["nowplaying"] == "true":
                 msg = "'%s' is now playing: %s - %s" % (user.username, artist, tracktitle)
             else:
-                msg = "'%s' is not playing anything now, but played this %%s ago: %s - %s" % (user.username, artist, tracktitle)
+                timestamp = track.find("date")
+                date = []
+                if timestamp and "uts" in timestamp.attrs:
+
+                    dateThen = datetime.fromtimestamp(float(timestamp.attrs["uts"]))
+                    dateNow = datetime.utcnow()
+                    diff = dateNow - dateThen
+
+                    if diff.days > 0:
+                        if diff.days != 1:
+                            suffix = "s"
+                        else:
+                            suffix = ""
+                        date.append("%s day%s" % (diff.days, suffix))
+
+                    hours = (diff.seconds//3600)%24
+                    if hours > 0:
+                        if hours != 1:
+                            suffix = "s"
+                        else:
+                            suffix = ""
+                        date.append("%s hour%s" % (hours, suffix))
+
+                    minutes = (diff.seconds//60)%60
+                    if minutes != 1:
+                        suffix = "s"
+                    else:
+                        suffix = ""
+                    date.append("%s minute%s" % (minutes, suffix))
+                msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), artist, tracktitle)
             event.client.msg(event.channel, str(unescape(msg).encode("utf-8")))
             return
 
@@ -79,7 +109,7 @@ class Lastfm(Module):
             if not user:
                 event.client.notice(event.user.nickname, str("[Last.fm] No user registered for nick '%s'" % nickname))
                 return
-            
+
             session.begin()
             session.delete(user)
             session.commit()
