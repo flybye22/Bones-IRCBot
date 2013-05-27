@@ -14,11 +14,10 @@ from bones.modules.storage import Base
 from bones.modules.utilities import unescape
 
 class Lastfm(Module):
-    apikey = ""
 
-    def __init__(self, settings):
-        self.settings = settings
-        self.apikey = settings.get("module.Lastfm", "apikey")
+    def __init__(self, *args, **kwargs):
+        Module.__init__(self, *args, **kwargs)
+        self.apikey = self.settings.get("module.Lastfm", "apikey")
 
     @events.handler(event="storage.Database:init")
     def gotDB(self, db):
