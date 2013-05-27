@@ -29,7 +29,7 @@ class Database(Module):
     
     @event.handler(event="BotInitialized")
     def botReady(self, factory):
-        self.engine = engine_from_config(self.settings._sections["storage"], "sqlalchemy.")
+        self.engine = engine_from_config(self.settings.data["storage"], "sqlalchemy.")
         log.debug("Connected to database")
         event.fire(factory.tag, "storage.Database:init", self)
         self.sessionmaker = sessionmaker(bind=self.engine, autocommit=True)
