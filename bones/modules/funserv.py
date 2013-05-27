@@ -118,8 +118,11 @@ class MinecraftServerList(Module):
 
 
 class UselessResponses(Module):
-    danceCooldown = {}
-    danceCooldownTime = None
+    def __init__(self, *args, **kwargs):
+        Module.__init__(self, *args, **kwargs)
+        
+        self.danceCooldown = {}
+        self.danceCooldownTime = None
 
     @event.handler(event="Privmsg")
     def DANCE(self, event, step=0):
