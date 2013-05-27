@@ -5,7 +5,6 @@ log = logging.getLogger(__name__)
 eventHandlers = {}
 
 def fire(server, event, *args, **kwargs):
-    print "%s: %s" % (server, event)
     if server.lower() in eventHandlers:
         if event.lower() in eventHandlers[server.lower()]:
             for h in eventHandlers[server.lower()][event.lower()]:
@@ -36,7 +35,6 @@ def register(obj, server):
                 if event.lower() not in eventHandlers[server.lower()]:
                     eventHandlers[server.lower()][event.lower()] = []
                 eventHandlers[server.lower()][event.lower()].append({"c":obj, "f":item})
-    print eventHandlers
 
 
 class User():
