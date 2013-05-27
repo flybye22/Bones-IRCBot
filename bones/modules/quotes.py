@@ -22,8 +22,6 @@ from bones.modules.utilities import unescape
 
 
 class UserQuotes(Module):
-    def __init__(self, settings):
-        self.settings = settings
 
     @events.handler(event="storage.Database:init")
     def gotDB(self, db):
@@ -69,8 +67,6 @@ class UserQuotes(Module):
 
 
 class ChannelQuotes(Module):
-    def __init__(self, settings):
-        self.settings = settings
 
     @events.handler(event="storage.Database:init")
     def gotDB(self, db):
