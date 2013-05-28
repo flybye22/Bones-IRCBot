@@ -1,4 +1,5 @@
 import logging
+from twisted.internet import threads
 
 log = logging.getLogger(__name__)
 
@@ -9,7 +10,7 @@ def fire(server, event, *args, **kwargs):
         if event.lower() in eventHandlers[server.lower()]:
             for h in eventHandlers[server.lower()][event.lower()]:
                 try:
-                    h['f'](h['c'], *args, **kwargs)
+                    threads.deferToThread(h['f'], h['c'], *args, **kwargs)
                 except Exception, ex:
                     log.exception(ex)
 
