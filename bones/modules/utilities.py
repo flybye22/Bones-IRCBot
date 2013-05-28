@@ -74,7 +74,7 @@ class Utilities(Module):
             from bs4 import BeautifulSoup
             self.bs = BeautifulSoup
         except ImportError:
-            log.warn("Unmet dependency BeautifulSoup4: The Twitter URL checker will be disabled.")
+            log.warn("Unmet dependency BeautifulSoup4: The URL checkers will be disabled.")
 
     @event.handler(trigger="ping")
     def cmdPing(self, event):
@@ -104,47 +104,54 @@ class Utilities(Module):
 
     @event.handler(event="privmsg")
     def eventURLInfo_YouTube(self, event):
-        if "youtu" in event.msg and "http" in event.msg:
-            data = self.reYouTubeLink.search(event.msg)
-            if data:
-                vid = data.group(5)
-                url = "http://youtu.be/%s" % vid
-                html = urlopener.open(url).read()
-                data = re.search("<meta name=\"title\" content=\"(.+)\">", html)
+        if self.bs is not None:
+            if "youtu" in event.msg and "http" in event.msg:
+                data = self.reYouTubeLink.search(event.msg)
                 if data:
-                    event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(data.group(1)), url)))
+                    vid = data.group(5)
+                    url = "http://youtu.be/%s" % vid
+                    html = urlopener.open(url).read()
+                    soup = self.bs(html)
+                    title = soup.find("span", {"id":"eow-title"}).text.strip()
+                    if title:
+                        event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(title), url)).replace("\n", ""))
         
     @event.handler(event="privmsg")
     def eventURLInfo_Spotify(self, event):
-        if "open.spotify" in event.msg and "http" in event.msg:
-            data = self.reSpotifyLink.search(event.msg)
-            if data:
-                url = data.group(0)
-                html = urlopener.open(url).read()
-                type = data.group(2)
-                if type == "track":
-                    songtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
-                    artist = re.search("<h2> by <a.+>(.+)</a", html).group(1)
-                    if data:
-                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))))
-                elif type == "album":
-                    albumtitle = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
-                    artist = re.search("<h2>by <a.+>(.+)</a", html).group(1)
-                    if data:
-                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle)), unescape(artist)))
-                elif type == "artist":
-                    artist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
-                    if data:
-                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))))
-                elif type == "user" and data.group(3) is not None:
-                    playlist = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
-                    user = re.search("<h2>by <a.+>(.+)</a", html).group(1)
-                    if data:
-                        event.client.msg(event.channel, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))))
-                elif type == "user":
-                    user = re.search("<meta property=\"twitter:title\" content=\"(.+)\">", html).group(1)
-                    if data:
-                        event.client.msg(event.channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))))
+        if self.bs is not None:
+            if "open.spotify" in event.msg and "http" in event.msg:
+                data = self.reSpotifyLink.search(event.msg)
+                if data:
+                    url = data.group(0)
+                    html = urlopener.open(url).read()
+                    soup = self.bs(html)
+                    type = data.group(2)
+                    if type == "track":
+                        songtitle = soup.find("meta", {"property":"og:title"})['content'].strip()
+                        artist = soup.find("div", {"class":"player-header"}) \
+                                     .find("h2").find("a").text.strip()
+                        if data:
+                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))).replace("\n",""))
+                    elif type == "album":
+                        albumtitle = soup.find("meta", {"property":"og:title"})['content'].strip()
+                        artist = soup.find("div", {"class":"player-header"}) \
+                                     .find("h2").find("a").text.strip()
+                        if data:
+                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle), unescape(artist))).replace("\n",""))
+                    elif type == "artist":
+                        artist = soup.find("meta", {"property":"og:title"})['content'].strip()
+                        if data:
+                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))).replace("\n",""))
+                    elif type == "user" and data.group(3) is not None:
+                        playlist = soup.find("meta", {"property":"og:title"})['content'].strip()
+                        user = soup.find("div", {"class":"player-header"}) \
+                                     .find("h2").find("a").text.strip()
+                        if data:
+                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))).replace("\n",""))
+                    elif type == "user":
+                        user = soup.find("meta", {"property":"og:title"})['content'].strip()
+                        if data:
+                            event.client.msg(event.channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))).replace("\n",""))
 
     @event.handler(event="CTCPPong")
     def eventPingResponseReceive(self, event):
