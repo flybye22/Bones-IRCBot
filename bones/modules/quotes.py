@@ -57,7 +57,7 @@ class UserQuotes(Module):
             quote = UserQuote(
                     event.user.nickname,
                     event.channel,
-                    unicode(msg, "ISO-8859-1"),
+                    msg,
                     eventtype
                 )
             session.begin()
@@ -87,7 +87,7 @@ class ChannelQuotes(Module):
             cquote = ChannelQuote(
                     event.user.nickname,
                     event.channel,
-                    unicode(quote, "ISO-8859-1"),
+                    quote,
                 )
             session = self.db.new_session()
             session.begin()
