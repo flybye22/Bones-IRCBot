@@ -49,7 +49,7 @@ class ServerConfiguration(object):
         for section in queue:
             tmp = section.split(".")
             if len(tmp) > 2:
-                stmp = ".".join(tmp[2:])
+                stmp = ".".join(tmp[2:]).lower()
             elif section.lower() == ("server.%s" % self.server).lower():
                 stmp = "server"
             else:
