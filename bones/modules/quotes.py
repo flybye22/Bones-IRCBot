@@ -87,11 +87,11 @@ class ChannelQuotes(Module):
             cquote = ChannelQuote(
                     event.user.nickname,
                     event.channel,
-                    quote,
+                    unicode(quote, "ISO-8859-1"),
                 )
             session = self.db.new_session()
             session.begin()
-            session.add(unicode(cquote, "ISO-8859-1"))
+            session.add(cquote)
             session.commit()
             event.client.msg(event.channel, "Quote #%i saved." % cquote.id)
             return
