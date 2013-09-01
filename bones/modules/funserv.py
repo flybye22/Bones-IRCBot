@@ -6,9 +6,15 @@ import logging
 from datetime import datetime
 
 from twisted.internet import reactor
+from sqlalchemy import (
+    Column,
+    Integer,
+    Text,
+)
 
 from bones import event
 from bones.bot import Module, urlopener
+from bones.modules.storage import Base
 
 
 ##
@@ -115,6 +121,69 @@ class MinecraftServerList(Module):
     @event.handler(trigger="mc")
     def cmdMc(self, event):
         event.client.msg(event.channel, "%s: Wait wait, I'm charging my batteries!" % event.user.nickname)
+
+
+class Factoid(Base):
+    __tablename__ = "bones_factoids"
+
+    id = Column(Integer, primary_key=True)
+    submitter = Column(Text)
+    topic = Column(Text)
+    fact = Column(Text)
+
+    def __init__(self, topic, fact, submitter):
+        self.submitter = submitter
+        self.topic = topic
+        self.fact = fact
+
+class Factoids(Module):
+    reLearn = re.compile("(.+) is (.+)")
+    def __init__(self, settings):
+        self.log = logging.getLogger(".".join([__name__, "Factoids"]))
+        self.cheapStorage = {}
+
+    @event.handler(event="storage.Database:init")
+    def gotDB(self, db):
+        self.db = db
+
+    @event.handler(trigger="learn")
+    def cmdLearnFactoid(self, event):
+        match = self.reLearn.match(" ".join(event.args))
+        if match:
+            session = self.db.new_session()
+            session.begin()
+            topic = match.group(1)
+            fact = match.group(2)
+            factoid = Factoid(
+                topic,
+                fact,
+                event.user.nickname
+            )
+            session.add(factoid)
+            session.commit()
+            session.close()
+            event.client.msg(event.channel, "%s: I understand" % event.user.nickname)
+
+    @event.handler(event="PrivMsg")
+    def queryFactoid(self, event):
+        if event.msg.startswith("?"):
+            topic = event.msg[1:]
+            session = self.db.new_session()
+            factoids = session.query(Factoid).filter(Factoid.topic == topic).all()
+            if not factoids:
+                return
+            msg = "%s: %s is" % (event.user.nickname, topic)
+            i = 0
+            if len(factoids) > 1:
+                for factoid in factoids:
+                    if i > 0:
+                        msg = msg + ", or"
+                    i += 1
+                    msg = msg + " (#%d) %s" % (i, factoid.fact)
+            else:
+                msg = msg + " %s" % factoids[0].fact
+            event.client.msg(event.channel, msg.encode("utf-8"))
+            session.close()
 
 
 class UselessResponses(Module):
