@@ -1,7 +1,7 @@
 from datetime import datetime
+import json
 import urllib
 
-from bs4 import BeautifulSoup
 from sqlalchemy import (
     Column,
     Integer,
@@ -43,47 +43,49 @@ class Lastfm(Module):
             if not user:
                 event.client.msg(event.channel, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname)))
                 return
-            params = urllib.urlencode({"method":"user.getRecentTracks","user":user.username,"api_key":self.apikey})
+            params = urllib.urlencode({"method": "user.getRecentTracks", "user": user.username, "api_key": self.apikey, "format": "json", "extended": 1})
             data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
-            soup = BeautifulSoup(data, "lxml")
-            track = soup.find("track")
-            if not track:
+            data = json.loads(data)
+            if "track" not in data["recenttracks"] or len(data['recenttracks']['track']) < 1:
                 event.client.msg(event.channel, str("%s: No tracks found for user '%s'. Are you sure that the user exists?" % (event.user.nickname, user.username)))
                 return
-            artist = track.find("artist").text
-            tracktitle = track.find("name").text
-            if "nowplaying" in track.attrs and track.attrs["nowplaying"] == "true":
-                msg = "'%s' is now playing: %s - %s" % (user.username, artist, tracktitle)
+            track = data['recenttracks']['track'][0]
+            artist = track["artist"]["name"]
+            tracktitle = track["name"]
+            if "@attr" in track and "nowplaying" in track["@attr"] and track["@attr"]["nowplaying"].lower() == "true":
+                loved = ""
+                if "loved" in track and track["loved"] == "1":
+                    loved = "\x034<3\x03"
+                msg = "'%s' is now playing: %s - %s %s" % (user.username, artist, tracktitle, loved)
             else:
-                timestamp = track.find("date")
+                timestamp = track["date"]["uts"]
                 date = []
-                if timestamp and "uts" in timestamp.attrs:
 
-                    dateThen = datetime.fromtimestamp(float(timestamp.attrs["uts"]))
-                    dateNow = datetime.now()
-                    diff = dateNow - dateThen
+                dateThen = datetime.fromtimestamp(float(timestamp))
+                dateNow = datetime.now()
+                diff = dateNow - dateThen
 
-                    if diff.days > 0:
-                        if diff.days != 1:
-                            suffix = "s"
-                        else:
-                            suffix = ""
-                        date.append("%s day%s" % (diff.days, suffix))
-
-                    hours = (diff.seconds//3600)%24
-                    if hours > 0:
-                        if hours != 1:
-                            suffix = "s"
-                        else:
-                            suffix = ""
-                        date.append("%s hour%s" % (hours, suffix))
-
-                    minutes = (diff.seconds//60)%60
-                    if minutes != 1:
+                if diff.days > 0:
+                    if diff.days != 1:
                         suffix = "s"
                     else:
                         suffix = ""
-                    date.append("%s minute%s" % (minutes, suffix))
+                    date.append("%s day%s" % (diff.days, suffix))
+
+                hours = (diff.seconds//3600)%24
+                if hours > 0:
+                    if hours != 1:
+                        suffix = "s"
+                    else:
+                        suffix = ""
+                    date.append("%s hour%s" % (hours, suffix))
+
+                minutes = (diff.seconds//60)%60
+                if minutes != 1:
+                    suffix = "s"
+                else:
+                    suffix = ""
+                date.append("%s minute%s" % (minutes, suffix))
                 msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), artist, tracktitle)
             event.client.msg(event.channel, str(unescape(msg).encode("utf-8")))
             return
