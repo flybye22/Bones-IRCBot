@@ -24,13 +24,16 @@ class NickServ(Module):
             event.client.msg("NickServ", "IDENTIFY %s" % self.settings.get("services", "nickserv.password"))
 
 class HostServ(Module):
-    channelJoinQueue = []
-    haveVhost = False
-    haveIdentified = False
-    
+
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
         log.info("HostServ module enabled, all joins will be cancelled until we have received a vhost.")
+
+    @events.handler(event="BotSignedOn")
+    def cleanup(self, event):
+        self.channelJoinQueue = []
+        self.haveVhost = False
+        self.haveIdentified = False
 
     @events.handler(event="BotPreJoin")
     def preventUncloakedJoins(self, event):
