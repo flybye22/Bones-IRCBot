@@ -140,7 +140,6 @@ class Factoids(Module):
     reLearn = re.compile("(.+) is (.+)")
     def __init__(self, settings):
         self.log = logging.getLogger(".".join([__name__, "Factoids"]))
-        self.cheapStorage = {}
 
     @event.handler(event="storage.Database:init")
     def gotDB(self, db):
