@@ -74,8 +74,8 @@ class ChannelQuotes(Module):
 
     @events.handler(trigger="quote")
     def trigger(self, event):
-        if len(event.args) < 1 or event.args[0].lower() not in ["read","random","add"]:
-            event.client.notice(event.user.nickname, str("[Quote] Need one of the following arguments: 'read', 'random', 'add'"))
+        if len(event.args) < 1 or event.args[0].lower() not in ["read", "random", "add", "delete"]:
+            event.client.notice(event.user.nickname, str("[Quote] Need one of the following arguments: 'read', 'random', 'add', 'delete'"))
             return
 
         if event.args[0].lower() == "add":
@@ -94,6 +94,37 @@ class ChannelQuotes(Module):
             session.add(cquote)
             session.commit()
             event.client.msg(event.channel, "Quote #%i saved." % cquote.id)
+            return
+
+        if event.args[0].lower() == "delete":
+            if not len(event.args) >= 2:
+                event.client.notice(event.user.nickname, "[Quote] You need to provide a quote id!")
+                return
+            if not event.args[1].isdigit():
+                event.client.notice(event.user.nickname, "[Quote] Quote id needs to be a number!")
+                return
+
+            session = self.db.new_session()
+            quote = session.query(ChannelQuote).filter(ChannelQuote.id==event.args[1]).limit(1).first()
+
+            if not quote:
+                event.client.notice(event.user.nickname, "[Quote] No such quote '%s'" % event.args[1])
+                return
+
+            dateThen = quote.timestamp.replace(tzinfo=None)
+            dateNow = datetime.now()
+            diff = dateNow - dateThen
+            if quote.submitter != event.user.nickname:
+                event.client.notice(event.user.nickname, "[Quote] You do not have permission do delete this quote.")
+                return
+            if diff.seconds > 3600:
+                event.client.notice(event.user.nickname, "[Quote] This quote has been archived and thus cannot be removed.")
+                return
+
+            session.begin()
+            session.delete(quote)
+            session.commit()
+            event.client.msg(event.channel, "[Quote] Quote #%s deleted." % event.args[1])
             return
 
         if event.args[0].lower() == "random":
