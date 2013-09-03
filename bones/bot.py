@@ -186,7 +186,7 @@ class BonesBot(irc.IRCClient):
     
     def userJoin(self, user, channel):
         thisEvent = event.UserJoinEvent(self, user, channel)
-        event.fire("UserJoin", event)
+        event.fire("UserJoin", thisEvent)
         log.debug("Event userJoin: %s %s", user, channel)
     
     def privmsg(self, user, channel, msg):
