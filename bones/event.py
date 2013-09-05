@@ -125,6 +125,12 @@ class ChannelTopicChangedEvent(Event):
         self.newTopic = newTopic
 
 
+class CTCPVersionEvent(Event):
+    def __init__(self, user):
+        self.isCancelled = False
+        self.user = User(user)
+
+
 class CTCPPongEvent(Event):
     def __init__(self, client, user, secs):
         self.client = client
