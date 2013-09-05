@@ -7,7 +7,7 @@ import logging.config
 import urllib2
 
 from twisted.words.protocols import irc
-from twisted.internet import protocol
+from twisted.internet import protocol, reactor
 
 from bones import event
 
@@ -60,6 +60,8 @@ class BonesBot(irc.IRCClient):
     sourceURL = property(_get_sourceURL)
     
     def signedOn(self):
+        self.factory.reconnectAttempts = 0
+
         if self.factory.settings.get("server", "setBot") == "true":
             self.mode(self.nickname, True, "B")
 
@@ -242,6 +244,8 @@ class BonesBotFactory(protocol.ClientFactory):
     modules = []
     
     def __init__(self, settings):
+        self.reconnectAttempts = 0
+
         self.settings = settings
         self.channels = settings.get("bot", "channel").split("\n")
         self.nickname = settings.get("bot", "nickname")
@@ -296,8 +300,10 @@ class BonesBotFactory(protocol.ClientFactory):
             raise ex
     
     def clientConnectionLost(self, connector, reason):
-        log.info("Lost connection (%s), reconnecting.", reason)
-        connector.connect()
+        time = 10.0 * self.reconnectAttempts
+        self.reconnectAttempts += 1
+        log.info("Lost connection (%s), reconnecting in %i seconds.", reason, time)
+        reactor.callLater(time, connector.connect)
     
     def clientConnectionFailed(self, connector, reason):
         log.info("Could not connect: %s", reason)
