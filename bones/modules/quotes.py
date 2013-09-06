@@ -188,7 +188,7 @@ class UserQuote(Base):
     nickname = Column(Text)
     channel = Column(Text)
     quote = Column(Text)
-    type = Column(Enum('privmsg','mode','notice','ctcp','action','quit','leave','nick','dcc'))
+    type = Column(Enum('privmsg','mode','notice','ctcp','action','quit','leave','nick','dcc', name="irc_message"))
     timestamp = Column(DateTime(timezone=True))
 
     def __init__(self, nickname, channel, quote, msgtype):
@@ -201,7 +201,7 @@ class UserQuote(Base):
 
 class ChannelQuote(Base):
     __tablename__ = "bones_quotes_channel"
-    
+
     id = Column(Integer, primary_key=True)
     submitter = Column(Text)
     channel = Column(Text)
