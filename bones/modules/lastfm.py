@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import logging
 import urllib
 
 from sqlalchemy import (
@@ -18,6 +19,7 @@ class Lastfm(Module):
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
         self.apikey = self.settings.get("module.Lastfm", "apikey")
+        self.log = logging.getLogger(".".join([__name__, "Lastfm"]))
 
     @events.handler(event="storage.Database:init")
     def gotDB(self, db):
@@ -30,7 +32,7 @@ class Lastfm(Module):
         nickname = None
         if argc <= 0:
             nickname = event.user.nickname
-        elif event.args[0] in ["-r","-d"]:
+        elif event.args[0] in ["-r", "-d"]:
             action = event.args[0]
             if len(event.args) >= 2:
                 nickname = event.args[1]
@@ -46,6 +48,10 @@ class Lastfm(Module):
             params = urllib.urlencode({"method": "user.getRecentTracks", "user": user.username, "api_key": self.apikey, "format": "json", "extended": 1})
             data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
             data = json.loads(data)
+            if "error" in data:
+                self.log.error("API error %i: %s", data["error"], data["message"])
+                event.client.msg(event.channel, "[Last.fm] An error occurred while processing your request. Please notify the bot manager")
+                return
             if "track" not in data["recenttracks"] or len(data['recenttracks']['track']) < 1:
                 event.client.msg(event.channel, str("%s: No tracks found for user '%s'. Are you sure that the user exists?" % (event.user.nickname, user.username)))
                 return
