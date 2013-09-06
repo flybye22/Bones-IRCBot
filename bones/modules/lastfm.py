@@ -49,10 +49,10 @@ class Lastfm(Module):
             try:
                 data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
                 data = json.loads(data)
-                return
             except:
                 event.client.msg(event.channel, "[Last.fm] An unexpected error occurred. Please tell the bot manager to file a bug report.")
-                log.exception("An error occurred while fetching user.getRecentTracks for user %s", nickname)
+                self.log.exception("An error occurred while fetching user.getRecentTracks for user %s", nickname)
+                return
             if "error" in data:
                 self.log.error("API error %i: %s", data["error"], data["message"])
                 event.client.msg(event.channel, "[Last.fm] An error occurred while processing your request. Please notify the bot manager")
