@@ -260,6 +260,9 @@ class BonesBotFactory(protocol.ClientFactory):
         regex = "([%s])([a-zA-Z0-9]*)( .+)*?" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
         
+        if settings.get("bot", "exposeVCS") == "true" and os.path.exists(".git"):
+            botFactory.versionEnv = subprocess.check_output(["git", "describe", "--long", "--all"])
+ 
         modules = settings.get("bot", "modules").split("\n")
         for module in modules:
             self.loadModule(module)
