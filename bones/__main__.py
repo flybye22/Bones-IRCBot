@@ -20,6 +20,13 @@ if __name__ == "__main__":
         if len(tmp) == 2 and tmp[0].lower() == "server":
             servers.append(tmp[1])
 
+    if len(servers) < 1:
+        log.error("""No server sections found in your configuration file!
+Have you remembered to update your configuration file?
+Read the following link for more info, namely the "Changes" section:
+https://github.com/404d/Bones-IRCBot/pull/13""")
+        raise SystemExit
+
     for server in servers:
         botFactory = BonesBotFactory(settings.server(server))
         botFactory.connect()
