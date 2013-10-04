@@ -184,9 +184,10 @@ class BonesBot(irc.IRCClient):
     
     def join(self, channel):
         thisEvent = event.BotPreJoinEvent(self, channel)
-        event.fire(self.tag, "BotPreJoin", thisEvent)
-        if thisEvent.isCancelled is False:
-            irc.IRCClient.join(self, channel)
+        def doJoin(thisEvent):
+            if thisEvent.isCancelled == False:
+                irc.IRCClient.join(thisEvent.client, thisEvent.channel)
+        event.fire(self.tag, "BotPreJoin", thisEvent, callback=doJoin)
     
     def userJoin(self, user, channel):
         thisEvent = event.UserJoinEvent(self, user, channel)

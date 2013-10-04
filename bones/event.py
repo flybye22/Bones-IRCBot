@@ -6,13 +6,21 @@ log = logging.getLogger(__name__)
 eventHandlers = {}
 
 def fire(server, event, *args, **kwargs):
-    if server.lower() in eventHandlers:
-        if event.lower() in eventHandlers[server.lower()]:
-            for h in eventHandlers[server.lower()][event.lower()]:
-                try:
-                    threads.deferToThread(h['f'], h['c'], *args, **kwargs)
-                except Exception, ex:
-                    log.exception(ex)
+    def threadedFire(server, event, *args, **kwargs):
+        callback = None
+        if "callback" in kwargs:
+            callback = kwargs["callback"]
+            del kwargs["callback"]
+        if server.lower() in eventHandlers:
+            if event.lower() in eventHandlers[server.lower()]:
+                for h in eventHandlers[server.lower()][event.lower()]:
+                    try:
+                        h['f'](h['c'], *args, **kwargs)
+                    except Exception, ex:
+                        log.exception(ex)
+        if callback:
+            callback(*args, **kwargs)
+    threads.deferToThread(threadedFire, server, event, *args, **kwargs)
 
 def handler(event=None, trigger=None):
     def realHandler(func):
