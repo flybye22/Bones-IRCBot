@@ -21,6 +21,9 @@ urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.0')]
 class InvalidBonesModuleException(Exception):
     pass
 
+class InvalidConfigurationException(Exception):
+    pass
+
 
 class NoSuchBonesModuleException(Exception):
     pass
@@ -220,6 +223,12 @@ class BonesBot(irc.IRCClient):
             self.join(params[1])
         event.fire(self.tag, "irc_unknown", self, prefix, command, params)
 
+    def irc_ERR_NICKNAMEINUSE(self, prefix, params):
+        if len(self.factory.nicknames) > 0:
+            self.register(self.factory.nicknames.pop(0))
+            return
+        irc.IRCClient.irc_ERR_NICKNAMEINUSE(self, prefix, params)
+
     def ctcpQuery_VERSION(self, user, channel, data):
         """
         Reimplement irc.IRCClient.ctcpQuery_VERSION
@@ -252,7 +261,11 @@ class BonesBotFactory(protocol.ClientFactory):
 
         self.settings = settings
         self.channels = settings.get("bot", "channel").split("\n")
-        self.nickname = settings.get("bot", "nickname")
+        self.nicknames = settings.get("bot", "nickname").split("\n")
+        try:
+            self.nickname = self.nicknames.pop(0)
+        except IndexError:
+            raise InvalidConfigurationException, "No nicknames configured, property bot.nickname is empty"
         self.realname = settings.get("bot", "realname")
         self.username = settings.get("bot", "username")
 
