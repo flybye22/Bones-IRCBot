@@ -251,7 +251,7 @@ class BonesBot(irc.IRCClient):
 class BonesBotFactory(protocol.ClientFactory):
     sourceURL = "https://github.com/404d/Bones-IRCBot"
     versionName = "Bones IRCBot"
-    versionNum = "0.0"
+    versionNum = "0.1-DEV"
     versionEnv = ""
 
     protocol = BonesBot
