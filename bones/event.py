@@ -1,57 +1,49 @@
 import logging
+from twisted.internet import threads
 
 log = logging.getLogger(__name__)
 
 eventHandlers = {}
-triggerHandlers = {}
 
-def fire(event, *args, **kwargs):
-    if event.lower() in eventHandlers:
-        for h in eventHandlers[event.lower()]:
-            try:
-                h['f'](h['c'], *args, **kwargs)
-            except Exception, ex:
-                log.exception(ex)
-
-def fireTrigger(trigger, *args, **kwargs):
-    if trigger in triggerHandlers:
-        for h in triggerHandlers[trigger]:
-            try:
-                h['f'](h['c'], *args, **kwargs)
-            except Exception, ex:
-                log.exception(ex)
+def fire(server, event, *args, **kwargs):
+    def threadedFire(server, event, *args, **kwargs):
+        callback = None
+        if "callback" in kwargs:
+            callback = kwargs["callback"]
+            del kwargs["callback"]
+        if server.lower() in eventHandlers:
+            if event.lower() in eventHandlers[server.lower()]:
+                for h in eventHandlers[server.lower()][event.lower()]:
+                    try:
+                        h['f'](h['c'], *args, **kwargs)
+                    except Exception, ex:
+                        log.exception(ex)
+        if callback:
+            callback(*args, **kwargs)
+    threads.deferToThread(threadedFire, server, event, *args, **kwargs)
 
 def handler(event=None, trigger=None):
     def realHandler(func):
-        if event is not None:
+        if event is not None or trigger is not None:
             if getattr(func, '_event', None) is None:
                 func._event = []
-            func._event.append(event.lower())
-        if trigger is not None:
-            if getattr(func, '_trigger', None) is None:
-                func._trigger = []
-            func._trigger.append(trigger.lower())
+            if event:
+                func._event.append(event.lower())
+            if trigger:
+                func._event.append("Trigger:%s" % trigger.lower())
         return func
     return realHandler
 
-def module(klass):
-    log.warning("Decorator @event.module is deprecated and will be removed in the future")
-    return klass
-
-def register(obj):
+def register(obj, server):
     klass = obj.__class__
     for name, item in klass.__dict__.iteritems():
         if getattr(item, '_event', None) is not None:
             for event in item._event:
-                if event not in eventHandlers:
-                    eventHandlers[event] = []
-                eventHandlers[event].append({"c":obj, "f":item})
-        
-        if getattr(item, '_trigger', None) is not None:
-            for trigger in item._trigger:
-                if trigger not in triggerHandlers:
-                    triggerHandlers[trigger] = []
-                triggerHandlers[trigger].append({"c":obj, "f":item})
+                if server.lower() not in eventHandlers:
+                    eventHandlers[server.lower()] = {}
+                if event.lower() not in eventHandlers[server.lower()]:
+                    eventHandlers[server.lower()][event.lower()] = []
+                eventHandlers[server.lower()][event.lower()].append({"c":obj, "f":item})
 
 
 class User():

@@ -62,7 +62,6 @@ class NickFix(Module):
 
 class Utilities(Module):
     bs = None
-    ongoingPings = {}
     
     reYouTubeLink = re.compile("http(s)?\:\/\/(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
     reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
@@ -70,6 +69,7 @@ class Utilities(Module):
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
+        self.ongoingPings = {}
         try:
             from bs4 import BeautifulSoup
             self.bs = BeautifulSoup
