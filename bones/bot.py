@@ -234,18 +234,19 @@ class BonesBot(irc.IRCClient):
     def ctcpQuery_VERSION(self, user, channel, data):
         if data is None and self.versionName:
             thisEvent = event.CTCPVersionEvent(user)
-            event.fire("CTCPVersion", thisEvent)
-            if not thisEvent.isCancelled:
-                version = "%s %s %s" % (
-                    self.versionName,
-                    self.versionNum,
-                    self.versionEnv,
-                )
-                version = version.replace("\n", "")
-                self.ctcpMakeReply(thisEvent.user.nickname, [('VERSION', version)])
-                log.debug("Received CTCP VERSION query from %s, replied '%s'.", user, version)
-            else:
-                log.debug("Received CTCP VERSION query from %s, but event was cancelled by an eventhandler.", user)
+            def eventCallback(thisEvent):
+                if not thisEvent.isCancelled:
+                    version = "%s %s %s" % (
+                        self.versionName,
+                        self.versionNum,
+                        self.versionEnv,
+                    )
+                    version = version.replace("\n", "")
+                    self.ctcpMakeReply(thisEvent.user.nickname, [('VERSION', version)])
+                    log.debug("Received CTCP VERSION query from %s, replied '%s'.", user, version)
+                else:
+                    log.debug("Received CTCP VERSION query from %s, but event was cancelled by an eventhandler.", user)
+            event.fire(self.tag, "CTCPVersion", thisEvent, callback=eventCallback)
 
 
 class BonesBotFactory(protocol.ClientFactory):
