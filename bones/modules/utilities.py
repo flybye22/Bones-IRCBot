@@ -94,9 +94,9 @@ class Utilities(Module):
                     url = data.group(0)
                     html = urlopener.open(url).read()
                     soup = self.bs(html)
-                    tweet = soup.find("p", {"class":"tweet-text"}).text
+                    tweet = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("p", {"class":"tweet-text"}).text
                     user = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("span", {"class":"username js-action-profile-name"}).text
-                    msg = u"\x030,10Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s" % (tweet, user)
+                    msg = u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s" % (tweet, user)
                     msg = unescape(msg)
                     msg = msg.encode("utf-8")
                     msg = str(msg)
