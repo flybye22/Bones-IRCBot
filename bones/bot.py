@@ -323,11 +323,14 @@ class BonesBotFactory(protocol.ClientFactory):
     def clientConnectionLost(self, connector, reason):
         time = 10.0 * self.reconnectAttempts
         self.reconnectAttempts += 1
-        log.info("Lost connection (%s), reconnecting in %i seconds.", reason, time)
+        log.info("{%s} Lost connection (%s), reconnecting in %i seconds.", self.tag, reason, time)
         reactor.callLater(time, connector.connect)
     
     def clientConnectionFailed(self, connector, reason):
-        log.info("Could not connect: %s", reason)
+        time = 30.0 * self.reconnectAttempts
+        self.reconnectAttempts += 1
+        log.info("{%s} Could not connect (%s), reconnecting in %i seconds.", self.tag, reason, time)
+        reactor.callLater(time, connector.connect)
 
     def connect(self):
         serverHost = self.settings.get("server", "host")
