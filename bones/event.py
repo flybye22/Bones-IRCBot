@@ -98,6 +98,14 @@ class BotPreJoinEvent(Event):
         self.channel = channel
 
 
+class PreNicknameInUseError(Event):
+    def __init__(self, client, prefix, params):
+        self.isCancelled = False
+        self.client = client
+        self.prefix = prefix
+        self.params = params
+
+
 class BotSignedOnEvent(Event):
     def __init__(self, client):
         self.client = client

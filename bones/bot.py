@@ -174,7 +174,7 @@ class BonesBot(irc.IRCClient):
     def userRenamed(self, oldname, newname):
         log.debug("User %s changed nickname to %s", oldname, newname)
         thisEvent = event.UserNickChangedEvent(self, oldname, newname)
-        event.fire(self.tag, "UerNickChanged", thisEvent)
+        event.fire(self.tag, "UserNickChanged", thisEvent)
     
     def receivedMOTD(self, motd):
         thisEvent = event.ServerMOTDReceivedEvent(self, motd)
@@ -224,10 +224,14 @@ class BonesBot(irc.IRCClient):
         event.fire(self.tag, "irc_unknown", self, prefix, command, params)
 
     def irc_ERR_NICKNAMEINUSE(self, prefix, params):
-        if len(self.factory.nicknames) > 0:
-            self.register(self.factory.nicknames.pop(0))
-            return
-        irc.IRCClient.irc_ERR_NICKNAMEINUSE(self, prefix, params)
+        thisEvent = event.PreNicknameInUseError(self, prefix, params)
+        def callback(event):
+            if thisEvent.isCancelled == False:
+                if len(self.factory.nicknames) > 0:
+                    self.register(self.factory.nicknames.pop(0))
+                    return
+                irc.IRCClient.irc_ERR_NICKNAMEINUSE(self, event.prefix, event.params)
+        event.fire(self.tag, "PreNicknameInUseError", thisEvent, callback=callback)
 
     def ctcpQuery_VERSION(self, user, channel, data):
         """
