@@ -42,14 +42,17 @@ def unescape(text):
 
 
 class NickFix(Module):
-    nickIWant = None
+    def __init__(self, *args, **kwargs):
+        Module.__init__(self, *args, **kwargs)
+        self.nickIWant = None
+        self.isRecovering = False
 
     @event.handler(event="UserQuit")
     @event.handler(event="UserNickChanged")
     def somethingHappened(self, myEvent):
         user = None
         if self.nickIWant == None:
-            self.nickIWant = self.settings.get("bot", "nickname")
+            self.nickIWant = self.settings.get("bot", "nickname").split("\n")[0]
 
         if isinstance(myEvent, event.UserNickChangedEvent) is True:
             user = myEvent.oldname
@@ -57,7 +60,20 @@ class NickFix(Module):
             user = myEvent.user
 
         if user.lower() == self.nickIWant.lower():
+            myEvent.client.factory.nicknames = self.settings.get("bot", "nickname").split("\n")[1:]
+            self.isRecovering = True
             myEvent.client.setNick(self.nickIWant)
+
+    @event.handler(event="BotSignedOn")
+    def resetMe(self, event):
+        self.isRecovering = False
+        self.nickIWant = None
+
+    @event.handler(event="PreNicknameInUseError")
+    def shouldWeEvenTry(self, event):
+        if self.isRecovering:
+            event.isCancelled = True
+            self.isRecovering = False
 
 
 class Utilities(Module):
