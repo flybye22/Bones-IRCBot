@@ -156,7 +156,7 @@ class UselessResponses(Module):
     def cmdHi5(self, event):
         target = ""
         if len(event.args) > 0:
-            target = event.args[0]
+            target = " ".join(event.args)
         event.client.msg(event.channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
 
     @event.handler(trigger="kira")
