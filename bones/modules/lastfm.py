@@ -10,7 +10,7 @@ from sqlalchemy import (
     )
 
 from bones import event as events
-from bones.bot import Module, urlopener
+from bones.bot import Module
 from bones.modules.storage import Base
 from bones.modules.utilities import unescape
 
@@ -47,7 +47,7 @@ class Lastfm(Module):
                 return
             params = urllib.urlencode({"method": "user.getRecentTracks", "user": user.username, "api_key": self.apikey, "format": "json", "extended": 1})
             try:
-                data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
+                data = event.client.factory.urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
                 data = json.loads(data)
             except:
                 event.client.msg(event.channel, "[Last.fm] An unexpected error occurred. Please tell the bot manager to file a bug report.")

@@ -5,7 +5,7 @@ import logging
 log = logging.getLogger(__name__)
 
 from bones import event
-from bones.bot import Module, urlopener
+from bones.bot import Module
 
 
 ##
@@ -108,7 +108,7 @@ class Utilities(Module):
                 data = self.reTwitterLink.search(event.msg)
                 if data:
                     url = data.group(0)
-                    html = urlopener.open(url).read()
+                    html = event.client.factory.urlopener.open(url).read()
                     soup = self.bs(html)
                     tweet = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("p", {"class":"tweet-text"}).text
                     user = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("span", {"class":"username js-action-profile-name"}).text
@@ -126,7 +126,7 @@ class Utilities(Module):
                 if data:
                     vid = data.group(5)
                     url = "http://youtu.be/%s" % vid
-                    html = urlopener.open(url).read()
+                    html = event.client.factory.urlopener.open(url).read()
                     soup = self.bs(html)
                     title = soup.find("span", {"id":"eow-title"}).text.strip()
                     if title:
@@ -139,7 +139,7 @@ class Utilities(Module):
                 data = self.reSpotifyLink.search(event.msg)
                 if data:
                     url = data.group(0)
-                    html = urlopener.open(url).read()
+                    html = event.client.factory.urlopener.open(url).read()
                     soup = self.bs(html)
                     type = data.group(2)
                     if type == "track":
