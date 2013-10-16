@@ -237,3 +237,25 @@ class UselessResponses(Module):
     @event.handler(trigger="huehue")
     def cmdHueHue(self, event):
         event.client.msg(event.channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
+
+if __name__ == "__main__":
+    from ConfigParser import SafeConfigParser
+    from sqlalchemy import engine_from_config
+    import sys
+    settings = SafeConfigParser()
+    if len(sys.argv) < 2:
+        print "Error: You need to provide a config file!"
+        sys.exit(1)
+    settings.read(sys.argv[1])
+    if "storage" not in settings._sections:
+        print "Error: Config file does not contain a 'storage' section."
+        sys.exit(1)
+    elif "sqlalchemy.url" not in settings._sections["storage"]:
+        print "Error: Section 'storage' does not contain an 'sqlalchemy.url' key."
+        sys.exit(1)
+    print "Connecting to '%s'..." % settings._sections["storage"]["sqlalchemy.url"]
+    engine = engine_from_config(settings._sections["storage"], "sqlalchemy.")
+    print "Creating tables..."
+    from bones.modules.storage import Base
+    Base.metadata.create_all(engine)
+    print "Have a nice day!"
