@@ -171,7 +171,7 @@ class Factoids(Module):
             factoids = session.query(Factoid).filter(Factoid.topic == topic).all()
             if not factoids:
                 return
-            msg = "%s: %s is" % (event.user.nickname, topic)
+            msg = "%s: %s is" % (event.user.nickname, topic.decode("utf-8"))
             i = 0
             if len(factoids) > 1:
                 for factoid in factoids:
