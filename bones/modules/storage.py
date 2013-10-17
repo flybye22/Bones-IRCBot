@@ -12,10 +12,11 @@ from sqlalchemy.orm import (
     sessionmaker,
     )
 
+import bones.event
 from bones.bot import Module
-from bones import event
 
 Base = declarative_base()
+
 
 class Database(Module):
 
@@ -23,13 +24,13 @@ class Database(Module):
         self.settings = settings
         self.sessionmaker = None
         self.engine = None
-    
+
     def new_session(self):
         return self.sessionmaker()
-    
-    @event.handler(event="BotInitialized")
+
+    @bones.event.handler(event="BotInitialized")
     def botReady(self, factory):
         self.engine = engine_from_config(self.settings.data["storage"], "sqlalchemy.")
         log.debug("Connected to database")
-        event.fire(factory.tag, "storage.Database:init", self)
+        bones.event.fire(factory.tag, "storage.Database:init", self)
         self.sessionmaker = sessionmaker(bind=self.engine, autocommit=True)

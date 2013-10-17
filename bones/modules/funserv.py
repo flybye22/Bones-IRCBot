@@ -7,7 +7,7 @@ from datetime import datetime
 
 from twisted.internet import reactor
 
-from bones import event
+import bones.event
 from bones.bot import Module, urlopener
 
 
@@ -45,23 +45,29 @@ def unescape(text):
 
 
 class QDB(Module):
-    try:    
+    try:
         from bs4 import BeautifulSoup
     except ImportError:
         BeautifulSoup = None
 
     quotesCache = []
-    
+
     def __init__(self, settings):
-        self.log = logging.getLogger(".".join([__name__,"QDB"]))
+        self.log = logging.getLogger(".".join([__name__, "QDB"]))
         if not self.BeautifulSoup:
-            ex = Exception("Unmet dependency: BeautifulSoup 4 not installed. This dependency needs to be installed before you can use the module %s" % ".".join([__name__,"QDB"]))
+            ex = Exception(
+                "Unmet dependency: BeautifulSoup 4 not installed. This "
+                "dependency needs to be installed before you can use the "
+                "module %s" %
+
+                (".".join([__name__, "QDB"],))
+            )
             self.log.error(ex)
             raise ex
         self.settings = settings
         self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote"))
-    
-    @event.handler(trigger="qdb")
+
+    @bones.event.handler(trigger="qdb")
     def cmdQdb(self, event):
         if len(event.args) == 1 and event.args[0].isdigit() \
         or len(event.args) >= 2 and event.args[0].lower() == "read":
@@ -89,7 +95,7 @@ class QDB(Module):
             quote = self.quotesCache.pop()
             self.sendQuote(event.client, event.channel, quote)
             return
-    
+
     def sendQuote(self, client, channel, quote):
         lines = quote[1].split("\n")
         if len(lines) > self.maxLinesPerQuote:
@@ -99,6 +105,10 @@ class QDB(Module):
             client.msg(channel, str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
 
     def cacheIfNeeded(self):
+        """
+        Ensures that the quote cache is not empty, and will fetch new quotes
+        once the cache is empty.
+        """
         if not self.quotesCache:
             self.log.debug("Fetching new quotes from qdb.us/random")
             html = urlopener.open("http://qdb.us/random").read()
@@ -111,20 +121,14 @@ class QDB(Module):
             random.shuffle(self.quotesCache, random.random)
 
 
-class MinecraftServerList(Module):
-    @event.handler(trigger="mc")
-    def cmdMc(self, event):
-        event.client.msg(event.channel, "%s: Wait wait, I'm charging my batteries!" % event.user.nickname)
-
-
 class UselessResponses(Module):
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
-        
+
         self.danceCooldown = {}
         self.danceCooldownTime = None
 
-    @event.handler(event="Privmsg")
+    @bones.event.handler(event="Privmsg")
     def DANCE(self, event, step=0):
         msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "", event.msg)
         if "DANCE" in msg:
@@ -150,25 +154,31 @@ class UselessResponses(Module):
                 reactor.callLater(1.0, self.DANCE, event, step=3)
             elif step == 3:
                 event.client.msg(event.channel, r":D/-<")
-            
 
-    @event.handler(trigger="hi5")
+    @bones.event.handler(trigger="hi5")
     def cmdHi5(self, event):
         target = ""
         if len(event.args) > 0:
             target = " ".join(event.args)
         event.client.msg(event.channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
 
-    @event.handler(trigger="kira")
+    @bones.event.handler(trigger="kira")
     def cmdKira(self, event):
         prefix = event.match.group(1)
         if prefix.encode("utf-8") in "★✫✦✧✩✪✫✬✭✮✯✰✴✵✶✷✸✹⭑⭒⭐🌟":
             event.client.msg(event.channel, "(ﾉゝ∀・)\x038~キラ%s" % prefix.encode("utf-8"))
-    
-    @event.handler(trigger="hue")
+
+    @bones.event.handler(trigger="bitches")
+    @bones.event.handler(trigger="ビッチ")
+    def bitches(self, event):
+        event.client.msg(event.channel, "Bitches")
+        event.client.msg(event.channel, "and")
+        event.client.msg(event.channel, "hoes")
+
+    @bones.event.handler(trigger="hue")
     def cmdHue(self, event):
         event.client.msg(event.channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
 
-    @event.handler(trigger="huehue")
+    @bones.event.handler(trigger="huehue")
     def cmdHueHue(self, event):
         event.client.msg(event.channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")

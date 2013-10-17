@@ -4,7 +4,7 @@ import htmlentitydefs
 import logging
 log = logging.getLogger(__name__)
 
-from bones import event
+import bones.event
 from bones.bot import Module, urlopener
 
 
@@ -47,14 +47,14 @@ class NickFix(Module):
         self.nickIWant = None
         self.isRecovering = False
 
-    @event.handler(event="UserQuit")
-    @event.handler(event="UserNickChanged")
+    @bones.event.handler(event="UserQuit")
+    @bones.event.handler(event="UserNickChanged")
     def somethingHappened(self, myEvent):
         user = None
         if self.nickIWant == None:
             self.nickIWant = self.settings.get("bot", "nickname").split("\n")[0]
 
-        if isinstance(myEvent, event.UserNickChangedEvent) is True:
+        if isinstance(myEvent, bones.event.UserNickChangedEvent) is True:
             user = myEvent.oldname
         else:
             user = myEvent.user
@@ -64,12 +64,12 @@ class NickFix(Module):
             self.isRecovering = True
             myEvent.client.setNick(self.nickIWant)
 
-    @event.handler(event="BotSignedOn")
+    @bones.event.handler(event="BotSignedOn")
     def resetMe(self, event):
         self.isRecovering = False
         self.nickIWant = None
 
-    @event.handler(event="PreNicknameInUseError")
+    @bones.event.handler(event="PreNicknameInUseError")
     def shouldWeEvenTry(self, event):
         if self.isRecovering:
             event.isCancelled = True
@@ -78,7 +78,7 @@ class NickFix(Module):
 
 class Utilities(Module):
     bs = None
-    
+
     reYouTubeLink = re.compile("http(s)?\:\/\/(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
     reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
     reTwitterLink = re.compile("https?\:\/\/twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
@@ -92,7 +92,7 @@ class Utilities(Module):
         except ImportError:
             log.warn("Unmet dependency BeautifulSoup4: The URL checkers will be disabled.")
 
-    @event.handler(trigger="ping")
+    @bones.event.handler(trigger="ping")
     def cmdPing(self, event):
         nick = event.user.nickname
         if nick not in self.ongoingPings:
@@ -100,8 +100,8 @@ class Utilities(Module):
             event.client.ping(nick)
         else:
             event.client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
-            
-    @event.handler(event="privmsg")
+
+    @bones.event.handler(event="privmsg")
     def eventURLInfo_Twitter(self, event):
         if self.bs is not None:
             if "twitter" in event.msg and "http" in event.msg:
@@ -118,7 +118,7 @@ class Utilities(Module):
                     msg = str(msg)
                     event.client.msg(event.channel, msg)
 
-    @event.handler(event="privmsg")
+    @bones.event.handler(event="privmsg")
     def eventURLInfo_YouTube(self, event):
         if self.bs is not None:
             if "youtu" in event.msg and "http" in event.msg:
@@ -131,8 +131,8 @@ class Utilities(Module):
                     title = soup.find("span", {"id":"eow-title"}).text.strip()
                     if title:
                         event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(title), url)).replace("\n", ""))
-        
-    @event.handler(event="privmsg")
+
+    @bones.event.handler(event="privmsg")
     def eventURLInfo_Spotify(self, event):
         if self.bs is not None:
             if "open.spotify" in event.msg and "http" in event.msg:
@@ -169,11 +169,11 @@ class Utilities(Module):
                         if data:
                             event.client.msg(event.channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))).replace("\n",""))
 
-    @event.handler(event="CTCPPong")
+    @bones.event.handler(event="CTCPPong")
     def eventPingResponseReceive(self, event):
         nick = event.user.nickname
         if nick in self.ongoingPings:
             channel = self.ongoingPings[nick]
             event.client.msg(channel, "%s: Your response time was %.3f seconds." % (nick, event.secs))
             del self.ongoingPings[nick]
-    
+

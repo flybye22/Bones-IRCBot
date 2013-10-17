@@ -9,7 +9,7 @@ from sqlalchemy import (
     Text,
     )
 
-from bones import event as events
+import bones.event
 from bones.bot import Module, urlopener
 from bones.modules.storage import Base
 from bones.modules.utilities import unescape
@@ -21,11 +21,11 @@ class Lastfm(Module):
         self.apikey = self.settings.get("module.Lastfm", "apikey")
         self.log = logging.getLogger(".".join([__name__, "Lastfm"]))
 
-    @events.handler(event="storage.Database:init")
+    @bones.event.handler(event="storage.Database:init")
     def gotDB(self, db):
         self.db = db
 
-    @events.handler(trigger="lastfm")
+    @bones.event.handler(trigger="lastfm")
     def trigger(self, event):
         argc = len(event.args)
         action = None
@@ -40,12 +40,20 @@ class Lastfm(Module):
             nickname = event.args[0].decode("utf-8")
 
         session = self.db.new_session()
-        if action == None:
-            user = session.query(User).filter(User.nickname==nickname).first()
+        if not action:
+            user = session.query(User).filter(User.nickname == nickname).first()
             if not user:
-                event.client.msg(event.channel, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname)))
+                event.client.msg(
+                    event.channel, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname))
+                )
                 return
-            params = urllib.urlencode({"method": "user.getRecentTracks", "user": user.username, "api_key": self.apikey, "format": "json", "extended": 1})
+            params = urllib.urlencode({
+                "method": "user.getRecentTracks",
+                "user": user.username,
+                "api_key": self.apikey,
+                "format": "json",
+                "extended": 1
+            })
             try:
                 data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
                 data = json.loads(data)
@@ -83,7 +91,7 @@ class Lastfm(Module):
                         suffix = ""
                     date.append("%s day%s" % (diff.days, suffix))
 
-                hours = (diff.seconds//3600)%24
+                hours = (diff.seconds//3600) % 24
                 if hours > 0:
                     if hours != 1:
                         suffix = "s"
@@ -91,7 +99,7 @@ class Lastfm(Module):
                         suffix = ""
                     date.append("%s hour%s" % (hours, suffix))
 
-                minutes = (diff.seconds//60)%60
+                minutes = (diff.seconds//60) % 60
                 if minutes != 1:
                     suffix = "s"
                 else:
@@ -105,8 +113,8 @@ class Lastfm(Module):
             if not nickname:
                 event.client.notice(event.user.nickname, str("[Last.fm] You need to provide a Last.fm username."))
                 return
-                
-            user = session.query(User).filter(User.nickname==event.user.nickname).first()
+
+            user = session.query(User).filter(User.nickname == event.user.nickname).first()
             if not user:
                 user = User(event.user.nickname)
             user.username = nickname
@@ -117,7 +125,7 @@ class Lastfm(Module):
             return
 
         elif action == "-d":
-            user = session.query(User).filter(User.nickname==event.user.nickname).first()
+            user = session.query(User).filter(User.nickname == event.user.nickname).first()
             if not user:
                 event.client.notice(event.user.nickname, str("[Last.fm] No user registered for nick '%s'" % nickname))
                 return
