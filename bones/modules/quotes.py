@@ -74,7 +74,7 @@ class ChannelQuotes(Module):
 
     @events.handler(trigger="quote")
     def trigger(self, event):
-        if len(event.args) < 1 or event.args[0].lower() not in ["read", "random", "add", "delete"]:
+        if len(event.args) < 1 or event.args[0].lower() not in ["read", "random", "add", "delete", "search"]:
             event.client.notice(event.user.nickname, str("[Quote] Need one of the following arguments: 'read', 'random', 'add', 'delete'"))
             return
 
@@ -131,6 +131,27 @@ class ChannelQuotes(Module):
             session = self.db.new_session()
             quote = session.query(ChannelQuote).filter(ChannelQuote.channel==event.channel).order_by(func.random()).limit(1).first()
             self.sendQuote(event, quote)
+            return
+
+        if event.args[0].lower() == "search":
+            if len(event.args) < 2:
+                event.client.notice(event.user.nickname, "[Quote] You need to provide a search term!")
+                return
+            
+            session = self.db.new_session()
+            quotes = session.query(ChannelQuote).filter(ChannelQuote.quote.like("%%%s%%" % " ".join(event.args[1:]))).order_by(ChannelQuote.id.asc()).all()
+            if len(quotes) > 1:
+                results = ""
+                for result in quotes:
+                    if results != "":
+                        results = results + ", "
+                    results = results + ("#%d" % result.id)
+                event.client.msg(event.channel, "[Quote] Results found: %s" % results)
+                return
+            if len(quotes) == 1:
+                self.sendQuote(event, quotes.pop())
+                return
+            event.client.msg(event.channel, "[Quote] No results found")
             return
 
         if event.args[0].lower() == "read":
@@ -213,3 +234,25 @@ class ChannelQuote(Base):
         self.channel = channel
         self.quote = quote
         self.timestamp = datetime.now()
+
+if __name__ == "__main__":
+    from ConfigParser import SafeConfigParser
+    from sqlalchemy import engine_from_config
+    import sys
+    settings = SafeConfigParser()
+    if len(sys.argv) < 2:
+        print "Error: You need to provide a config file!"
+        sys.exit(1)
+    settings.read(sys.argv[1])
+    if "storage" not in settings._sections:
+        print "Error: Config file does not contain a 'storage' section."
+        sys.exit(1)
+    elif "sqlalchemy.url" not in settings._sections["storage"]:
+        print "Error: Section 'storage' does not contain an 'sqlalchemy.url' key."
+        sys.exit(1)
+    print "Connecting to '%s'..." % settings._sections["storage"]["sqlalchemy.url"]
+    engine = engine_from_config(settings._sections["storage"], "sqlalchemy.")
+    print "Creating tables..."
+    from bones.modules.storage import Base
+    Base.metadata.create_all(engine)
+    print "Have a nice day!"
