@@ -31,6 +31,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.extlinks',
     'sphinx.ext.coverage',
+    'sphinx.ext.intersphinx',
 ]
 
 extlinks = {

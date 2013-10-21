@@ -367,6 +367,31 @@ class BonesBot(irc.IRCClient):
 
 
 class BonesBotFactory(protocol.ClientFactory):
+    """The Twisted client factory that provides connection management
+    and configuration for each individual bot configuration.
+
+
+    .. attribute:: sourceURL
+
+        A hardcoded string URL to the Bones IRC Bot repository. Sent
+        to clients in response to a :code:`CTCP SOURCEURL` query.
+
+    .. attribute:: versionEnv
+
+        Currently unused. Sent to clients as a part of a
+        :code:`CTCP VERSION` reply.
+
+    .. attribute:: versionName
+
+        The name of the bot. Sent to clients as a part of a
+        :code:`CTCP VERSION` reply.
+
+    .. attribute:: versionNum
+
+        The release name of the current bot version. Sent to clients
+        as a part of a :code:`CTCP VERSION` reply.
+    """
+
     sourceURL = "https://github.com/404d/Bones-IRCBot"
     versionName = "Bones IRCBot"
     versionNum = "0.2.0-DEV"
@@ -403,9 +428,19 @@ class BonesBotFactory(protocol.ClientFactory):
             self.loadModule(module)
         bones.event.fire(self.tag, "BotInitialized", self)
 
-    def loadModule(self, path, userloaded=False):
-        """
-        Loads the specified module and adds it to the bot.
+    def loadModule(self, path):
+        """Loads the specified module and adds it to the bot if it is a
+        valid :term:`Bones module`.
+
+        :param path: The Python dot-notation path to the module that should be
+            loaded.
+        :type path: str.
+
+        :raises:
+            :class:`~bones.bot.BonesModuleAlreadyLoadedException,`
+            :class:`~bones.bot.InvalidBonesModuleException,`
+            :class:`~bones.bot.InvalidConfigurationException,`
+            :class:`~bones.bot.NoSuchBonesException`
         """
         tmppath = path.split(".")
         package = ".".join(tmppath[:len(tmppath)-1])
@@ -447,7 +482,7 @@ class BonesBotFactory(protocol.ClientFactory):
             self.modules.append(instance)
             bones.event.register(instance, self.tag)
             log.info("Loaded module %s", path)
-            bones.event.fire(self.tag, "ModuleLoaded", module, userloaded)
+            bones.event.fire(self.tag, "ModuleLoaded", module)
         else:
             ex = InvalidBonesModuleException(
                 "Could not load module %s: Module is not a subclass of "
@@ -459,6 +494,11 @@ class BonesBotFactory(protocol.ClientFactory):
             raise ex
 
     def clientConnectionLost(self, connector, reason):
+        """Called when the connection to the server was lost. This method
+        will take care of reconnecting the bot to the server after a variable
+        time period.
+        """
+
         time = 10.0 * self.reconnectAttempts
         self.reconnectAttempts += 1
         log.info(
@@ -468,6 +508,11 @@ class BonesBotFactory(protocol.ClientFactory):
         reactor.callLater(time, connector.connect)
 
     def clientConnectionFailed(self, connector, reason):
+        """Called when an error occured with the connection. This method
+        will take care of reconnecting the bot to the server after a variable
+        time period.
+        """
+
         time = 30.0 * self.reconnectAttempts
         self.reconnectAttempts += 1
         log.info(
@@ -481,6 +526,7 @@ class BonesBotFactory(protocol.ClientFactory):
         Gets called automatically by the default manager at boot and by
         the factory when reconnecting a lost or failed connection.
         """
+
         serverHost = self.settings.get("server", "host")
         serverPort = int(self.settings.get("server", "port"))
         if self.settings.get("server", "useSSL") == "true":
@@ -515,5 +561,6 @@ class Module():
         currently loaded settings for this server factory and all its bots and
         modules.
     """
+
     def __init__(self, settings):
         self.settings = settings

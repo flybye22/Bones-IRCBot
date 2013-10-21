@@ -36,6 +36,7 @@ Getting Started
    :glob:
 
    intro/installation
+   intro/module
    intro/events
 
 API Documentation
