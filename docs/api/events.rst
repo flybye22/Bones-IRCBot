@@ -42,9 +42,6 @@ attributes. The class :class:`UserJoinEvent` for example inherits the
 attribute :attr:`client` from the class :class:`Event` even though that
 attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
 
-.. autoclass:: bones.event.BotNoticeReceivedEvent
-    :show-inheritance:
-
 .. autoclass:: bones.event.BotInitializedEvent
     :show-inheritance:
 
@@ -54,7 +51,13 @@ attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
 .. autoclass:: bones.event.BotKickedEvent
     :show-inheritance:
 
+.. autoclass:: bones.event.BotModuleLoaded
+    :show-inheritance:
+
 .. autoclass:: bones.event.BotNickChangedEvent
+    :show-inheritance:
+
+.. autoclass:: bones.event.BotNoticeReceivedEvent
     :show-inheritance:
 
 .. autoclass:: bones.event.BotPreJoinEvent
@@ -76,6 +79,9 @@ attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
     :show-inheritance:
 
 .. autoclass:: bones.event.CTCPPongEvent
+    :show-inheritance:
+
+.. autoclass:: bones.event.IRCUnknownCommandEvent
     :show-inheritance:
 
 .. autoclass:: bones.event.ModeChangedEvent

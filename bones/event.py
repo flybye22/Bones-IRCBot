@@ -139,6 +139,11 @@ class Event():
     pass
 
 
+class BotModuleLoaded(Event):
+    def __init__(self, module):
+        self.module = module
+
+
 class BotNoticeReceivedEvent(Event):
     def __init__(self, client, user, channel, message):
         self.client = client
@@ -223,6 +228,14 @@ class CTCPPongEvent(Event):
         self.client = client
         self.secs = secs
         self.user = User(user)
+
+
+class IRCUnknownCommandEvent(Event):
+    def __init__(self, client, prefix, command, params):
+        self.client = client
+        self.prefix = prefix
+        self.command = command
+        self.params = params
 
 
 class ModeChangedEvent(Event):

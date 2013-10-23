@@ -315,9 +315,8 @@ class BonesBot(irc.IRCClient):
                 params[1]
             )
             self.join(params[1])
-        bones.event.fire(
-            self.tag, "irc_unknown", self, prefix, command, params
-        )
+        event = bones.event.IRCUnknownCommandEvent(self, prefix, command, params)
+        bones.event.fire(self.tag, event)
 
     def irc_ERR_NICKNAMEINUSE(self, prefix, params):
         event = bones.event.PreNicknameInUseError(self, prefix, params)
@@ -482,7 +481,7 @@ class BonesBotFactory(protocol.ClientFactory):
             self.modules.append(instance)
             bones.event.register(instance, self.tag)
             log.info("Loaded module %s", path)
-            bones.event.fire(self.tag, "ModuleLoaded", module)
+            bones.event.fire(self.tag, bones.event.BotModuleLoaded(module))
         else:
             ex = InvalidBonesModuleException(
                 "Could not load module %s: Module is not a subclass of "

@@ -11,8 +11,9 @@ from sqlalchemy import (
 
 import bones.event
 from bones.bot import Module, urlopener
-from bones.modules.storage import Base
+from bones.modules import storage
 from bones.modules.utilities import unescape
+
 
 class Lastfm(Module):
 
@@ -21,9 +22,9 @@ class Lastfm(Module):
         self.apikey = self.settings.get("module.Lastfm", "apikey")
         self.log = logging.getLogger(".".join([__name__, "Lastfm"]))
 
-    @bones.event.handler(event="storage.Database:init")
-    def gotDB(self, db):
-        self.db = db
+    @bones.event.handler(event=storage.DatabaseInitializedEvent)
+    def gotDB(self, event):
+        self.db = event.module
 
     @bones.event.handler(trigger="lastfm")
     def trigger(self, event):
@@ -137,7 +138,7 @@ class Lastfm(Module):
             return
 
 
-class User(Base):
+class User(storage.Base):
     __tablename__ = "bones_lastfm"
 
     id = Column(Integer, primary_key=True)

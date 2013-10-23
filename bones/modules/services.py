@@ -58,19 +58,19 @@ class HostServ(Module):
             # Cancel the event so that the bot won't join the channel
             event.isCancelled = True
 
-    @bones.event.handler(event="irc_unknown")
-    def manageReplies(self, client, prefix, command, params):
+    @bones.event.handler(event=bones.event.IRCUnknownCommandEvent)
+    def manageReplies(self, event):
         # If the server is using cloaks, it will send a 396 while
         # giving us a cloak. Therefore we need to wait until we've
         # identified with services
-        if command == "900":
+        if event.command == "900":
             self.haveIdentified = True
 
         # Now that we've finally gotten our vhost, let's join all
         # those channels!
-        elif command == "396" and self.haveIdentified:
+        elif event.command == "396" and self.haveIdentified:
             log.info("Received Vhost, joining all queued channels")
             # As we've got a vhost, we shouldn't prevent joins anymore.
             self.haveVhost = True
             while self.channelJoinQueue:
-                client.join(self.channelJoinQueue.pop())
+                event.client.join(self.channelJoinQueue.pop())
