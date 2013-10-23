@@ -47,8 +47,8 @@ class NickFix(Module):
         self.nickIWant = None
         self.isRecovering = False
 
-    @bones.event.handler(event="UserQuit")
-    @bones.event.handler(event="UserNickChanged")
+    @bones.event.handler(event=bones.event.UserQuitEvent)
+    @bones.event.handler(event=bones.event.UserNickChangedEvent)
     def somethingHappened(self, myEvent):
         user = None
         if self.nickIWant == None:
@@ -64,12 +64,12 @@ class NickFix(Module):
             self.isRecovering = True
             myEvent.client.setNick(self.nickIWant)
 
-    @bones.event.handler(event="BotSignedOn")
+    @bones.event.handler(event=bones.event.BotSignedOnEvent)
     def resetMe(self, event):
         self.isRecovering = False
         self.nickIWant = None
 
-    @bones.event.handler(event="PreNicknameInUseError")
+    @bones.event.handler(event=bones.event.PreNicknameInUseError)
     def shouldWeEvenTry(self, event):
         if self.isRecovering:
             event.isCancelled = True
@@ -101,7 +101,7 @@ class Utilities(Module):
         else:
             event.client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
 
-    @bones.event.handler(event="privmsg")
+    @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_Twitter(self, event):
         if self.bs is not None:
             if "twitter" in event.msg and "http" in event.msg:
@@ -118,7 +118,7 @@ class Utilities(Module):
                     msg = str(msg)
                     event.client.msg(event.channel, msg)
 
-    @bones.event.handler(event="privmsg")
+    @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_YouTube(self, event):
         if self.bs is not None:
             if "youtu" in event.msg and "http" in event.msg:
@@ -132,7 +132,7 @@ class Utilities(Module):
                     if title:
                         event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(title), url)).replace("\n", ""))
 
-    @bones.event.handler(event="privmsg")
+    @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_Spotify(self, event):
         if self.bs is not None:
             if "open.spotify" in event.msg and "http" in event.msg:
@@ -169,7 +169,7 @@ class Utilities(Module):
                         if data:
                             event.client.msg(event.channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))).replace("\n",""))
 
-    @bones.event.handler(event="CTCPPong")
+    @bones.event.handler(event=bones.event.CTCPPongEvent)
     def eventPingResponseReceive(self, event):
         nick = event.user.nickname
         if nick in self.ongoingPings:

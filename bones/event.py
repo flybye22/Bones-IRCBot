@@ -5,6 +5,7 @@ log = logging.getLogger(__name__)
 
 eventHandlers = {}
 
+
 def fire(server, event, *args, **kwargs):
     """Call all event handlers with the specified event identifier,
     registered to the provided server with the provided arguments.
@@ -16,17 +17,21 @@ def fire(server, event, *args, **kwargs):
     :param server: the server tag for the server this event occured
         at.
     :type server: str
-    :param event: the event identifier for the event which occured.
-    :type event: str
+    :param event: the event instance or the event identifier for the
+        event which occured.
+    :type event: object
     """
     def threadedFire(server, event, *args, **kwargs):
         callback = None
         if "callback" in kwargs:
             callback = kwargs["callback"]
             del kwargs["callback"]
+        if isinstance(event, Event):
+            args = (event,) + args
+            event = event.__class__
         if server.lower() in eventHandlers:
-            if event.lower() in eventHandlers[server.lower()]:
-                for h in eventHandlers[server.lower()][event.lower()]:
+            if event in eventHandlers[server.lower()]:
+                for h in eventHandlers[server.lower()][event]:
                     try:
                         h['f'](h['c'], *args, **kwargs)
                     except Exception, ex:
@@ -35,12 +40,18 @@ def fire(server, event, *args, **kwargs):
             callback(*args, **kwargs)
     threads.deferToThread(threadedFire, server, event, *args, **kwargs)
 
+
 def handler(event=None, trigger=None):
     """Register the decorated method as an event handler for the supplied
     :term:`event` or :term:`trigger`.
 
-    :param event: the string identifier of the event (defaults to None).
-    :type event: str.
+    You can only supply one event/trigger per decorator call, and you can
+    not supply both event and trigger in the same call. You cannot leave both
+    of them empty.
+
+    :param event: the class of the event you are going to handle
+        (defaults to None).
+    :type event: object.
     :param trigger: the trigger command to react to (defaults to None).
     :type trigger: str.
     """
@@ -48,12 +59,18 @@ def handler(event=None, trigger=None):
         if event is not None or trigger is not None:
             if getattr(func, '_event', None) is None:
                 func._event = []
-            if event:
-                func._event.append(event.lower())
-            if trigger:
-                func._event.append("Trigger:%s" % trigger.lower())
+            if event and not trigger:
+                func._event.append(event)
+            if trigger and not event:
+                func._event.append("<Trigger: %s>" % trigger.lower())
+            if trigger and event:
+                log.error(
+                    "Can't register both an event and a trigger with the same "
+                    "bones.event.handler call."
+                )
         return func
     return realHandler
+
 
 def register(obj, server):
     """Look through a Module for registered event handlers and add
@@ -74,9 +91,9 @@ def register(obj, server):
             for event in item._event:
                 if server.lower() not in eventHandlers:
                     eventHandlers[server.lower()] = {}
-                if event.lower() not in eventHandlers[server.lower()]:
-                    eventHandlers[server.lower()][event.lower()] = []
-                eventHandlers[server.lower()][event.lower()].append({"c": obj, "f": item})
+                if event not in eventHandlers[server.lower()]:
+                    eventHandlers[server.lower()][event] = []
+                eventHandlers[server.lower()][event].append({"c": obj, "f": item})
 
 
 class User():
@@ -128,6 +145,11 @@ class BotNoticeReceivedEvent(Event):
         self.user = user
         self.channel = channel
         self.message = message
+
+
+class BotInitializedEvent(Event):
+    def __init__(self, factory):
+        self.factory = factory
 
 
 class BotJoinEvent(Event):

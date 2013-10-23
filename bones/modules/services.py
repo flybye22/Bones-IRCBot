@@ -6,7 +6,7 @@ from bones.bot import Module
 
 
 class NickServ(Module):
-    @bones.event.handler(event="BotSignedOn")
+    @bones.event.handler(event=bones.event.BotSignedOnEvent)
     def identifySignOn(self, event):
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice") == "false":
@@ -14,7 +14,7 @@ class NickServ(Module):
             log.info("Identifying with NickServ")
             event.client.msg("NickServ", "IDENTIFY %s" % self.settings.get("services", "nickserv.password"))
 
-    @bones.event.handler(event="BotNoticeReceived")
+    @bones.event.handler(event=bones.event.BotNoticeReceivedEvent)
     def identifyNotice(self, event):
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice") == "true" \
@@ -41,13 +41,13 @@ class HostServ(Module):
             "have received a vhost."
         )
 
-    @bones.event.handler(event="BotSignedOn")
+    @bones.event.handler(event=bones.event.BotSignedOnEvent)
     def cleanup(self, event):
         self.channelJoinQueue = []
         self.haveVhost = False
         self.haveIdentified = False
 
-    @bones.event.handler(event="BotPreJoin")
+    @bones.event.handler(event=bones.event.BotPreJoinEvent)
     def preventUncloakedJoins(self, event):
         # One of the most important things we need to do is prevent
         # joining while we do not have a vhost

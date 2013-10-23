@@ -72,7 +72,7 @@ class BonesBot(irc.IRCClient):
             self.mode(self.nickname, True, "B")
 
         event = bones.event.BotSignedOnEvent(self)
-        bones.event.fire(self.tag, "BotSignedOn", event)
+        bones.event.fire(self.tag, event)
         log.info("Signed on as %s.", self.nickname)
 
         for channel in self.factory.channels:
@@ -84,7 +84,7 @@ class BonesBot(irc.IRCClient):
             when
         )
         event = bones.event.ServerCreatedEvent(self, when)
-        bones.event.fire(self.tag, "ServerCreated", event)
+        bones.event.fire(self.tag, event)
 
     def yourHost(self, info):
         log.debug(
@@ -92,7 +92,7 @@ class BonesBot(irc.IRCClient):
             info
         )
         event = bones.event.ServerHostInfoEvent(self, info)
-        bones.event.fire(self.tag, "ServerHostInfo", event)
+        bones.event.fire(self.tag, event)
 
     def myInfo(self, servername, version, umodes, cmodes):
         log.debug(
@@ -104,7 +104,7 @@ class BonesBot(irc.IRCClient):
         event = bones.event.ServerInfoEvent(
             self, servername, version, umodes, cmodes
         )
-        bones.event.fire(self.tag, "ServerInfo", event)
+        bones.event.fire(self.tag, event)
 
     def luserClient(self, info):
         log.debug(
@@ -112,7 +112,7 @@ class BonesBot(irc.IRCClient):
             info
         )
         event = bones.event.ServerClientInfoEvent(self, info)
-        bones.event.fire(self.tag, "ServerClientInfo", event)
+        bones.event.fire(self.tag, event)
 
     def bounce(self, info):
         log.debug(
@@ -120,7 +120,7 @@ class BonesBot(irc.IRCClient):
             info
         )
         event = bones.event.BounceEvent(self, info)
-        bones.event.fire(self.tag, "Bounce", event)
+        bones.event.fire(self.tag, event)
 
     def isupport(self, options):
         log.debug(
@@ -128,7 +128,7 @@ class BonesBot(irc.IRCClient):
             " ".join(options)
         )
         event = bones.event.ServerSupportEvent(self, options)
-        bones.event.fire(self.tag, "ServerSupport", event)
+        bones.event.fire(self.tag, event)
 
     def luserChannels(self, channels):
         log.debug(
@@ -136,7 +136,7 @@ class BonesBot(irc.IRCClient):
             channels
         )
         event = bones.event.ServerChannelCountEvent(self, channels)
-        bones.event.fire(self.tag, "ServerChannelCount", event)
+        bones.event.fire(self.tag, event)
 
     def luserOp(self, ops):
         log.debug(
@@ -144,7 +144,7 @@ class BonesBot(irc.IRCClient):
             ops
         )
         event = bones.event.ServerOpCountEvent(self, ops)
-        bones.event.fire(self.tag, "ServerOpCount", event)
+        bones.event.fire(self.tag, event)
 
     def luserMe(self, info):
         log.debug(
@@ -152,7 +152,7 @@ class BonesBot(irc.IRCClient):
             info
         )
         event = bones.event.ServerLocalInfoEvent(self, info)
-        bones.event.fire(self.tag, "ServerLocalInfo", event)
+        bones.event.fire(self.tag, event)
 
     def noticed(self, user, channel, message):
         log.debug(
@@ -162,7 +162,7 @@ class BonesBot(irc.IRCClient):
         event = bones.event.BotNoticeReceivedEvent(
             self, user, channel, message
         )
-        bones.event.fire(self.tag, "BotNoticeReceived", event)
+        bones.event.fire(self.tag, event)
 
     def modeChanged(self, user, channel, set, modes, args):
         if set:
@@ -176,7 +176,7 @@ class BonesBot(irc.IRCClient):
         event = bones.event.ModeChangedEvent(
             self, user, channel, set, modes, args
         )
-        bones.event.fire(self.tag, "ModeChanged", event)
+        bones.event.fire(self.tag, event)
 
     def kickedFrom(self, channel, kicker, message):
         log.info(
@@ -184,7 +184,7 @@ class BonesBot(irc.IRCClient):
             channel, kicker, message
         )
         event = bones.event.BotKickedEvent(self, channel, kicker, message)
-        bones.event.fire(self.tag, "BotKicked", event)
+        bones.event.fire(self.tag, event)
 
     def nickChanged(self, nick):
         log.info(
@@ -192,7 +192,7 @@ class BonesBot(irc.IRCClient):
             nick
         )
         event = bones.event.BotNickChangedEvent(self, nick)
-        bones.event.fire(self.tag, "BotNickChanged", event)
+        bones.event.fire(self.tag, event)
 
     def userLeft(self, user, channel):
         log.debug(
@@ -200,7 +200,7 @@ class BonesBot(irc.IRCClient):
             user, channel
         )
         event = bones.event.UserPartEvent(self, user, channel)
-        bones.event.fire(self.tag, "UserPart", event)
+        bones.event.fire(self.tag, event)
 
     def userQuit(self, user, quitMessage):
         log.debug(
@@ -208,7 +208,7 @@ class BonesBot(irc.IRCClient):
             user, quitMessage
         )
         event = bones.event.UserQuitEvent(self, user, quitMessage)
-        bones.event.fire(self.tag, "UserQuit", event)
+        bones.event.fire(self.tag, event)
 
     def userKicked(self, kickee, channel, kicker, message):
         log.debug(
@@ -218,7 +218,7 @@ class BonesBot(irc.IRCClient):
         event = bones.event.UserKickedEvent(
             self, kickee, channel, kicker, message
         )
-        bones.event.fire(self.tag, "UserKicked", event)
+        bones.event.fire(self.tag, event)
 
     def action(self, user, channel, data):
         log.debug(
@@ -226,7 +226,7 @@ class BonesBot(irc.IRCClient):
             user, channel, data
         )
         event = bones.event.UserActionEvent(self, user, channel, data)
-        bones.event.fire(self.tag, "UserAction", event)
+        bones.event.fire(self.tag, event)
 
     def topicUpdated(self, user, channel, newTopic):
         log.debug(
@@ -236,7 +236,7 @@ class BonesBot(irc.IRCClient):
         event = bones.event.ChannelTopicChangedEvent(
             self, user, channel, newTopic
         )
-        bones.event.fire(self.tag, "ChannelTopicChanged", event)
+        bones.event.fire(self.tag, event)
 
     def userRenamed(self, oldname, newname):
         log.debug(
@@ -244,11 +244,11 @@ class BonesBot(irc.IRCClient):
             oldname, newname
         )
         event = bones.event.UserNickChangedEvent(self, oldname, newname)
-        bones.event.fire(self.tag, "UserNickChanged", event)
+        bones.event.fire(self.tag, event)
 
     def receivedMOTD(self, motd):
         event = bones.event.ServerMOTDReceivedEvent(self, motd)
-        bones.event.fire(self.tag, "ServerMOTDReceived", event)
+        bones.event.fire(self.tag, event)
 
     def joined(self, channel):
         log.info(
@@ -256,7 +256,7 @@ class BonesBot(irc.IRCClient):
             channel
         )
         event = bones.event.BotJoinEvent(self, channel)
-        bones.event.fire(self.tag, "BotJoin", event)
+        bones.event.fire(self.tag, event)
 
     def join(self, channel):
         event = bones.event.BotPreJoinEvent(self, channel)
@@ -265,11 +265,11 @@ class BonesBot(irc.IRCClient):
             if thisEvent.isCancelled is False:
                 irc.IRCClient.join(thisEvent.client, thisEvent.channel)
 
-        bones.event.fire(self.tag, "BotPreJoin", event, callback=doJoin)
+        bones.event.fire(self.tag, event, callback=doJoin)
 
     def userJoin(self, user, channel):
         event = bones.event.UserJoinEvent(self, user, channel)
-        bones.event.fire(self.tag, "UserJoin", event)
+        bones.event.fire(self.tag, event)
         log.debug("Event userJoin: %s %s", user, channel)
 
     def privmsg(self, user, channel, msg):
@@ -280,7 +280,7 @@ class BonesBot(irc.IRCClient):
         if not channel.startswith("#") and not channel.startswith("&"):
             channel = user.split("!")[0]
         event = bones.event.PrivmsgEvent(self, user, channel, msg)
-        bones.event.fire(self.tag, "Privmsg", event)
+        bones.event.fire(self.tag, event)
         data = self.factory.reCommand.match(msg.decode("utf-8"))
         if data:
             trigger = data.group(2)
@@ -293,7 +293,7 @@ class BonesBot(irc.IRCClient):
                 self, user=user, channel=channel, msg=msg, args=args,
                 match=data
             )
-            bones.event.fire(self.tag, "Trigger:%s" % trigger, triggerEvent)
+            bones.event.fire(self.tag, "<Trigger: %s>" % trigger.lower(), triggerEvent)
 
     def pong(self, user, secs):
         log.debug(
@@ -301,7 +301,7 @@ class BonesBot(irc.IRCClient):
             secs, user
         )
         event = bones.event.CTCPPongEvent(self, user, secs)
-        bones.event.fire(self.tag, "CTCPPong", event)
+        bones.event.fire(self.tag, event)
 
     def irc_unknown(self, prefix, command, params):
         log.debug(
@@ -332,8 +332,8 @@ class BonesBot(irc.IRCClient):
                 )
 
         bones.event.fire(
-            self.tag, "PreNicknameInUseError",
-            event, callback=callback
+            self.tag, event,
+            callback=callback
         )
 
     def ctcpQuery_VERSION(self, user, channel, data):
@@ -362,7 +362,7 @@ class BonesBot(irc.IRCClient):
                         user
                     )
             bones.event.fire(
-                self.tag, "CTCPVersion", event, callback=eventCallback
+                self.tag, event, callback=eventCallback
             )
 
 
@@ -426,7 +426,7 @@ class BonesBotFactory(protocol.ClientFactory):
         modules = settings.get("bot", "modules").split("\n")
         for module in modules:
             self.loadModule(module)
-        bones.event.fire(self.tag, "BotInitialized", self)
+        bones.event.fire(self.tag, bones.event.BotInitializedEvent(self))
 
     def loadModule(self, path):
         """Loads the specified module and adds it to the bot if it is a
