@@ -228,7 +228,7 @@ class BonesBot(irc.IRCClient):
             "Kicked from channel %s by %s. Reason: %s",
             channel, kicker, message
         )
-        event = bones.event.BotKickedEvent(self, channe, kicker, message)
+        event = bones.event.BotKickedEvent(self, channel, kicker, message)
         bones.event.fire(self.tag, event)
 
     def nickChanged(self, nick):
