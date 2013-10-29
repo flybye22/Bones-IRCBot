@@ -141,5 +141,6 @@ attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
 Utility Classes
 ---------------
 
+.. autoclass:: bones.event.Channel
 .. autoclass:: bones.event.User
 

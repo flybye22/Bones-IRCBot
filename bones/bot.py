@@ -33,6 +33,27 @@ class BonesModuleAlreadyLoadedException(Exception):
 
 
 class BonesBot(irc.IRCClient):
+    def __init__(self, *args, **kwargs):
+        self.channels = {}
+        self.channel_types = []
+        self.channel_modes = {
+            "list": [],
+            "always": [],
+            "set": [],
+            "never": [],
+        }
+        self.prefixes = []
+
+    def get_channel(self, name):
+        """Returns the Channel object for the given channel."""
+        if name not in self.channels:
+            self.channels[name] = bones.event.Channel(name, self)
+        return self.channels[name]
+
+    def remove_channel(self, name):
+        if name in self.channels:
+            del self.channels[name]
+
     def _get_nickname(self):
         return self.factory.nickname
     nickname = property(_get_nickname)
@@ -127,6 +148,25 @@ class BonesBot(irc.IRCClient):
             "Received server support flags: %s",
             " ".join(options)
         )
+        for option in options:
+            if option.startswith("PREFIX=("):
+                data = option[len("PREFIX=("):]
+                data = data.split(")")
+                self.prefixes = zip(data[0], data[1])
+                log.debug("Server prefixes: %s" % self.prefixes)
+
+            elif option.startswith("CHANMODES="):
+                data = option[len("CHANMODES="):]
+                data = data.split(",")
+                self.channel_modes["list"] = data[0]
+                self.channel_modes["always"] = data[1]
+                self.channel_modes["set"] = data[2]
+                self.channel_modes["never"] = data[3]
+                log.debug("Server channel modes: %s" % self.channel_modes)
+
+            elif option.startswith("CHANTYPES"):
+                self.channel_types = option[len("CHANTYPES"):]
+
         event = bones.event.ServerSupportEvent(self, options)
         bones.event.fire(self.tag, event)
 
@@ -164,26 +204,31 @@ class BonesBot(irc.IRCClient):
         )
         bones.event.fire(self.tag, event)
 
-    def modeChanged(self, user, channel, set, modes, args):
+    def modeChanged(self, user, target, set, modes, args):
         if set:
             setString = "+"
         else:
             setString = "-"
         log.debug(
             "Mode change in %s: %s set %s%s (%s)",
-            channel, user, setString, modes, args
+            target, user, setString, modes, args
         )
+        if [True for x in self.channel_types if x is target[0]]:
+            target = self.get_channel(target)
+            args = [x for x in args if x is not None]
+            target.set_modes(modes, args, set)
         event = bones.event.ModeChangedEvent(
-            self, user, channel, set, modes, args
+            self, user, target, set, modes, args
         )
         bones.event.fire(self.tag, event)
 
-    def kickedFrom(self, channel, kicker, message):
+    def kickedFrom(self, channelName, kicker, message):
+        channel = self.get_channel(channelName)
         log.info(
             "Kicked from channel %s by %s. Reason: %s",
             channel, kicker, message
         )
-        event = bones.event.BotKickedEvent(self, channel, kicker, message)
+        event = bones.event.BotKickedEvent(self, channe, kicker, message)
         bones.event.fire(self.tag, event)
 
     def nickChanged(self, nick):
@@ -194,7 +239,8 @@ class BonesBot(irc.IRCClient):
         event = bones.event.BotNickChangedEvent(self, nick)
         bones.event.fire(self.tag, event)
 
-    def userLeft(self, user, channel):
+    def userLeft(self, user, channelName):
+        channel = self.get_channel(channelName)
         log.debug(
             "User %s parted from %s",
             user, channel
@@ -210,7 +256,8 @@ class BonesBot(irc.IRCClient):
         event = bones.event.UserQuitEvent(self, user, quitMessage)
         bones.event.fire(self.tag, event)
 
-    def userKicked(self, kickee, channel, kicker, message):
+    def userKicked(self, kickee, channelName, kicker, message):
+        channel = self.get_channel(channelName)
         log.debug(
             "User %s was kicked from %s by %s (Reason: %s)",
             kickee, channel, kicker, message
@@ -220,7 +267,8 @@ class BonesBot(irc.IRCClient):
         )
         bones.event.fire(self.tag, event)
 
-    def action(self, user, channel, data):
+    def action(self, user, channelName, data):
+        channel = self.get_channel(channelName)
         log.debug(
             "User %s actioned in %s: %s",
             user, channel, data
@@ -228,7 +276,8 @@ class BonesBot(irc.IRCClient):
         event = bones.event.UserActionEvent(self, user, channel, data)
         bones.event.fire(self.tag, event)
 
-    def topicUpdated(self, user, channel, newTopic):
+    def topicUpdated(self, user, channelName, newTopic):
+        channel = self.get_channel(channelName)
         log.debug(
             "User %s changed topic of %s to %s",
             user, channel, newTopic
@@ -250,11 +299,17 @@ class BonesBot(irc.IRCClient):
         event = bones.event.ServerMOTDReceivedEvent(self, motd)
         bones.event.fire(self.tag, event)
 
-    def joined(self, channel):
+    def joined(self, channelName):
+        channel = self.get_channel(channelName)
         log.info(
             "Joined channel %s.",
             channel
         )
+        if [True for t in self.channel_types if channel.name.startswith(t)]:
+            self.sendLine("MODE %s" % channel.name)
+        else:
+            self.sendLine("MODE #%s" % channel.name)
+
         event = bones.event.BotJoinEvent(self, channel)
         bones.event.fire(self.tag, event)
 
@@ -267,18 +322,21 @@ class BonesBot(irc.IRCClient):
 
         bones.event.fire(self.tag, event, callback=doJoin)
 
-    def userJoin(self, user, channel):
-        event = bones.event.UserJoinEvent(self, user, channel)
+    def userJoined(self, user, channelName):
+        log.debug("Event userJoined: %s %s", user, channelName)
+        channel = self.get_channel(channelName)
+        event = bones.event.UserJoinEvent(self, channel, user)
         bones.event.fire(self.tag, event)
-        log.debug("Event userJoin: %s %s", user, channel)
 
-    def privmsg(self, user, channel, msg):
+    def privmsg(self, user, channelName, msg):
+        if not [True for x in self.channel_types if x == channelName[0]]:
+            channel = user.split("!")[0]
+        else:
+            channel = self.get_channel(channelName)
         log.debug(
             "Event privmsg: %s %s :%s",
             user, channel, msg
         )
-        if not channel.startswith("#") and not channel.startswith("&"):
-            channel = user.split("!")[0]
         event = bones.event.PrivmsgEvent(self, user, channel, msg)
         bones.event.fire(self.tag, event)
         data = self.factory.reCommand.match(msg.decode("utf-8"))
@@ -302,6 +360,32 @@ class BonesBot(irc.IRCClient):
         )
         event = bones.event.CTCPPongEvent(self, user, secs)
         bones.event.fire(self.tag, event)
+
+    def irc_RPL_CHANNELMODEIS(self, prefix, params):
+        channel = params[1]
+        modes = params[2]
+        args = ""
+        if len(params) >= 4:
+            args = params[3:]
+        log.debug("RPL_CHANNELMODEIS: %s %s %s", channel, modes, args)
+        self.get_channel(channel).set_modes(modes[1:], args, True)
+
+    def irc_RPL_NAMREPLY(self, prefix, params):
+        channel = self.get_channel(params[2])
+        nicks = params[3].split(" ")
+        modes = []
+        args = []
+        for nick in nicks:
+            if nick:
+                mode = [m for m, p in self.prefixes if p == nick[0]]
+                user = bones.event.User("1!2@3")
+                user.channels.append(channel)
+                channel.users.append(user)
+                if mode:
+                    modes.append(mode[0])
+                    args.append(nick[1:])
+        if modes:
+            channel.set_modes("".join(modes), args, True)
 
     def irc_unknown(self, prefix, command, params):
         log.debug(

@@ -130,6 +130,70 @@ class User():
         tmp = tmp[1].split("@")
         self.username = tmp[0]
         self.hostname = tmp[1]
+        self.channels = []
+        self.user_modes = {}
+
+
+class Target():
+    pass
+
+
+class Channel(Target):
+    def __init__(self, name, server):
+        self.name = name
+        self.modes = {}
+        self.server = server
+        self.users = []
+
+    def __repr__(self):
+        return "<Channel %s{%s}>" % (self.name, self.server.factory.tag)
+
+    def cleanup(self):
+        for user in self.users:
+            if self in user.channels:
+                user.channels.remove(self)
+        del self.users
+        self.server = None
+
+    def remove_user(self, user):
+        if user in self.users:
+            self.users.remove(user)
+        if self in user.channels:
+            user.channels.remove(self)
+        for m, p in self.server.prefixes:
+            if m in self.modes and user.nickname in self.modes[m]:
+                self.modes[m].remove(user.nickname)
+
+    def set_modes(self, modes, args, set):
+        for mode in modes:
+            if set:
+                if mode in self.server.channel_modes["list"] or \
+                        [True for m, p in self.server.prefixes if m == mode]:
+                    if mode not in self.modes:
+                        self.modes[mode] = []
+                    self.modes[mode].append(args.pop(0))
+                elif mode in self.server.channel_modes["always"]:
+                    self.modes[mode] = args.pop(0)
+                elif mode in self.server.channel_modes["set"]:
+                    self.modes[mode] = args.pop(0)
+                else:
+                    self.modes[mode] = True
+            else:
+                if mode in self.server.channel_modes["list"] or \
+                        [True for m, p in self.server.prefixes if m == mode]:
+                    arg = args.pop(0)
+                    if mode in self.modes and arg in self.modes[mode]:
+                        self.modes[mode].remove(arg)
+                elif mode in self.server.channel_modes["always"]:
+                    arg = args.pop(0)
+                    if mode in self.modes and arg:
+                        del self.modes[mode]
+                elif mode in self.server.channel_modes["set"]:
+                    if mode in self.modes:
+                        del self.modes[mode]
+                else:
+                    if mode in self.modes:
+                        del self.modes[mode]
 
 
 # ------------------------------------ #
@@ -458,7 +522,7 @@ class UserJoinEvent(Event):
     def __init__(self, client, channel, user):
         self.client = client
         self.channel = channel
-        self.user = User(user)
+        self.user = user
 
 
 class UserNickChangedEvent(Event):

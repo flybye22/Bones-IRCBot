@@ -96,7 +96,7 @@ class Utilities(Module):
     def cmdPing(self, event):
         nick = event.user.nickname
         if nick not in self.ongoingPings:
-            self.ongoingPings[nick] = event.channel
+            self.ongoingPings[nick] = event.channel.name
             event.client.ping(nick)
         else:
             event.client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
@@ -116,7 +116,7 @@ class Utilities(Module):
                     msg = unescape(msg)
                     msg = msg.encode("utf-8")
                     msg = str(msg)
-                    event.client.msg(event.channel, msg)
+                    event.client.msg(event.channel.name, msg)
 
     @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_YouTube(self, event):
@@ -130,7 +130,7 @@ class Utilities(Module):
                     soup = self.bs(html)
                     title = soup.find("span", {"id":"eow-title"}).text.strip()
                     if title:
-                        event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(title), url)).replace("\n", ""))
+                        event.client.msg(event.channel.name, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(title), url)).replace("\n", ""))
 
     @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_Spotify(self, event):
@@ -147,27 +147,27 @@ class Utilities(Module):
                         artist = soup.find("div", {"class":"player-header"}) \
                                      .find("h2").find("a").text.strip()
                         if data:
-                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))).replace("\n",""))
+                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))).replace("\n",""))
                     elif type == "album":
                         albumtitle = soup.find("meta", {"property":"og:title"})['content'].strip()
                         artist = soup.find("div", {"class":"player-header"}) \
                                      .find("h2").find("a").text.strip()
                         if data:
-                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle), unescape(artist))).replace("\n",""))
+                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle), unescape(artist))).replace("\n",""))
                     elif type == "artist":
                         artist = soup.find("meta", {"property":"og:title"})['content'].strip()
                         if data:
-                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))).replace("\n",""))
+                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))).replace("\n",""))
                     elif type == "user" and data.group(3) is not None:
                         playlist = soup.find("meta", {"property":"og:title"})['content'].strip()
                         user = soup.find("div", {"class":"player-header"}) \
                                      .find("h2").find("a").text.strip()
                         if data:
-                            event.client.msg(event.channel, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))).replace("\n",""))
+                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))).replace("\n",""))
                     elif type == "user":
                         user = soup.find("meta", {"property":"og:title"})['content'].strip()
                         if data:
-                            event.client.msg(event.channel, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))).replace("\n",""))
+                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))).replace("\n",""))
 
     @bones.event.handler(event=bones.event.CTCPPongEvent)
     def eventPingResponseReceive(self, event):

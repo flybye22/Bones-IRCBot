@@ -45,7 +45,7 @@ class Lastfm(Module):
             user = session.query(User).filter(User.nickname == nickname).first()
             if not user:
                 event.client.msg(
-                    event.channel, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname))
+                    event.channel.name, str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname))
                 )
                 return
             params = urllib.urlencode({
@@ -59,15 +59,16 @@ class Lastfm(Module):
                 data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
                 data = json.loads(data)
             except:
-                event.client.msg(event.channel, "[Last.fm] An unexpected error occurred. Please tell the bot manager to file a bug report.")
+                event.client.msg(event.channel.name, "[Last.fm] An unexpected error occurred. Please tell the bot manager to file a bug report.")
                 self.log.exception("An error occurred while fetching user.getRecentTracks for user %s", nickname)
                 return
             if "error" in data:
                 self.log.error("API error %i: %s", data["error"], data["message"])
-                event.client.msg(event.channel, "[Last.fm] An error occurred while processing your request. Please notify the bot manager")
+                event.client.msg(event.channel.name, "[Last.fm] An error occurred while processing your request. Please notify the bot manager")
+        log.debug(self.channels)
                 return
             if "track" not in data["recenttracks"] or len(data['recenttracks']['track']) < 1:
-                event.client.msg(event.channel, str("%s: No tracks found for user '%s'. Are you sure that the user exists?" % (event.user.nickname, user.username)))
+                event.client.msg(event.channel.name, str("%s: No tracks found for user '%s'. Are you sure that the user exists?" % (event.user.nickname, user.username)))
                 return
             track = data['recenttracks']['track'][0]
             artist = track["artist"]["name"]
@@ -107,7 +108,7 @@ class Lastfm(Module):
                     suffix = ""
                 date.append("%s minute%s" % (minutes, suffix))
                 msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), artist, tracktitle)
-            event.client.msg(event.channel, str(unescape(msg).encode("utf-8")))
+            event.client.msg(event.channel.name, str(unescape(msg).encode("utf-8")))
             return
 
         elif action == "-r":

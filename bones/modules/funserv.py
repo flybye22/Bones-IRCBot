@@ -99,10 +99,10 @@ class QDB(Module):
     def sendQuote(self, client, channel, quote):
         lines = quote[1].split("\n")
         if len(lines) > self.maxLinesPerQuote:
-            client.msg(channel, str("[QDB #%s] Quote too long, read it at QDB instead: http://qdb.us/%s" % (quote[0], quote[0])))
+            client.msg(channel.name, str("[QDB #%s] Quote too long, read it at QDB instead: http://qdb.us/%s" % (quote[0], quote[0])))
             return
         for line in lines:
-            client.msg(channel, str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
+            client.msg(channel.name, str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
 
     def cacheIfNeeded(self):
         """
@@ -135,50 +135,43 @@ class UselessResponses(Module):
             if not self.danceCooldownTime:
                 self.danceCooldownTime = int(self.settings.get("module.UselessResponses", "dance.cooldown"))
             if step == 0:
-                if event.channel in self.danceCooldown:
-                    last = self.danceCooldown[event.channel]
+                if event.channel.name in self.danceCooldown:
+                    last = self.danceCooldown[event.channel.name]
                     now = datetime.utcnow()
                     delta = now - last
                     if delta.seconds < self.danceCooldownTime:
                         wait = self.danceCooldownTime - delta.seconds
                         event.client.notice(event.user.nickname, "Please wait %s more seconds." % wait)
                         return
-                self.danceCooldown[event.channel] = datetime.utcnow()
-                event.client.ctcpMakeQuery(event.channel, [('ACTION', "dances")])
+                self.danceCooldown[event.channel.name] = datetime.utcnow()
+                event.client.ctcpMakeQuery(event.channel.name, [('ACTION', "dances")])
                 reactor.callLater(1.5, self.DANCE, event, step=1)
             elif step == 1:
-                event.client.msg(event.channel, r":D\-<")
+                event.client.msg(event.channel.name, r":D\-<")
                 reactor.callLater(1.0, self.DANCE, event, step=2)
             elif step == 2:
-                event.client.msg(event.channel, r":D|-<")
+                event.client.msg(event.channel.name, r":D|-<")
                 reactor.callLater(1.0, self.DANCE, event, step=3)
             elif step == 3:
-                event.client.msg(event.channel, r":D/-<")
+                event.client.msg(event.channel.name, r":D/-<")
 
     @bones.event.handler(trigger="hi5")
     def cmdHi5(self, event):
         target = ""
         if len(event.args) > 0:
             target = " ".join(event.args)
-        event.client.msg(event.channel, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
+        event.client.msg(event.channel.name, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
 
     @bones.event.handler(trigger="kira")
     def cmdKira(self, event):
         prefix = event.match.group(1)
         if prefix.encode("utf-8") in "★✫✦✧✩✪✫✬✭✮✯✰✴✵✶✷✸✹⭑⭒⭐🌟":
-            event.client.msg(event.channel, "(ﾉゝ∀・)\x038~キラ%s" % prefix.encode("utf-8"))
-
-    @bones.event.handler(trigger="bitches")
-    @bones.event.handler(trigger="ビッチ")
-    def bitches(self, event):
-        event.client.msg(event.channel, "Bitches")
-        event.client.msg(event.channel, "and")
-        event.client.msg(event.channel, "hoes")
+            event.client.msg(event.channel.name, "(ﾉゝ∀・)\x038~キラ%s" % prefix.encode("utf-8"))
 
     @bones.event.handler(trigger="hue")
     def cmdHue(self, event):
-        event.client.msg(event.channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
+        event.client.msg(event.channel.name, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
 
     @bones.event.handler(trigger="huehue")
     def cmdHueHue(self, event):
-        event.client.msg(event.channel, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
+        event.client.msg(event.channel.name, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
