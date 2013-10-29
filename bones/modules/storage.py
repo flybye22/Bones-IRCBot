@@ -32,8 +32,8 @@ class Database(Module):
     def botReady(self, event):
         self.engine = engine_from_config(self.settings.data["storage"], "sqlalchemy.")
         log.debug("Connected to database")
-        event = DatabaseInitializedEvent(self)
-        bones.event.fire(event.factory.tag, event)
+        dbInitEvent = DatabaseInitializedEvent(self)
+        bones.event.fire(event.factory.tag, dbInitEvent)
         self.sessionmaker = sessionmaker(bind=self.engine, autocommit=True)
 
 
