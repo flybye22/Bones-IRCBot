@@ -63,7 +63,7 @@ class NickFix(Module):
         if isinstance(myEvent, bones.event.UserNickChangedEvent) is True:
             user = myEvent.oldname
         else:
-            user = myEvent.user.nickname
+            user = myEvent.user
 
         if user.lower() == self.nickIWant.lower():
             myEvent.client.factory.nicknames = self.settings.get("bot", "nickname").split("\n")[1:]
