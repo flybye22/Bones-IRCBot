@@ -216,7 +216,7 @@ class BonesBot(irc.IRCClient):
         if [True for x in self.channel_types if x is target[0]]:
             target = self.get_channel(target)
             args = [x for x in args if x is not None]
-            target.set_modes(modes, args, set)
+            target._set_modes(modes, args, set)
         event = bones.event.ModeChangedEvent(
             self, user, target, set, modes, args
         )
@@ -368,7 +368,7 @@ class BonesBot(irc.IRCClient):
         if len(params) >= 4:
             args = params[3:]
         log.debug("RPL_CHANNELMODEIS: %s %s %s", channel, modes, args)
-        self.get_channel(channel).set_modes(modes[1:], args, True)
+        self.get_channel(channel)._set_modes(modes[1:], args, True)
 
     def irc_RPL_NAMREPLY(self, prefix, params):
         channel = self.get_channel(params[2])
@@ -378,14 +378,14 @@ class BonesBot(irc.IRCClient):
         for nick in nicks:
             if nick:
                 mode = [m for m, p in self.prefixes if p == nick[0]]
-                user = bones.event.User("1!2@3")
+                user = bones.event.User("1!2@3", self)
                 user.channels.append(channel)
                 channel.users.append(user)
                 if mode:
                     modes.append(mode[0])
                     args.append(nick[1:])
         if modes:
-            channel.set_modes("".join(modes), args, True)
+            channel._set_modes("".join(modes), args, True)
 
     def irc_unknown(self, prefix, command, params):
         log.debug(
@@ -421,7 +421,7 @@ class BonesBot(irc.IRCClient):
 
     def ctcpQuery_VERSION(self, user, channel, data):
         if data is None and self.versionName:
-            event = bones.event.CTCPVersionEvent(user)
+            event = bones.event.CTCPVersionEvent(self, user)
 
             def eventCallback(thisEvent):
                 if not event.isCancelled:

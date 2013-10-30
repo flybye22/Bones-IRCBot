@@ -142,5 +142,12 @@ Utility Classes
 ---------------
 
 .. autoclass:: bones.event.Channel
+    :show-inheritance:
+    :members:
+.. autoclass:: bones.event.Target
+    :show-inheritance:
+    :members:
 .. autoclass:: bones.event.User
+    :show-inheritance:
+    :members:
 

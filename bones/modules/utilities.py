@@ -20,6 +20,12 @@ from bones.bot import Module, urlopener
 # @return The plain text, as a Unicode string, if necessary.
 
 def unescape(text):
+    """
+    Turns HTML entities like &amp; into the character it represents
+    (& in this case).
+
+        .. deprecated: Use BeautifulSoup's built-in handling for this.
+    """
     def fixup(m):
         text = m.group(0)
         if text[:2] == "&#":
@@ -57,7 +63,7 @@ class NickFix(Module):
         if isinstance(myEvent, bones.event.UserNickChangedEvent) is True:
             user = myEvent.oldname
         else:
-            user = myEvent.user
+            user = myEvent.user.nickname
 
         if user.lower() == self.nickIWant.lower():
             myEvent.client.factory.nicknames = self.settings.get("bot", "nickname").split("\n")[1:]
@@ -97,9 +103,9 @@ class Utilities(Module):
         nick = event.user.nickname
         if nick not in self.ongoingPings:
             self.ongoingPings[nick] = event.channel.name
-            event.client.ping(nick)
+            event.user.ping()
         else:
-            event.client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
+            event.user.notice("Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
 
     @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_Twitter(self, event):
@@ -111,12 +117,10 @@ class Utilities(Module):
                     html = urlopener.open(url).read()
                     soup = self.bs(html)
                     tweet = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("p", {"class":"tweet-text"}).text
+                    tweet = u"↵ ".join(tweet.split("\n"))
                     user = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("span", {"class":"username js-action-profile-name"}).text
                     msg = u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s" % (tweet, user)
-                    msg = unescape(msg)
-                    msg = msg.encode("utf-8")
-                    msg = str(msg)
-                    event.client.msg(event.channel.name, msg)
+                    event.channel.msg(msg.encode("utf-8"))
 
     @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_YouTube(self, event):
@@ -129,8 +133,10 @@ class Utilities(Module):
                     html = urlopener.open(url).read()
                     soup = self.bs(html)
                     title = soup.find("span", {"id":"eow-title"}).text.strip()
+                    msg = u"\x0314You\x035Tube \x034::\x03 %s \x034::\x03 %s" % (title, url)
+                    msg = u"↵ ".join(msg.split("\n"))
                     if title:
-                        event.client.msg(event.channel.name, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(title), url)).replace("\n", ""))
+                        event.channel.msg(msg.encode("utf-8"))
 
     @bones.event.handler(event=bones.event.PrivmsgEvent)
     def eventURLInfo_Spotify(self, event):
@@ -147,33 +153,32 @@ class Utilities(Module):
                         artist = soup.find("div", {"class":"player-header"}) \
                                      .find("h2").find("a").text.strip()
                         if data:
-                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (unescape(songtitle), unescape(artist))).replace("\n",""))
+                            event.channel.msg(str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (songtitle, artist)).replace("\n",""))
                     elif type == "album":
                         albumtitle = soup.find("meta", {"property":"og:title"})['content'].strip()
                         artist = soup.find("div", {"class":"player-header"}) \
                                      .find("h2").find("a").text.strip()
                         if data:
-                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (unescape(albumtitle), unescape(artist))).replace("\n",""))
+                            event.channel.msg(str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (albumtitle, artist)).replace("\n",""))
                     elif type == "artist":
                         artist = soup.find("meta", {"property":"og:title"})['content'].strip()
                         if data:
-                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (unescape(artist))).replace("\n",""))
+                            event.channel.msg(str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (artist)).replace("\n",""))
                     elif type == "user" and data.group(3) is not None:
                         playlist = soup.find("meta", {"property":"og:title"})['content'].strip()
                         user = soup.find("div", {"class":"player-header"}) \
                                      .find("h2").find("a").text.strip()
                         if data:
-                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (unescape(playlist), unescape(user))).replace("\n",""))
+                            event.channel.msg(str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (playlist, user)).replace("\n",""))
                     elif type == "user":
                         user = soup.find("meta", {"property":"og:title"})['content'].strip()
                         if data:
-                            event.client.msg(event.channel.name, str("\x031,3Spotify\x03 User \x033::\x03 %s" % (unescape(user))).replace("\n",""))
+                            event.channel.msg(str("\x031,3Spotify\x03 User \x033::\x03 %s" % (user)).replace("\n",""))
 
     @bones.event.handler(event=bones.event.CTCPPongEvent)
     def eventPingResponseReceive(self, event):
         nick = event.user.nickname
         if nick in self.ongoingPings:
-            channel = self.ongoingPings[nick]
-            event.client.msg(channel, "%s: Your response time was %.3f seconds." % (nick, event.secs))
+            event.user.notice("%s: Your response time was %.3f seconds." % (nick, event.secs))
             del self.ongoingPings[nick]
 

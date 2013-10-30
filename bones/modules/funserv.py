@@ -23,6 +23,12 @@ from bones.bot import Module, urlopener
 # @return The plain text, as a Unicode string, if necessary.
 
 def unescape(text):
+    """
+    Turns HTML entities like &amp; into the character it represents
+    (& in this case).
+
+        .. deprecated: Use BeautifulSoup's built-in handling for this.
+    """
     def fixup(m):
         text = m.group(0)
         if text[:2] == "&#":
@@ -78,31 +84,34 @@ class QDB(Module):
             self.log.debug("Fetching qdb.us/%i", id)
             data = urlopener.open("http://qdb.us/%i" % id)
             if data.getcode() == 404:
-                event.client.msg(event.channel, str("[QDB #%s] Quote not found." % id))
+                event.channel.msg(str("[QDB #%s] Quote not found." % id))
                 return
             if data.getcode() == 200:
                 html = data.read()
                 soup = self.BeautifulSoup(html)
-                quote = soup.find("span", {"class":"qt"}).text
-                self.sendQuote(event.client, event.channel, (id, quote))
+                quote = soup.find("span", {"class": "qt"}).text
+                self.sendQuote(event.channel, (id, quote))
                 return
-            self.log.error("Got unknown HTTP error code %i when fetching qdb.us/%i", data.getcode(), id)
-            event.client.msg(event.channel, str("[QDB] An unknown exception occurred. Please notify the bot master and try again later."))
+            self.log.error(
+                "Got unknown HTTP error code %i when fetching qdb.us/%i",
+                data.getcode(), id
+            )
+            event.channel.msg(str("[QDB] An unknown exception occurred. Please notify the bot master and try again later."))
             return
 
         if len(event.args) <= 0 or event.args[0].lower() == "random":
             self.cacheIfNeeded()
             quote = self.quotesCache.pop()
-            self.sendQuote(event.client, event.channel, quote)
+            self.sendQuote(event.channel, quote)
             return
 
-    def sendQuote(self, client, channel, quote):
+    def sendQuote(self, channel, quote):
         lines = quote[1].split("\n")
         if len(lines) > self.maxLinesPerQuote:
-            client.msg(channel.name, str("[QDB #%s] Quote too long, read it at QDB instead: http://qdb.us/%s" % (quote[0], quote[0])))
+            channel.msg(str("[QDB #%s] Quote too long, read it at QDB instead: http://qdb.us/%s" % (quote[0], quote[0])))
             return
         for line in lines:
-            client.msg(channel.name, str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
+            channel.msg(str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
 
     def cacheIfNeeded(self):
         """
@@ -141,37 +150,37 @@ class UselessResponses(Module):
                     delta = now - last
                     if delta.seconds < self.danceCooldownTime:
                         wait = self.danceCooldownTime - delta.seconds
-                        event.client.notice(event.user.nickname, "Please wait %s more seconds." % wait)
+                        event.user.notice("Please wait %s more seconds." % wait)
                         return
                 self.danceCooldown[event.channel.name] = datetime.utcnow()
                 event.client.ctcpMakeQuery(event.channel.name, [('ACTION', "dances")])
                 reactor.callLater(1.5, self.DANCE, event, step=1)
             elif step == 1:
-                event.client.msg(event.channel.name, r":D\-<")
+                event.channel.msg(r":D\-<")
                 reactor.callLater(1.0, self.DANCE, event, step=2)
             elif step == 2:
-                event.client.msg(event.channel.name, r":D|-<")
+                event.channel.msg(r":D|-<")
                 reactor.callLater(1.0, self.DANCE, event, step=3)
             elif step == 3:
-                event.client.msg(event.channel.name, r":D/-<")
+                event.channel.msg(r":D/-<")
 
     @bones.event.handler(trigger="hi5")
     def cmdHi5(self, event):
         target = ""
         if len(event.args) > 0:
             target = " ".join(event.args)
-        event.client.msg(event.channel.name, "(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
+        event.channel.msg("(　｀ー´)八(｀ー´　) ＨＩ５ %s" % target)
 
     @bones.event.handler(trigger="kira")
     def cmdKira(self, event):
         prefix = event.match.group(1)
         if prefix.encode("utf-8") in "★✫✦✧✩✪✫✬✭✮✯✰✴✵✶✷✸✹⭑⭒⭐🌟":
-            event.client.msg(event.channel.name, "(ﾉゝ∀・)\x038~キラ%s" % prefix.encode("utf-8"))
+            event.channel.msg("(ﾉゝ∀・)\x038~キラ%s" % prefix.encode("utf-8"))
 
     @bones.event.handler(trigger="hue")
     def cmdHue(self, event):
-        event.client.msg(event.channel.name, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
+        event.channel.msg("ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ")
 
     @bones.event.handler(trigger="huehue")
     def cmdHueHue(self, event):
-        event.client.msg(event.channel.name, "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
+        event.channel.msg("ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")

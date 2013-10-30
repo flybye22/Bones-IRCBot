@@ -96,13 +96,33 @@ def register(obj, server):
                 eventHandlers[server.lower()][event].append({"c": obj, "f": item})
 
 
-class User():
+class Target():
+    """Utility class providing easy access to methods commonly used against
+    targets.
+    """
+    def __init__(self, name, server):
+        self.name = name
+        self.server = server
+
+    def msg(self, msg):
+        """Sends the provided message to the represented target."""
+        self.server.msg(self.name, msg)
+
+    def notice(self, msg):
+        """Sends the provided message as a notice to the represented target."""
+        self.server.notice(self.name, msg)
+
+
+class User(Target):
     """Utility class turning a hostmask into distinguishable nickname,
     user and hostname attributes.
 
     :param mask: The IRC hostmask to be parsed. Ex:
         :code:`Bones!bot@192.168.0.2`
     :type mask: str
+    :param server: :class:`~bones.bot.BonesBot` instance representing
+        the server connection where we can reach this user.
+    :type server: :class:`bones.bot.BonesBot`
 
     .. attribute:: mask
 
@@ -123,39 +143,55 @@ class User():
         A string of the username for the provided hostmask. Given
         the hostmask above, the hostname will be :code:`bot`.
     """
-    def __init__(self, mask):
+    def __init__(self, mask, server):
         self.mask = mask
         tmp = mask.split("!")
-        self.nickname = tmp[0]
+        Target.__init__(self, tmp[0], server)
         tmp = tmp[1].split("@")
         self.username = tmp[0]
         self.hostname = tmp[1]
         self.channels = []
         self.user_modes = {}
 
+    def _get_nickname(self):
+        return self.name
+    nickname = property(_get_nickname)
 
-class Target():
-    pass
+    def ping(self):
+        """Sends the user a CTCP PING query."""
+        self.server.ping(self.name)
 
 
 class Channel(Target):
+    """Utility class representing a channel on a server.
+
+    .. attribute:: modes
+
+        A dictionary of mode-value pairs representing the modes in
+        the channel. Modes such as :code:`+b` will be added to and
+        removed from this list when the bot sees them.
+
+    .. attribute:: users
+
+        A list of user instances representing all the users in the
+        channel.
+    """
     def __init__(self, name, server):
-        self.name = name
+        Target.__init__(self, name, server)
         self.modes = {}
-        self.server = server
         self.users = []
 
     def __repr__(self):
         return "<Channel %s{%s}>" % (self.name, self.server.factory.tag)
 
-    def cleanup(self):
+    def _cleanup(self):
         for user in self.users:
             if self in user.channels:
                 user.channels.remove(self)
         del self.users
         self.server = None
 
-    def remove_user(self, user):
+    def _remove_user(self, user):
         if user in self.users:
             self.users.remove(user)
         if self in user.channels:
@@ -164,7 +200,7 @@ class Channel(Target):
             if m in self.modes and user.nickname in self.modes[m]:
                 self.modes[m].remove(user.nickname)
 
-    def set_modes(self, modes, args, set):
+    def _set_modes(self, modes, args, set):
         for mode in modes:
             if set:
                 if mode in self.server.channel_modes["list"] or \
@@ -282,16 +318,16 @@ class ChannelTopicChangedEvent(Event):
 
 
 class CTCPVersionEvent(Event):
-    def __init__(self, user):
+    def __init__(self, client, user):
         self.isCancelled = False
-        self.user = User(user)
+        self.user = User(user, client)
 
 
 class CTCPPongEvent(Event):
     def __init__(self, client, user, secs):
         self.client = client
         self.secs = secs
-        self.user = User(user)
+        self.user = User(user, client)
 
 
 class IRCUnknownCommandEvent(Event):
@@ -316,7 +352,7 @@ class PrivmsgEvent(Event):
     def __init__(self, client, user, channel, msg):
         self.client = client
         self.channel = channel
-        self.user = User(user)
+        self.user = User(user, client)
         self.msg = msg
 
 
@@ -489,7 +525,7 @@ class UserActionEvent(Event):
     """
     def __init__(self, client, user, channel, data):
         self.client = client
-        self.user = User(user)
+        self.user = User(user, client)
         self.channel = channel
         self.data = data
 

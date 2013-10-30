@@ -52,9 +52,9 @@ class HostServ(Module):
         # One of the most important things we need to do is prevent
         # joining while we do not have a vhost
         if not self.haveVhost:
-            log.debug("Queueing join to channel %s", event.channel)
+            log.debug("Queueing join to channel %s", event.channel.name)
             # Add channel to join queue
-            self.channelJoinQueue.append(event.channel)
+            self.channelJoinQueue.append(event.channel.name)
             # Cancel the event so that the bot won't join the channel
             event.isCancelled = True
 

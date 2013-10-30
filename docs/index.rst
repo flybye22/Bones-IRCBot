@@ -18,9 +18,8 @@ A basic :term:`Bones module` may be made in as few lines as this:
 
         @bones.event.handler(event=bones.event.UserJoinEvent)
         def greet_user(self, event):
-            event.client.msg(
-                event.user.nickname,
-                "Welcome to %s, %s!" % (event.channel, event.user.nickname)
+            event.user.msg(
+                "Welcome to %s, %s!" % (event.channel.name, event.user.nickname)
             )
 
 The documentation on this page is just as much documentation of the API
