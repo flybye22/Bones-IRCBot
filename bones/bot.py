@@ -330,7 +330,7 @@ class BonesBot(irc.IRCClient):
 
     def privmsg(self, user, channelName, msg):
         if not [True for x in self.channel_types if x == channelName[0]]:
-            channel = user.split("!")[0]
+            channel = bones.event.User(user, self)
         else:
             channel = self.get_channel(channelName)
         log.debug(

@@ -349,6 +349,40 @@ class ModeChangedEvent(Event):
 
 
 class PrivmsgEvent(Event):
+    """Event fired when the bot receives a message from another user,
+    either over a query or from a channel.
+
+    :param client: A `~bones.bot.BonesBot` instance representing the current
+        server connection.
+    :type client: `bones.bot.BonesBot`
+    :param user: The hostmask of the user who sent this message.
+    :type user: string
+    :param channel: A `~bones.event.Target` instance representing the
+        communication target this message was sent to.
+    :type channel: `bones.event.Target`
+    :param msg: The message that was sent to the target.
+    :type msg: string
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance representing the server
+        connection which received this event.
+
+    .. attribute:: msg
+
+        The message string that was sent.
+
+    .. attribute:: channel
+
+        A `~bones.bot.Target` instance representing the communication channel
+        this message was sent to. This may be an object something that inherits
+        `~bones.bot.Target`, like `~bones.bot.Channel` and `~bones.bot.User`.
+
+    .. attribute:: user
+
+        A `~bones.bot.User` instance representing the user that sent the
+        message.
+    """
     def __init__(self, client, user, channel, msg):
         self.client = client
         self.channel = channel
