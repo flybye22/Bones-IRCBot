@@ -85,9 +85,9 @@ class NickFix(Module):
 class Utilities(Module):
     bs = None
 
-    reYouTubeLink = re.compile("http(s)?\:\/\/(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
-    reSpotifyLink = re.compile("http(s)?\:\/\/open\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
-    reTwitterLink = re.compile("https?\:\/\/twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
+    reYouTubeLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
+    reSpotifyLink = re.compile("(https?\:\/\/)?(open|play)\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
+    reTwitterLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
