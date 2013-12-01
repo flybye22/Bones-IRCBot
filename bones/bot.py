@@ -384,6 +384,9 @@ class BonesBot(irc.IRCClient):
                 if mode:
                     modes.append(mode[0])
                     args.append(nick[1:])
+                    user.nickname = nick[1:]
+                else:
+                    user.nickname = nick
         if modes:
             channel._set_modes("".join(modes), args, True)
 
