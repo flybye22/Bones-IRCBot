@@ -592,7 +592,7 @@ class UserJoinEvent(Event):
     def __init__(self, client, channel, user):
         self.client = client
         self.channel = channel
-        self.user = user
+        self.user = User(user, client)
 
 
 class UserNickChangedEvent(Event):
@@ -600,6 +600,8 @@ class UserNickChangedEvent(Event):
     changes his/her nickname.
 
     :param client: The bot instance that this event originated from.
+    :param user: The user who changed his/her nickname.
+    type user: :class:`bones.event.user`
     :param oldname: The previous nickname the user went by.
     :type oldname: str
     :param newname: The new nickname the user is now using.
@@ -609,6 +611,11 @@ class UserNickChangedEvent(Event):
 
         The :class:`bones.bot.BonesBot` instance representing the connection
         to the server that this event originated from.
+
+    .. attribute:: user
+
+        A :class:`~bones.event.User` instance representing the user who changed
+        his/her nickname.
 
     .. attribute:: newname
 
@@ -621,8 +628,9 @@ class UserNickChangedEvent(Event):
         before the nickname change.
 
     """
-    def __init__(self, client, oldname, newname):
+    def __init__(self, client, user, oldname, newname):
         self.client = client
+        self.user = user
         self.oldname = oldname
         self.newname = newname
 
@@ -638,8 +646,8 @@ class UserPartEvent(Event):
 
     :param client: The bot instance that this event originated from.
     :type client: :class:`bones.bot.BonesBot`
-    :param user: The nickname of the user who parted from the channel.
-    :type user: str.
+    :param user: The the user who parted from the channel.
+    :type user: :class:`bones.event.User`
     :param channel: The name of the channel the user parted from.
     :type channel: str.
 
@@ -654,12 +662,12 @@ class UserPartEvent(Event):
 
     .. attribute:: user
 
-        A string representing the nickname of the user who parted from the
+        A :class:`~bones.event.User` instance representing the nickname of the user who parted from the
         channel.
     """
     def __init__(self, client, user, channel):
         self.client = client
-        self.user = user
+        self.user = User(user, client)
         self.channel = channel
 
 class UserQuitEvent(Event):
@@ -684,7 +692,7 @@ class UserQuitEvent(Event):
     :param client: The bot instance where this event occured.
     :type client: :class:`bones.bot.BonesBot`
     :param user: The user who quit IRC.
-    :type user: str.
+    :type user: :class:`bones.event.User`
     :param quitMessage: The message sent with the quit command.
     :type quitMessage: str.
 
@@ -695,7 +703,7 @@ class UserQuitEvent(Event):
 
     .. attribute:: user
 
-        A string representing the nickname of the user who quit IRC.
+        A :class:`~bones.event.User` instance representing the nickname of the user who quit IRC.
 
     .. attribute:: quitMessage
 
@@ -706,8 +714,9 @@ class UserQuitEvent(Event):
     """
     def __init__(self, client, user, quitMessage):
         self.client = client
-        self.user = user
+        self.user = User(user, client)
         self.quitMessage = quitMessage
+
 
 class UserKickedEvent(Event):
     """An event that is fired whenever a user have been kicked from a channel.

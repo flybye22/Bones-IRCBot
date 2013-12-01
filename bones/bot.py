@@ -246,6 +246,11 @@ class BonesBot(irc.IRCClient):
             user, channel
         )
         event = bones.event.UserPartEvent(self, user, channel)
+        user = event.user
+        if channel in user.channels:
+            user.channels.remove(channel)
+        if user in channel.users:
+            channel.users.remove(user)
         bones.event.fire(self.tag, event)
 
     def userQuit(self, user, quitMessage):
@@ -255,6 +260,12 @@ class BonesBot(irc.IRCClient):
         )
         event = bones.event.UserQuitEvent(self, user, quitMessage)
         bones.event.fire(self.tag, event)
+        user = event.user
+        for channelName in self.channels:
+            channel = self.get_channel(channelName)
+            if event.user in channel.users:
+                channel.users.remove(event.user)
+        del user
 
     def userKicked(self, kickee, channelName, kicker, message):
         channel = self.get_channel(channelName)
@@ -265,6 +276,15 @@ class BonesBot(irc.IRCClient):
         event = bones.event.UserKickedEvent(
             self, kickee, channel, kicker, message
         )
+        user = None
+        for tmpUser in channel.users:
+            if tmpUser.nickname == kickee:
+                user = tmpUser
+                break
+        if user in channel.users:
+            channel.users.remove(user)
+        if channel in user.channels:
+            user.channels.remove(channel)
         bones.event.fire(self.tag, event)
 
     def action(self, user, channelName, data):
@@ -292,7 +312,13 @@ class BonesBot(irc.IRCClient):
             "User %s changed nickname to %s",
             oldname, newname
         )
-        event = bones.event.UserNickChangedEvent(self, oldname, newname)
+        for channelName in self.channels:
+            channel = self.get_channel(channelName)
+            for user in channel.users:
+                if user.nickname == oldname:
+                    user.nickname = newname
+                    break
+        event = bones.event.UserNickChangedEvent(self, user, oldname, newname)
         bones.event.fire(self.tag, event)
 
     def receivedMOTD(self, motd):
@@ -326,6 +352,9 @@ class BonesBot(irc.IRCClient):
         log.debug("Event userJoined: %s %s", user, channelName)
         channel = self.get_channel(channelName)
         event = bones.event.UserJoinEvent(self, channel, user)
+        user = event.user
+        user.channels.append(channel)
+        channel.users.append(user)
         bones.event.fire(self.tag, event)
 
     def privmsg(self, user, channelName, msg):
@@ -421,6 +450,23 @@ class BonesBot(irc.IRCClient):
             self.tag, event,
             callback=callback
         )
+
+    def irc_JOIN(self, prefix, params):
+        nick = prefix.split("!")[0]
+        if nick.lower() == self.nickname.lower():
+            self.joined(params[-1])
+        else:
+            self.userJoined(prefix, params[-1])
+
+    def irc_PART(self, prefix, params):
+        nick = prefix.split("!")[0]
+        if nick.lower() == self.nickname.lower():
+            self.left(params[-1])
+        else:
+            self.userLeft(prefix, params[-1])
+
+    def irc_QUIT(self, prefix, params):
+        self.userQuit(prefix, params[0])
 
     def ctcpQuery_VERSION(self, user, channel, data):
         if data is None and self.versionName:
