@@ -11,7 +11,7 @@ def fire(server, event, *args, **kwargs):
     registered to the provided server with the provided arguments.
 
     This may be called by your :term:`Bones module` to create and
-    provide custom events. :code:`*args` and :code:`**kwargs` will
+    provide custom event. :code:`*args` and :code:`**kwargs` will
     be passed on to the event handlers.
 
     :param server: the server tag for the server this event occured
@@ -240,11 +240,39 @@ class Event():
 
 
 class BotModuleLoaded(Event):
+    """
+    Called by the :class:`~bones.bot.BonesBotFactory` when a module is
+    loaded during initialization.
+
+    .. attribute:: module
+
+        The module instance that were initialized and loaded.
+    """
     def __init__(self, module):
         self.module = module
 
 
 class BotNoticeReceivedEvent(Event):
+    """
+    Fired whenever the bot receives a notice.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: user
+
+        A string representing the nickname of the user that sent the notice.
+
+    .. attribute:: channel
+
+        A string representing the name of the channel that the notice were sent
+        to.
+
+    .. attribute:: message
+
+        The message that was sendt as part of the notice.
+    """
     def __init__(self, client, user, channel, message):
         self.client = client
         self.user = user
@@ -253,17 +281,62 @@ class BotNoticeReceivedEvent(Event):
 
 
 class BotInitializedEvent(Event):
+    """
+    An event that is fired whenever the bot factory for a configuartion
+    has been initialized and is ready to connect to the server.
+
+    .. attribute:: factory
+
+        The :class:`~bones.bot.BonesBotFactory` instance which was initialized.
+    """
     def __init__(self, factory):
         self.factory = factory
 
 
 class BotJoinEvent(Event):
+    """
+    An event that is fired whenever the bot joins a new channel. The bot has
+    "joined" a channel when  the server informs the bot of its presence in that
+    channel, and not when the bot calls
+    :class:`client.join("#channel")`.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: channel
+
+        A :class:`~bones.event.Channel` instance representing the channel that
+        were joined by the bot.
+    """
     def __init__(self, client, channel):
         self.client = client
         self.channel = channel
 
 
 class BotKickedEvent(Event):
+    """
+    An event that is fired whenever the bot gets kicked from a channel it is
+    in.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: channel
+
+        A :class:`~bones.event.Channel` instance representing the channel that
+        the bot was kicked form.
+
+    .. attribute:: kicker
+
+        A :class:`~bones.event.User` instance representing the user that kicked
+        the bot.
+
+    .. attribute:: message
+
+        The kick reason as specified by the kicker, as a string.
+    """
     def __init__(self, client, channel, kicker, message):
         self.client = client
         self.channel = channel
@@ -272,12 +345,42 @@ class BotKickedEvent(Event):
 
 
 class BotNickChangedEvent(Event):
+    """
+    Called by the bot when its nickname has changed, either by the bot
+    itself or something like services, nick collision or the like.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: nick
+
+        The new nickname that the bot now goes by.
+    """
     def __init__(self, client, nick):
         self.client = client
         self.nick = nick
 
 
 class BotPreJoinEvent(Event):
+    """
+    Called by the bot before the bot joins a channel. This may be
+    used to prevent the bot from joining a channel.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: channel
+
+        The channel that the bot is trying to join, in string format.
+
+    .. attribute:: isCancelled
+
+        A boolean that tells the bot whether to stop this event
+        chain and prevent the bot from joining a channel.
+
+    """
     def __init__(self, client, channel):
         self.isCancelled = False
         self.client = client
@@ -285,6 +388,24 @@ class BotPreJoinEvent(Event):
 
 
 class PreNicknameInUseError(Event):
+    """
+    An event that is fired before the bot's username is changed because
+    of collision. As the bot's default behaviour tells it to cycle through
+    all of the nicks in the bot nickname list, this may be used to prevent
+    floods when changing the nickname by hand. An example use of this event
+    is available in the :class:`bones.modules.utilities.NickFix` module that
+    makes the bot try to recover its nick if it is in use.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: isCancelled
+
+        A boolean that tells the bot whether to stop this event
+        chain and prevent the bot from automatically changing its
+        nick.
+    """
     def __init__(self, client, prefix, params):
         self.isCancelled = False
         self.client = client
@@ -298,6 +419,10 @@ class BotSignedOnEvent(Event):
 
     :param client: The bot instance that this event originates from.
     :type client: :class:`bones.bot.BonesBot`
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
     """
     def __init__(self, client):
         self.client = client
@@ -318,12 +443,50 @@ class ChannelTopicChangedEvent(Event):
 
 
 class CTCPVersionEvent(Event):
+    """
+    Fired by the bot after a CTCP VERSION has been received. This
+    event may be used to cancel the CTCP VERSION reply that is
+    usually sent.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: isCancelled
+
+        A boolean that tells the bot whether to stop this event
+        chain and prevent the bot from joining a channel.
+
+    .. attribute:: user
+
+        The user that sent the CTCP VERSION request, as a
+        :class:`bones.event.User` instance.
+    """
     def __init__(self, client, user):
         self.isCancelled = False
+        self.client = client
         self.user = User(user, client)
 
 
 class CTCPPongEvent(Event):
+    """
+    Fired by the bot after a CTCP PING reply has been received. This
+    event may be used to get the result of a :code:`client.ping`
+    request.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: secs
+
+        Time elapsed since the ping request started, in seconds as a float.
+
+    .. attribute:: user
+
+        The user that sent the CTCP VERSION request, as a
+        :class:`bones.event.User` instance.
+    """
     def __init__(self, client, user, secs):
         self.client = client
         self.secs = secs
@@ -331,6 +494,25 @@ class CTCPPongEvent(Event):
 
 
 class IRCUnknownCommandEvent(Event):
+    """
+    Fired whenever the bot encouters an unknown numeric reply and/or command.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: prefix
+
+        The sender of the unknown command.
+
+    .. attribute:: command
+
+        The numeric or string representation of the unknown command.
+
+    .. attribute:: params
+
+        All supplied parameters, as a list.
+    """
     def __init__(self, client, prefix, command, params):
         self.client = client
         self.prefix = prefix
@@ -352,14 +534,14 @@ class PrivmsgEvent(Event):
     """Event fired when the bot receives a message from another user,
     either over a query or from a channel.
 
-    :param client: A `~bones.bot.BonesBot` instance representing the current
+    :param client: A :class:`~bones.bot.BonesBot` instance representing the current
         server connection.
-    :type client: `bones.bot.BonesBot`
+    :type client: :class:`bones.bot.BonesBot`
     :param user: The hostmask of the user who sent this message.
     :type user: string
-    :param channel: A `~bones.event.Target` instance representing the
+    :param channel: A :class:`~bones.event.Target` instance representing the
         communication target this message was sent to.
-    :type channel: `bones.event.Target`
+    :type channel: :class:`bones.event.Target`
     :param msg: The message that was sent to the target.
     :type msg: string
 
@@ -374,13 +556,13 @@ class PrivmsgEvent(Event):
 
     .. attribute:: channel
 
-        A `~bones.bot.Target` instance representing the communication channel
+        A :class:`~bones.bot.Target` instance representing the communication channel
         this message was sent to. This may be an object something that inherits
         `~bones.bot.Target`, like `~bones.bot.Channel` and `~bones.bot.User`.
 
     .. attribute:: user
 
-        A `~bones.bot.User` instance representing the user that sent the
+        A :class:`~bones.bot.User` instance representing the user that sent the
         message.
     """
     def __init__(self, client, user, channel, msg):
@@ -391,30 +573,102 @@ class PrivmsgEvent(Event):
 
 
 class ServerChannelCountEvent(Event):
+    """
+    Fired when the bot receives the :code:`RPL_LUSERCHANNELS` numeric.
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance that represents the client
+        that received this numeric reply.
+
+    .. attribute:: channels
+
+        The server channel count, as an integer.
+    """
     def __init__(self, client, channels):
         self.client = client
         self.channels = channels
 
 
 class ServerCreatedEvent(Event):
+    """
+    Fired when the bot receives the :code:`RPL_CREATED` numeric.
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance that represents the client
+        that received this numeric reply.
+
+    .. attribute:: when
+
+        The creation date, as a string.
+    """
     def __init__(self, client, when):
         self.client = client
         self.when = when
 
 
 class ServerClientInfoEvent(Event):
+    """
+    Fired when the bot receives the :code:`RPL_LUSERCLIENT` numeric.
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance that represents the client
+        that received this numeric reply.
+
+    .. attribute:: info
+
+        The client info, as a string.
+    """
     def __init__(self, client, info):
         self.client = client
         self.info = info
 
 
 class ServerHostInfoEvent(Event):
+    """
+    Fired when the bot receives the :code:`RPL_YOURHOST` numeric.
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance that represents the client
+        that received this numeric reply.
+
+    .. attribute:: info
+
+        The server info, as a string.
+    """
     def __init__(self, client, info):
         self.client = client
         self.info = info
 
 
 class ServerInfoEvent(Event):
+    """
+    Fired when the bot receives the :code:`RPL_MYINFO` numeric.
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance that represents the client
+        that received this numeric reply.
+
+    .. attribute:: servername
+
+        The name of the current server, as a string.
+
+    .. attribute:: version
+
+        The version info of the current server, as a string.
+
+    .. attribute:: umodes
+
+        The supported user modes on the current server.
+
+    .. attribute:: cmodes
+
+        The supported channel modes on the current server.
+    """
     def __init__(self, client, servername, version, umodes, cmodes):
         self.client = client
         self.servername = servername
@@ -424,6 +678,18 @@ class ServerInfoEvent(Event):
 
 
 class ServerLocalInfoEvent(Event):
+    """
+    Fired when the bot receives the :code:`RPL_LUSERME` numeric.
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance that represents the client
+        that received this numeric reply.
+
+    .. attribute:: info
+
+        The server info, as a string.
+    """
     def __init__(self, client, info):
         self.client = client
         self.info = info
@@ -442,14 +708,14 @@ class ServerOpCountEvent(Event):
     :param client: The bot instance for the server this event originated from.
     :type client: :class:`bones.bot.BonesBot`
 
-    .. warning::
-
-        This event is not fully documented
-
     .. attribute:: client
 
         A :class:`bones.bot.BonesBot` instance representing the server connection
         which received this event.
+
+    .. attribute:: ops
+
+        The number of local operators connected to the server, as an integer.
     """
     def __init__(self, client, ops):
         self.client = client
@@ -464,15 +730,15 @@ class ServerSupportEvent(Event):
     :param client: The bot instance for the server this event originated from.
     :type client: :class:`bones.bot.BonesBot`
 
-
-    .. warning::
-
-        This event is not fully documented
-
     .. attribute:: client
 
         A :class:`bones.bot.BonesBot` instance representing the server connection
         which received this event.
+
+    .. attribute:: options
+
+        A list of all the different options the server supports, in strings with
+        the format "KEY=VALUE".
     """
     def __init__(self, client, options):
         self.client = client
