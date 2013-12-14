@@ -11,7 +11,7 @@ def fire(server, event, *args, **kwargs):
     registered to the provided server with the provided arguments.
 
     This may be called by your :term:`Bones module` to create and
-    provide custom event. :code:`*args` and :code:`**kwargs` will
+    provide custom events. :code:`*args` and :code:`**kwargs` will
     be passed on to the event handlers.
 
     :param server: the server tag for the server this event occured
@@ -157,6 +157,22 @@ class User(Target):
         return self.name
     nickname = property(_get_nickname)
 
+    def kick(self, channel, reason=None):
+        """
+        Kicks the user from the specified channel.
+
+        .. attribute:: reason
+
+            A string that will be supplied with the kick as a reason for the
+            kick.
+
+        .. attribute:: channel
+
+            The :class:`~bones.event.Channel` instance that represents the
+            channel the user is to be kicked from.
+        """
+        self.server.kick(channel.name, self.name, reason)
+
     def ping(self):
         """Sends the user a CTCP PING query."""
         self.server.ping(self.name)
@@ -230,6 +246,22 @@ class Channel(Target):
                 else:
                     if mode in self.modes:
                         del self.modes[mode]
+
+    def kick(self, user, reason=None):
+        """
+        Kicks the specified user from the channel.
+
+        .. attribute:: reason
+
+            A string that will be supplied with the kick as a reason for the
+            kick.
+
+        .. attribute:: user
+
+            The :class:`~bones.event.User` instance that represents the user
+            to be kicked.
+        """
+        self.server.kick(self.name, user.name, reason)
 
 
 # ------------------------------------ #
