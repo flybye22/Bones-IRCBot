@@ -86,7 +86,6 @@ class Utilities(Module):
     bs = None
 
     reYouTubeLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
-    reSpotifyLink = re.compile("(https?\:\/\/)?(open|play)\.spotify\.com\/(track|artist|album|user)\/[a-zA-Z0-9]+(\/playlist\/[a-zA-Z0-9]+)?", re.IGNORECASE)
     reTwitterLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
 
     def __init__(self, *args, **kwargs):
@@ -137,43 +136,6 @@ class Utilities(Module):
                     msg = u"↵ ".join(msg.split("\n"))
                     if title:
                         event.channel.msg(msg.encode("utf-8"))
-
-    @bones.event.handler(event=bones.event.PrivmsgEvent)
-    def eventURLInfo_Spotify(self, event):
-        if self.bs is not None:
-            if "open.spotify" in event.msg and "http" in event.msg:
-                data = self.reSpotifyLink.search(event.msg)
-                if data:
-                    url = data.group(0)
-                    html = urlopener.open(url).read()
-                    soup = self.bs(html)
-                    type = data.group(2)
-                    if type == "track":
-                        songtitle = soup.find("meta", {"property":"og:title"})['content'].strip()
-                        artist = soup.find("div", {"class":"player-header"}) \
-                                     .find("h2").find("a").text.strip()
-                        if data:
-                            event.channel.msg(str("\x031,3Spotify\x03 Track \x033::\x03 %s \x033::\x03 %s" % (songtitle, artist)).replace("\n",""))
-                    elif type == "album":
-                        albumtitle = soup.find("meta", {"property":"og:title"})['content'].strip()
-                        artist = soup.find("div", {"class":"player-header"}) \
-                                     .find("h2").find("a").text.strip()
-                        if data:
-                            event.channel.msg(str("\x031,3Spotify\x03 Album \x033::\x03 %s \x033::\x03 %s" % (albumtitle, artist)).replace("\n",""))
-                    elif type == "artist":
-                        artist = soup.find("meta", {"property":"og:title"})['content'].strip()
-                        if data:
-                            event.channel.msg(str("\x031,3Spotify\x03 Artist \x033::\x03 %s" % (artist)).replace("\n",""))
-                    elif type == "user" and data.group(3) is not None:
-                        playlist = soup.find("meta", {"property":"og:title"})['content'].strip()
-                        user = soup.find("div", {"class":"player-header"}) \
-                                     .find("h2").find("a").text.strip()
-                        if data:
-                            event.channel.msg(str("\x031,3Spotify\x03 Playlist \x033::\x03 %s \x033::\x03 %s" % (playlist, user)).replace("\n",""))
-                    elif type == "user":
-                        user = soup.find("meta", {"property":"og:title"})['content'].strip()
-                        if data:
-                            event.channel.msg(str("\x031,3Spotify\x03 User \x033::\x03 %s" % (user)).replace("\n",""))
 
     @bones.event.handler(event=bones.event.CTCPPongEvent)
     def eventPingResponseReceive(self, event):
