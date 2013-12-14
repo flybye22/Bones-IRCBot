@@ -8,16 +8,16 @@ and providing and implementing the API itself.
 A basic Bones module may be made in as few lines as this:
 
 ```python
-    import bones.bot
-    import bones.event
+import bones.bot
+import bones.event
 
-    class Greeter(bones.bot.Module):
+class Greeter(bones.bot.Module):
 
-        @bones.event.handler(event=bones.event.UserJoinEvent)
-        def greet_user(self, event):
-            event.user.msg(
-                "Welcome to %s, %s!" % (event.channel.name, event.user.nickname)
-            )
+    @bones.event.handler(event=bones.event.UserJoinEvent)
+    def greet_user(self, event):
+        event.user.msg(
+            "Welcome to %s, %s!" % (event.channel.name, event.user.nickname)
+        )
 ```
 
 ## Getting started
