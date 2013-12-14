@@ -1,17 +1,30 @@
 # Bones IRC Bot
-A barebones IRC bot made to be easy to configure and write modules for.
+The Bones IRC Bot is a bare bones IRC Bot made with extensibility
+in mind. It provides an easy to use API for writing :term:`Bones modules`
+which is the base of the bot itself. The bot is by default an empty shell
+which does work like managing connections, configurations, error handling
+and providing and implementing the API itself.
+
+A basic Bones module may be made in as few lines as this:
+
+```python
+    import bones.bot
+    import bones.event
+
+    class Greeter(bones.bot.Module):
+
+        @bones.event.handler(event=bones.event.UserJoinEvent)
+        def greet_user(self, event):
+            event.user.msg(
+                "Welcome to %s, %s!" % (event.channel.name, event.user.nickname)
+            )
+```
 
 ## Getting started
-To get started, clone this repo and take a look at the `config.ini` file where you'll find all the settings of the bot. I advice you to make a copy of this file before editing it, and then edit the copy rather than the original.
+If you want to get right down to business you can head over to the [installation guide][howto-install] over at [Read The Docs][docs].
 
-Before you can get started however, there's some dependencies that needs to be installed:
+## Documentation
+The Bones IRC Bot documentation may be found over at [Read The Docs][docs].
 
-- `twisted`
-- Optional, required only for SSL: `pyopenssl`
-- Optional, required by the QDB module: `beautifulsoup4`
-
-When you've installed the dependencies, you can make the bot run by using the following command from the repo root:
-
-`python -m bones <path-to-config>`
-
-Remember to replace `<path-to-config>` with your config file!
+[howto-install]: http://bones-irc-bot.readthedocs.org/en/latest/intro/installation.html
+[docs]: http://bones-irc-bot.readthedocs.org/
