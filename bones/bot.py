@@ -661,9 +661,10 @@ class BonesBotFactory(protocol.ClientFactory):
 
         serverHost = self.settings.get("server", "host")
         serverPort = int(self.settings.get("server", "port"))
-        bind_address = (
-            ( self.settings.get("bot", "bindAddress"), 0 ) if self.settings.get("bot", "bindAddress") else None
-        )
+        if self.settings.get("bot", "bindAddress"): 
+            bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
+        else:
+            bind_address = None
         if self.settings.get("server", "useSSL") == "true":
             log.info("Connecting to server %s:+%i", serverHost, serverPort)
             try:
