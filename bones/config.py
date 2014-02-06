@@ -14,7 +14,7 @@ class BaseConfiguration(object):
             if self._conf.has_option(section, option):
                 return self._conf.get(section, option)
         return None
-    
+
     def rehash(self):
         self._conf.read(file)
 
@@ -62,5 +62,8 @@ class ServerConfiguration(object):
                 if not data == "__name__":
                     self.data[stmp][data] = self.config._conf._sections[section][data.lower()]
 
-    def get(self, section, option):
-        return self.data[section.lower()][option.lower()]
+    def get(self, section, option, default=None):
+        if section.lower() in self.data and option.lower() in self.data[section.lower()]:
+            return self.data[section.lower()][option.lower()]
+        else:
+            return default
