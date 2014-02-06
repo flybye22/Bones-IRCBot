@@ -661,6 +661,10 @@ class BonesBotFactory(protocol.ClientFactory):
 
         serverHost = self.settings.get("server", "host")
         serverPort = int(self.settings.get("server", "port"))
+        if self.settings.get("bot", "bindAddress"): 
+            bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
+        else:
+            bind_address = None
         if self.settings.get("server", "useSSL") == "true":
             log.info("Connecting to server %s:+%i", serverHost, serverPort)
             try:
@@ -674,12 +678,11 @@ class BonesBotFactory(protocol.ClientFactory):
                 log.exception(ex)
                 raise ex
             reactor.connectSSL(
-                serverHost, serverPort, self, ssl.ClientContextFactory()
+                serverHost, serverPort, self, ssl.ClientContextFactory(), bindAddress=bind_address
             )
         else:
             log.info("Connecting to server %s:%i", serverHost, serverPort)
-            reactor.connectTCP(serverHost, serverPort, self)
-
+            reactor.connectTCP(serverHost, serverPort, self, bindAddress=bind_address)
 
 class Module():
     """:term:`Bones module` base class
