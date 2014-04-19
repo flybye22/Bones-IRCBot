@@ -610,7 +610,7 @@ class BonesBotFactory(protocol.ClientFactory):
                 )
                 log.exception(ex)
                 raise ex
-            instance = module(self.settings)
+            instance = module(settings=self.settings, factory=self)
             self.modules.append(instance)
             bones.event.register(instance, self.tag)
             log.info("Loaded module %s", path)
@@ -695,7 +695,13 @@ class Module():
         A :class:`bones.config.ServerConfiguration` instance containing all the
         currently loaded settings for this server factory and all its bots and
         modules.
+
+    .. attribute:: factory
+
+        A :class:`bones.bot.BonesBotFactory` instance representing the factory which
+        instanciates the clients whom this module is used with.
     """
 
-    def __init__(self, settings):
+    def __init__(self, settings, factory):
         self.settings = settings
+        self.factory = factory
