@@ -621,7 +621,7 @@ class BonesBotFactory(protocol.ClientFactory):
                 )
                 log.exception(ex)
                 raise ex
-            instance = module(self.settings)
+            instance = module(settings=self.settings, factory=self)
             self.modules.append(instance)
             bones.event.register(instance, self.tag)
             log.info("Loaded module %s", path)
@@ -672,6 +672,10 @@ class BonesBotFactory(protocol.ClientFactory):
 
         serverHost = self.settings.get("server", "host")
         serverPort = int(self.settings.get("server", "port"))
+        if self.settings.get("bot", "bindAddress"): 
+            bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
+        else:
+            bind_address = None
         if self.settings.get("server", "useSSL") == "true":
             log.info("Connecting to server %s:+%i", serverHost, serverPort)
             try:
@@ -685,12 +689,11 @@ class BonesBotFactory(protocol.ClientFactory):
                 log.exception(ex)
                 raise ex
             reactor.connectSSL(
-                serverHost, serverPort, self, ssl.ClientContextFactory()
+                serverHost, serverPort, self, ssl.ClientContextFactory(), bindAddress=bind_address
             )
         else:
             log.info("Connecting to server %s:%i", serverHost, serverPort)
-            reactor.connectTCP(serverHost, serverPort, self)
-
+            reactor.connectTCP(serverHost, serverPort, self, bindAddress=bind_address)
 
 class Module():
     """:term:`Bones module` base class
@@ -703,7 +706,13 @@ class Module():
         A :class:`bones.config.ServerConfiguration` instance containing all the
         currently loaded settings for this server factory and all its bots and
         modules.
+
+    .. attribute:: factory
+
+        A :class:`bones.bot.BonesBotFactory` instance representing the factory which
+        instanciates the clients whom this module is used with.
     """
 
-    def __init__(self, settings):
+    def __init__(self, settings, factory):
         self.settings = settings
+        self.factory = factory

@@ -11,45 +11,6 @@ import bones.event
 from bones.bot import Module, urlopener
 
 
-##
-# Removes HTML or XML character references and entities from a text string.
-#
-# 404d edit start:
-# Code snippet obtained from http://effbot.org/zone/re-sub.htm#unescape-html
-# This code snippet have been slightly altered to fix some issues with htmlparser and/or htmlentitydefs choking on some UTF-8 characters.
-# 404d edit end
-#
-# @param text The HTML (or XML) source text.
-# @return The plain text, as a Unicode string, if necessary.
-
-def unescape(text):
-    """
-    Turns HTML entities like &amp; into the character it represents
-    (& in this case).
-
-        .. deprecated: Use BeautifulSoup's built-in handling for this.
-    """
-    def fixup(m):
-        text = m.group(0)
-        if text[:2] == "&#":
-            # character reference
-            try:
-                if text[:3] == "&#x":
-                    return unichr(int(text[3:-1], 16))
-                else:
-                    return unichr(int(text[2:-1]))
-            except ValueError:
-                pass
-        else:
-            # named entity
-            try:
-                text = chr(htmlentitydefs.name2codepoint[text[1:-1]])
-            except KeyError:
-                pass
-        return text # leave as is
-    return re.sub(ur"&#?\w+;", fixup, text, re.UNICODE)
-
-
 class QDB(Module):
     try:
         from bs4 import BeautifulSoup
