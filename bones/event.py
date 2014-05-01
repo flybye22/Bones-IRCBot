@@ -137,19 +137,27 @@ class User(Target):
 
         A string of the hostname for the provided hostmask. Given
         the hostmask above, the hostname will be :code:`192.168.0.2`.
+        If the provided hostmask is missing the hostname part, this will
+        be :code:`None`.
 
     .. attribute:: username
 
         A string of the username for the provided hostmask. Given
         the hostmask above, the hostname will be :code:`bot`.
+        If the provided hostmask is missing the username part, this will
+        be :code:`None`.
     """
     def __init__(self, mask, server):
         self.mask = mask
         tmp = mask.split("!")
         Target.__init__(self, tmp[0], server)
-        tmp = tmp[1].split("@")
-        self.username = tmp[0]
-        self.hostname = tmp[1]
+        if len(tmp) > 1:
+            tmp = tmp[1].split("@")
+            self.username = tmp[0]
+            self.hostname = tmp[1]
+        else:
+            self.username = None
+            self.hostname = None
         self.channels = []
         self.user_modes = {}
 
@@ -191,11 +199,17 @@ class Channel(Target):
 
         A list of user instances representing all the users in the
         channel.
+
+    .. attribute:: topic
+
+        An :class:`~bones.event.Topic` instance containing the current
+        topic and the user that wrote it.
     """
     def __init__(self, name, server):
         Target.__init__(self, name, server)
         self.modes = {}
         self.users = []
+        self.topic = None
 
     def __repr__(self):
         return "<Channel %s{%s}>" % (self.name, self.server.factory.tag)
