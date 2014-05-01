@@ -263,6 +263,33 @@ class Channel(Target):
         """
         self.server.kick(self.name, user.name, reason)
 
+    def setTopic(self, topic):
+        """
+        Changes the channel's topic.
+
+        .. attribute:: topic
+
+            A string that will be used as the new topic.
+        """
+        self.server.topic(self.name, topic)
+
+
+class Topic():
+    """Utility class representing a topic in a channel.
+
+    .. attribute:: text
+
+        A string containing the current topic of the channel.
+
+    .. attribute:: user
+
+        An instance of :class:`~bones.event.User` that represents
+        the user that wrote the topic.
+    """
+    def __init__(self, topic, user):
+        self.text = topic
+        self.user = user
+
 
 # ------------------------------------ #
 

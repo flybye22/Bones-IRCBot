@@ -296,12 +296,23 @@ class BonesBot(irc.IRCClient):
         event = bones.event.UserActionEvent(self, user, channel, data)
         bones.event.fire(self.tag, event)
 
-    def topicUpdated(self, user, channelName, newTopic):
+    def irc_TOPIC(self, prefix, params):
+        self.topicUpdated(prefix, params[0], params[1])
+
+    def irc_RPL_TOPIC(self, prefix, params):
+        self.topicUpdated(prefix, params[1], params[2])
+
+    def irc_RPL_NOTOPIC(self, prefix, params):
+        self.topicUpdated(prefix, params[1], "")
+
+    def topicUpdated(self, hostmask, channelName, newTopic):
         channel = self.get_channel(channelName)
+        user = bones.event.User(hostmask, self)
         log.debug(
             "User %s changed topic of %s to %s",
-            user, channel, newTopic
+            user.nickname, channel, newTopic
         )
+        channel.topic = bones.event.Topic(newTopic, user)
         event = bones.event.ChannelTopicChangedEvent(
             self, user, channel, newTopic
         )
