@@ -1062,6 +1062,8 @@ class UserKickedEvent(Event):
 
     :param client: The bot instance where this event occured.
     :type client: :class:`bones.bot.BonesBot`
+    :param channel: The channel instance where this event occured.
+    :type channel: :class:`bones.event.Channel`
     :param kickee: The nickname of the user who was kicked.
     :type kickee: str.
     :param kicker: The nickname of the user who kicked the kickee.
@@ -1069,6 +1071,11 @@ class UserKickedEvent(Event):
     :param message: The message provided with the kick, usually as a reason
         for the kick.
     :type message: str.
+
+    .. attribute:: channel
+
+        A :class:`bones.event.Channel` instance representing the channel
+        where the kick occurred.
 
     .. attribute:: client
 
@@ -1092,6 +1099,7 @@ class UserKickedEvent(Event):
     """
     def __init__(self, client, kickee, channel, kicker, message):
         self.client = client
+        self.channel = channel
         self.kickee = kickee
         self.kicker = kicker
         self.message = message
