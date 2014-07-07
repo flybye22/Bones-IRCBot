@@ -35,14 +35,15 @@ class BonesModuleAlreadyLoadedException(Exception):
 class BonesBot(irc.IRCClient):
     def __init__(self, *args, **kwargs):
         self.channels = {}
-        self.channel_types = []
+        self.users = {}
+        self.channel_types = "#"
         self.channel_modes = {
             "list": [],
             "always": [],
             "set": [],
             "never": [],
         }
-        self.prefixes = []
+        self.prefixes = [("o","@"),("v","+")]
 
     def get_channel(self, name):
         """Returns the Channel object for the given channel."""
