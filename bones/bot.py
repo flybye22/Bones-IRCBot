@@ -165,8 +165,9 @@ class BonesBot(irc.IRCClient):
                 self.channel_modes["never"] = data[3]
                 log.debug("Server channel modes: %s" % self.channel_modes)
 
-            elif option.startswith("CHANTYPES"):
-                self.channel_types = option[len("CHANTYPES"):]
+            elif option.startswith("CHANTYPES="):
+                self.channel_types = option[len("CHANTYPES="):]
+                print self.channel_types
 
         event = bones.event.ServerSupportEvent(self, options)
         bones.event.fire(self.tag, event)
