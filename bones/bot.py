@@ -51,6 +51,13 @@ class BonesBot(irc.IRCClient):
             self.channels[name] = bones.event.Channel(name, self)
         return self.channels[name]
 
+    def get_user(self, name):
+        """Returns the User object for the given nickname if it exists, None if
+        otherwise."""
+        if name not in self.users:
+            return None
+        return self.users[name]
+
     def remove_channel(self, name):
         if name in self.channels:
             del self.channels[name]
