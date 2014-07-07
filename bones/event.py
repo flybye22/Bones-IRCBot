@@ -288,10 +288,6 @@ class Channel(Target):
         self.server.topic(self.name, topic)
 
 
-class ChannelMessageEvent(IrcPrivmsgEvent):
-    pass
-
-
 class Topic():
     """Utility class representing a topic in a channel.
 
@@ -625,6 +621,10 @@ class IrcPrivmsgEvent(Event):
         if isinstance(self.channel, User):
             message = "".join(self.channel.nickname, separator, message)
         self.channel.msg(message)
+
+
+class ChannelMessageEvent(IrcPrivmsgEvent):
+    pass
 
 
 class IRCUnknownCommandEvent(Event):
