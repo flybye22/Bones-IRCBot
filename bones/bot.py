@@ -404,7 +404,7 @@ class BonesBot(irc.IRCClient):
             data = irc.ctcpExtract(msg)
             if data['extended']:
                 # Got CTCP query
-                self.ctcpQery(prefix, data['extended'])
+                self.ctcpQuery(prefix, target.name, data['extended'])
                 return
             elif not data['normal']:
                 return
