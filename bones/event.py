@@ -618,8 +618,8 @@ class IrcPrivmsgEvent(Event):
         :type message: string
         :default message: ": "
         """
-        if isinstance(self.channel, User):
-            message = "".join(self.channel.nickname, separator, message)
+        if not isinstance(self.channel, User):
+            message = "".join([self.user.nickname, separator, message])
         self.channel.msg(message)
 
 
