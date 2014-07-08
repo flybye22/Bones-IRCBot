@@ -902,7 +902,7 @@ class TriggerEvent(PrivmsgEvent):
     .. seealso::
 
         :class:`Event`,
-        :class:`PrivmsgEvent`
+        :class:`ChannelMessageEvent`
 
     .. attribute:: args
 
@@ -915,7 +915,7 @@ class TriggerEvent(PrivmsgEvent):
         message, :attr:`msg`
     """
     def __init__(self, client, args=None, channel=None, user=None, msg=None, match=None):
-        PrivmsgEvent.__init__(self, client, user, channel, msg)
+        ChannelMessageEvent.__init__(self, client, user, channel, msg)
         self.args = args
         self.match = match
 
