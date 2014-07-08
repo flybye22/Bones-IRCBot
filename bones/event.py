@@ -881,7 +881,7 @@ class ServerSupportEvent(Event):
         self.options = options
 
 
-class TriggerEvent(PrivmsgEvent):
+class TriggerEvent(ChannelMessageEvent):
     """An event that is fired by the bot whenever it receives a :code:`PRIVMSG`
     event that starts with a valid trigger prefix and is a valid command.
 
