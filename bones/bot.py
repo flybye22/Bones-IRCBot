@@ -425,7 +425,7 @@ class BonesBot(irc.IRCClient):
                 data.group(1), trigger
             )
             triggerEvent = bones.event.TriggerEvent(
-                self, user=sender, channel=channel, msg=msg, args=args,
+                self, user=sender, channel=target, msg=msg, args=args,
                 match=data
             )
             bones.event.fire(self.tag, "<Trigger: %s>" % trigger.lower(), triggerEvent)
