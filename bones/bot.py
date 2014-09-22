@@ -679,8 +679,10 @@ class BonesBotFactory(protocol.ClientFactory):
         the factory when reconnecting a lost or failed connection.
         """
 
-        serverHost = self.settings.get("server", "host")
         serverPort = int(self.settings.get("server", "port"))
+        serverHost = self.settings.get("server", "host")
+        if ":" in serverHost and not ("[" and "]") in serverHost:
+            serverHost = "[%s]" % self.settings.get("server", "host")
         if self.settings.get("bot", "bindAddress"): 
             bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
         else:
@@ -698,11 +700,11 @@ class BonesBotFactory(protocol.ClientFactory):
                 log.exception(ex)
                 raise ex
             reactor.connectSSL(
-                serverHost, serverPort, self, ssl.ClientContextFactory(), bindAddress=bind_address
+                serverHostserverHost.strip("[]"), serverPort, self, ssl.ClientContextFactory(), bindAddress=bind_address
             )
         else:
             log.info("Connecting to server %s:%i", serverHost, serverPort)
-            reactor.connectTCP(serverHost, serverPort, self, bindAddress=bind_address)
+            reactor.connectTCP(serverHost.strip("[]"), serverPort, self, bindAddress=bind_address)
 
 class Module():
     """:term:`Bones module` base class
