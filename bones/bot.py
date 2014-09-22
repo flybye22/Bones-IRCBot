@@ -682,7 +682,7 @@ class BonesBotFactory(protocol.ClientFactory):
         serverPort = int(self.settings.get("server", "port"))
         serverHost = self.settings.get("server", "host")
         if ":" in serverHost and not ("[" and "]") in serverHost:
-            serverHost = "[%s]" % self.settings.get("server", "host")
+            serverHost = "[%s]" % serverHost
         if self.settings.get("bot", "bindAddress"): 
             bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
         else:
