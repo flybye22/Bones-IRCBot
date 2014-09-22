@@ -683,12 +683,19 @@ class BonesBotFactory(protocol.ClientFactory):
         serverHost = self.settings.get("server", "host")
         if ":" in serverHost and not ("[" and "]") in serverHost:
             serverHost = "[%s]" % serverHost
-        if self.settings.get("bot", "bindAddress"): 
+        log_serverHost = serverHost
+        if ":" in serverHost and not serverHost.startswith("[") and not serverHost.endswith("]"):
+            # IPv6 address, but not enclosed in brackets
+            log_serverHost = "[%s]" % serverHost
+        elif ":" in serverHost and (serverHost.startswith("[") and serverHost.endswith("]")):
+            # IPv6 address and enclosed in brackets
+            serverHost = serverHost[1:-1]
+        if self.settings.get("bot", "bindAddress"):
             bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
         else:
             bind_address = None
         if self.settings.get("server", "useSSL") == "true":
-            log.info("Connecting to server %s:+%i", serverHost, serverPort)
+            log.info("Connecting to server %s:+%i", log_serverHost, serverPort)
             try:
                 from twisted.internet import ssl
             except ImportError:
@@ -700,11 +707,11 @@ class BonesBotFactory(protocol.ClientFactory):
                 log.exception(ex)
                 raise ex
             reactor.connectSSL(
-                serverHostserverHost.strip("[]"), serverPort, self, ssl.ClientContextFactory(), bindAddress=bind_address
+                serverHost, serverPort, self, ssl.ClientContextFactory(), bindAddress=bind_address
             )
         else:
-            log.info("Connecting to server %s:%i", serverHost, serverPort)
-            reactor.connectTCP(serverHost.strip("[]"), serverPort, self, bindAddress=bind_address)
+            log.info("Connecting to server %s:%i", log_serverHost, serverPort)
+            reactor.connectTCP(serverHost, serverPort, self, bindAddress=bind_address)
 
 class Module():
     """:term:`Bones module` base class
