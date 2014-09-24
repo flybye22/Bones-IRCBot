@@ -7,7 +7,7 @@ eventHandlers = {}
 
 
 def fire(server, event, *args, **kwargs):
-    """Call all event handlers with the specified event identifier,
+    """Call all event handlers with the specified event identifier
     registered to the provided server with the provided arguments.
 
     This may be called by your :term:`Bones module` to create and
@@ -99,17 +99,42 @@ def register(obj, server):
 class Target():
     """Utility class providing easy access to methods commonly used against
     targets.
+
+    :param name: a string identifying the message target, as used in protocol
+        message `MSG targetNameHere :Message to be sent"
+    :type name: string
+    :param server: the BonesBot client instance that will be used to send
+        messages to this target.
+    :type server: :class:`bones.bot.BonesBot`
+
+    .. attribute:: name
+
+        String with the target name. This could for example be a nick, a hostname
+        or a channel name.
+
+    .. attribute:: server
+
+        :class:`~bones.bot.BonesBot` instance that will be used to send the
+        messages to the target.
     """
     def __init__(self, name, server):
         self.name = name
         self.server = server
 
     def msg(self, msg):
-        """Sends the provided message to the represented target."""
+        """Sends the provided message to the represented target.
+
+        :param msg: message to be sent.
+        :type msg: string
+        """
         self.server.msg(self.name, msg)
 
     def notice(self, msg):
-        """Sends the provided message as a notice to the represented target."""
+        """Sends the provided message as a notice to the represented target.
+
+        :param msg: message to be sent as a notice
+        :type msg: string
+        """
         self.server.notice(self.name, msg)
 
 
