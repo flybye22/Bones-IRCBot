@@ -7,7 +7,7 @@ import logging.config
 import urllib2
 
 from twisted.words.protocols import irc
-from twisted.internet import protocol, reactor
+from twisted.internet import defer, protocol, reactor
 
 from bones import event
 
@@ -262,8 +262,10 @@ class BonesBotFactory(protocol.ClientFactory):
     protocol = BonesBot
     
     def __init__(self, settings):
+        self.client = None
         self.modules = []
         self.tag = settings.server
+        self.reconnect = True
 
         self.reconnectAttempts = 0
 
@@ -285,6 +287,8 @@ class BonesBotFactory(protocol.ClientFactory):
         modules = settings.get("bot", "modules").split("\n")
         for module in modules:
             self.loadModule(module)
+        self.reconnect = True
+        reactor.addSystemEventTrigger('before', 'shutdown', self.twisted_shutdown)
         event.fire(self.tag, "BotInitialized", self)
 
     def loadModule(self, path, userloaded=False):
@@ -323,14 +327,28 @@ class BonesBotFactory(protocol.ClientFactory):
             ex = InvalidBonesModuleException("Could not load module %s: Module is not a subclass of bones.bot.Module" % path)
             log.exception(ex)
             raise ex
+
+    def buildProtocol(self, addr):
+        if not self.reconnect:
+            raise Exception
+        self.client = protocol.ClientFactory.buildProtocol(self, addr)
+        return self.client
     
     def clientConnectionLost(self, connector, reason):
+        if not self.reconnect:
+            reactor.callLater(0.0, self.shutdown_deferred.callback, 1)
+            return
+        self.client = None
         time = 10.0 * self.reconnectAttempts
         self.reconnectAttempts += 1
         log.info("{%s} Lost connection (%s), reconnecting in %i seconds.", self.tag, reason, time)
         reactor.callLater(time, connector.connect)
     
     def clientConnectionFailed(self, connector, reason):
+        if not self.reconnect:
+            reactor.callLater(0.0, self.shutdown_deferred.callback, 1)
+            return
+        self.client = None
         time = 30.0 * self.reconnectAttempts
         self.reconnectAttempts += 1
         log.info("{%s} Could not connect (%s), reconnecting in %i seconds.", self.tag, reason, time)
@@ -351,6 +369,17 @@ class BonesBotFactory(protocol.ClientFactory):
         else:
             log.info("Connecting to server %s:%i", serverHost, serverPort)
             reactor.connectTCP(serverHost, serverPort, self)
+
+    def twisted_shutdown(self):
+        self.shutdown_deferred = defer.Deferred()
+        self.reconnect = False
+        def shutdown_hook(self):
+            if self.client:
+                self.client.quit("Reactor Shutdown")
+            else:
+                reactor.callLater(0.0, self.shutdown_deferred.callback, 1)
+        reactor.callLater(0.0, shutdown_hook, self)
+        return self.shutdown_deferred
 
 
 class Module():
