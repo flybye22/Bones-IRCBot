@@ -72,6 +72,9 @@ attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
 .. autoclass:: bones.event.BounceEvent
     :show-inheritance:
 
+.. autoclass:: bones.event.ChannelMessageEvent
+    :show-inheritance:
+
 .. autoclass:: bones.event.ChannelTopicChangedEvent
     :show-inheritance:
 
@@ -79,6 +82,9 @@ attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
     :show-inheritance:
 
 .. autoclass:: bones.event.CTCPPongEvent
+    :show-inheritance:
+
+.. autoclass:: bones.event.IrcPrivmsgEvent
     :show-inheritance:
 
 .. autoclass:: bones.event.IRCUnknownCommandEvent
@@ -127,6 +133,9 @@ attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
     :show-inheritance:
 
 .. autoclass:: bones.event.UserKickedEvent
+    :show-inheritance:
+
+.. autoclass:: bones.event.UserMessageEvent
     :show-inheritance:
 
 .. autoclass:: bones.event.UserNickChangedEvent
