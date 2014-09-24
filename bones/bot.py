@@ -375,7 +375,7 @@ class BonesBotFactory(protocol.ClientFactory):
         self.reconnect = False
         def shutdown_hook(self):
             if self.client:
-                self.client.quit("Reactor Shutdown")
+                self.client.quit(self.settings.get("bot", "quitMessage", default="Reactor shutdown"))
             else:
                 reactor.callLater(0.0, self.shutdown_deferred.callback, 1)
         reactor.callLater(0.0, shutdown_hook, self)
