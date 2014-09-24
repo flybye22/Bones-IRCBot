@@ -19,7 +19,8 @@ class QDB(Module):
 
     quotesCache = []
 
-    def __init__(self, settings):
+    def __init__(self, settings, factory):
+        Module.__init__(self, settings, factory)
         self.log = logging.getLogger(".".join([__name__, "QDB"]))
         if not self.BeautifulSoup:
             ex = Exception(
