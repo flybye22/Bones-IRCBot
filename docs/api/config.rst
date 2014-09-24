@@ -1,4 +1,4 @@
-.. _api/bot:
+.. _api/config:
 
 Configuration API
 =================
