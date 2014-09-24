@@ -566,6 +566,67 @@ class CTCPPongEvent(Event):
         self.user = User(user, client)
 
 
+class IrcPrivmsgEvent(Event):
+    """Event fired when the bot receives a message from another user,
+    either over a query or from a channel.
+
+    :param client: A :class:`~bones.bot.BonesBot` instance representing the current
+        server connection.
+    :type client: :class:`bones.bot.BonesBot`
+    :param user: The hostmask of the user who sent this message.
+    :type user: :class:`bones.event.User`
+    :param channel: A :class:`~bones.event.Target` instance representing the
+        communication target this message was sent to.
+    :type channel: :class:`bones.event.Target`
+    :param message: The message that was sent to the target.
+    :type message: string
+
+    .. attribute:: client
+
+        A :class:`~bones.bot.BonesBot` instance representing the server
+        connection which received this event.
+
+    .. attribute:: message
+
+        The message string that was sent.
+
+    .. attribute:: channel
+
+        A :class:`~bones.bot.Target` instance representing the communication channel
+        this message was sent to. This may be an object something that inherits
+        `~bones.bot.Target`, like `~bones.bot.Channel` and `~bones.bot.User`.
+
+    .. attribute:: user
+
+        A :class:`~bones.bot.User` instance representing the user that sent the
+        message.
+    """
+    def __init__(self, client, user, channel, message):
+        self.client = client
+        self.user = user
+        self.channel = channel
+        self.message = message
+
+    def reply(self, message, separator=": "):
+        """Sends `message` to `self.channel`. Prepends the nickname of the target user
+        plus `separator` if `self.channel` is a user instance.
+
+        :param message: The reply to this event.
+        :type message: string
+        :param separator: The separator used between a `~bones.event.User`'s nickname
+            and the provided message.
+        :type message: string
+        :default message: ": "
+        """
+        if not isinstance(self.channel, User):
+            message = "".join([self.user.nickname, separator, message])
+        self.channel.msg(message)
+
+
+class ChannelMessageEvent(IrcPrivmsgEvent):
+    pass
+
+
 class IRCUnknownCommandEvent(Event):
     """
     Fired whenever the bot encouters an unknown numeric reply and/or command.
@@ -606,6 +667,8 @@ class ModeChangedEvent(Event):
 class PrivmsgEvent(Event):
     """Event fired when the bot receives a message from another user,
     either over a query or from a channel.
+
+    .. deprecated:: Use `bones.event.IrcPrivmsgEvent` instead.
 
     :param client: A :class:`~bones.bot.BonesBot` instance representing the current
         server connection.
@@ -818,7 +881,7 @@ class ServerSupportEvent(Event):
         self.options = options
 
 
-class TriggerEvent(PrivmsgEvent):
+class TriggerEvent(ChannelMessageEvent):
     """An event that is fired by the bot whenever it receives a :code:`PRIVMSG`
     event that starts with a valid trigger prefix and is a valid command.
 
@@ -839,7 +902,7 @@ class TriggerEvent(PrivmsgEvent):
     .. seealso::
 
         :class:`Event`,
-        :class:`PrivmsgEvent`
+        :class:`ChannelMessageEvent`
 
     .. attribute:: args
 
@@ -852,7 +915,7 @@ class TriggerEvent(PrivmsgEvent):
         message, :attr:`msg`
     """
     def __init__(self, client, args=None, channel=None, user=None, msg=None, match=None):
-        PrivmsgEvent.__init__(self, client, user, channel, msg)
+        ChannelMessageEvent.__init__(self, client, user, channel, msg)
         self.args = args
         self.match = match
 
@@ -932,6 +995,10 @@ class UserJoinEvent(Event):
         self.client = client
         self.channel = channel
         self.user = User(user, client)
+
+
+class UserMessageEvent(IrcPrivmsgEvent):
+    pass
 
 
 class UserNickChangedEvent(Event):

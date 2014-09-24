@@ -377,17 +377,44 @@ class BonesBot(irc.IRCClient):
         channel.users.append(user)
         bones.event.fire(self.tag, event)
 
-    def privmsg(self, user, channelName, msg):
-        if not [True for x in self.channel_types if x == channelName[0]]:
-            channel = bones.event.User(user, self)
+    def irc_PRIVMSG(self, prefix, params):
+        sender = self.get_user(prefix)
+        if not sender:
+            sender = bones.event.User(prefix, self)
+        # Determine whether this is in a query or a channel
+        # This is simply done by checking whether the first char in
+        # the source name is in the `self.channel_types` array.
+        target = params[0]
+        if target[0] in self.channel_types:
+            target = self.get_channel(target)
+            specificEvent = bones.event.ChannelMessageEvent
         else:
-            channel = self.get_channel(channelName)
-        log.debug(
-            "Event privmsg: %s %s :%s",
-            user, channel, msg
-        )
-        event = bones.event.PrivmsgEvent(self, user, channel, msg)
+            target = self.get_user(prefix)
+            if not target:
+                target = bones.event.User(prefix, self)
+            specificEvent = bones.event.UserMessageEvent
+
+        # Extract the message content from the protocol message.
+        # As the message should be after ":", it should be contained in
+        # the last index in params.
+        msg = params[-1]
+        # Let twisted handle CTCP queries
+        if msg.startswith(irc.X_DELIM):
+            data = irc.ctcpExtract(msg)
+            if data['extended']:
+                # Got CTCP query
+                self.ctcpQuery(prefix, target.name, data['extended'])
+                return
+            elif not data['normal']:
+                return
+        # Send a IrcPrivmsgEvent for this event.
+        event = bones.event.IrcPrivmsgEvent(self, sender, target, msg)
         bones.event.fire(self.tag, event)
+        # Send a UserMessageEvent or ChannelMessageEvent for this event
+        # depending on whether the target is a User or a Channel.
+        event = specificEvent(self, sender, target, msg)
+        bones.event.fire(self.tag, event)
+        # Check if the message contains a trigger call.
         data = self.factory.reCommand.match(msg.decode("utf-8"))
         if data:
             trigger = data.group(2)
@@ -397,7 +424,7 @@ class BonesBot(irc.IRCClient):
                 data.group(1), trigger
             )
             triggerEvent = bones.event.TriggerEvent(
-                self, user=user, channel=channel, msg=msg, args=args,
+                self, user=sender, channel=target, msg=msg, args=args,
                 match=data
             )
             bones.event.fire(self.tag, "<Trigger: %s>" % trigger.lower(), triggerEvent)
