@@ -35,6 +35,9 @@ from both :class:`bones.event.EventWithSource` and
         A :class:`bones.bot.BonesBot` instance representing the server connection
         which received this event.
 
+.. autoclass:: bones.event.IrcPrivmsgEvent
+    :show-inheritance:
+
 Events
 ------
 All events inherits the attributes of its parents in addition to its own
@@ -82,9 +85,6 @@ attribute may not be mentioned in the :class:`UserJoinEvent` documentation.
     :show-inheritance:
 
 .. autoclass:: bones.event.CTCPPongEvent
-    :show-inheritance:
-
-.. autoclass:: bones.event.IrcPrivmsgEvent
     :show-inheritance:
 
 .. autoclass:: bones.event.IRCUnknownCommandEvent
