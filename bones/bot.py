@@ -252,6 +252,18 @@ class BonesBot(irc.IRCClient):
                     log.debug("Received CTCP VERSION query from %s, but event was cancelled by an eventhandler.", user)
             event.fire(self.tag, "CTCPVersion", thisEvent, callback=eventCallback)
 
+    def quit(self, message=None):
+        thisEvent = event.BotPreQuitEvent(self, message)
+        def doQuit(thisEvent):
+            if thisEvent.quitMessage:
+                self.sendLine("QUIT :{}".format(thisEvent.quitMessage))
+            else:
+                self.sendLine("QUIT")
+        # Holy fuck this thing is ages from feature/docs-and-cleanup.
+        # On merge, remember to update this event call to use the call below:
+        #event.fire(self.tag, thisEvent, callback=doQuit)
+        event.fire(self.tag, "BotPreQuitEvent", thisEvent, callback=doQuit)
+
 
 class BonesBotFactory(protocol.ClientFactory):
     sourceURL = "https://github.com/404d/Bones-IRCBot"

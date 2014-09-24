@@ -98,6 +98,12 @@ class BotPreJoinEvent(Event):
         self.channel = channel
 
 
+class BotPreQuitEvent(Event):
+    def __init__(self, client, quitMessage):
+        self.client = client
+        self.quitMessage = quitMessage
+
+
 class PreNicknameInUseError(Event):
     def __init__(self, client, prefix, params):
         self.isCancelled = False
