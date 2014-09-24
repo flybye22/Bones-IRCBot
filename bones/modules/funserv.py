@@ -99,9 +99,9 @@ class UselessResponses(Module):
         self.danceCooldown = {}
         self.danceCooldownTime = None
 
-    @bones.event.handler(event=bones.event.PrivmsgEvent)
+    @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def DANCE(self, event, step=0):
-        msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "", event.msg)
+        msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "", event.message)
         if "DANCE" in msg:
             if not self.danceCooldownTime:
                 self.danceCooldownTime = int(self.settings.get("module.UselessResponses", "dance.cooldown"))

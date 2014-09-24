@@ -67,11 +67,11 @@ class Utilities(Module):
         else:
             event.user.notice("Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
 
-    @bones.event.handler(event=bones.event.PrivmsgEvent)
+    @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_Twitter(self, event):
         if self.bs is not None:
-            if "twitter" in event.msg and "http" in event.msg:
-                data = self.reTwitterLink.search(event.msg)
+            if "twitter" in event.message and "http" in event.message:
+                data = self.reTwitterLink.search(event.message)
                 if data:
                     url = data.group(0)
                     html = urlopener.open(url).read()
@@ -82,11 +82,11 @@ class Utilities(Module):
                     msg = u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s" % (tweet, user)
                     event.channel.msg(msg.encode("utf-8"))
 
-    @bones.event.handler(event=bones.event.PrivmsgEvent)
+    @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_YouTube(self, event):
         if self.bs is not None:
-            if "youtu" in event.msg and "http" in event.msg:
-                data = self.reYouTubeLink.search(event.msg)
+            if "youtu" in event.message and "http" in event.message:
+                data = self.reYouTubeLink.search(event.message)
                 if data:
                     vid = data.group(5)
                     url = "http://youtu.be/%s" % vid
