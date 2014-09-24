@@ -51,11 +51,32 @@ class BonesBot(irc.IRCClient):
             self.channels[name] = bones.event.Channel(name, self)
         return self.channels[name]
 
-    def get_user(self, name):
-        """Returns the User object for the given nickname if it exists, None if
+    def get_user(self, target):
+        """Returns the User object for the given target if it exists, None if
         otherwise."""
+        if "!" in target:
+            name = target.split("!")[0]
+            semiMask = target.split("!")[1].split("@")
+        else:
+            name = target
+            semiMask = None
         if name not in self.users:
-            return None
+            self.users[name] = bones.event.User(target, self)
+        elif semiMask:
+            self.users[name].username = semiMask[0]
+            self.users[name].hostname = semiMask[1]
+        return self.users[name]
+
+    def create_user(self, target):
+        """Prepares a User object for the given target."""
+        if "!" in target:
+            name = target.split("!")[0]
+        else:
+            name = target
+        if name not in self.users:
+            self.users[name] = bones.event.User(target, self)
+        else:
+            raise Exception("Could not create user \"{}\": user already exists".format(target)) 
         return self.users[name]
 
     def remove_channel(self, name):
@@ -248,36 +269,50 @@ class BonesBot(irc.IRCClient):
         event = bones.event.BotNickChangedEvent(self, nick)
         bones.event.fire(self.tag, event)
 
-    def userLeft(self, user, channelName):
+    def userLeft(self, mask, channelName):
         channel = self.get_channel(channelName)
+        user = self.get_user(mask)
+        if not user:
+            user = self.create_user(mask)
         log.debug(
             "User %s parted from %s",
             user, channel
         )
-        event = bones.event.UserPartEvent(self, user, channel)
-        user = event.user
-        if channel in user.channels:
-            user.channels.remove(channel)
-        if user in channel.users:
-            channel.users.remove(user)
-        bones.event.fire(self.tag, event)
 
-    def userQuit(self, user, quitMessage):
+        event = bones.event.UserPartEvent(self, user, channel)
+        def userPartCleanup(event):
+            if event.user in event.channel.users:
+                log.debug("Removing %s from %s", event.user, event.channel)
+                event.channel.users.remove(event.user)
+        bones.event.fire(self.tag, event, callback=userPartCleanup)
+
+    def userQuit(self, mask, quitMessage):
+        user = self.get_user(mask)
+        if not user:
+            user = self.create_user(mask)
         log.debug(
             "User %s quit (Reason: %s)",
             user, quitMessage
         )
         event = bones.event.UserQuitEvent(self, user, quitMessage)
-        bones.event.fire(self.tag, event)
-        user = event.user
-        for channelName in self.channels:
-            channel = self.get_channel(channelName)
-            if event.user in channel.users:
-                channel.users.remove(event.user)
-        del user
+        def userQuitCleanup(event):
+            for channelName in self.channels:
+                channel = self.get_channel(channelName)
+                if event.user in channel.users:
+                    log.debug("Removing %s from %s", event.user, channel)
+                    channel.users.remove(event.user)
+            log.debug("Deleting %s", event.user)
+            del event.user
+        bones.event.fire(self.tag, event, callback=userQuitCleanup)
 
-    def userKicked(self, kickee, channelName, kicker, message):
+    def userKicked(self, kickeeNick, channelName, kickerNick, message):
         channel = self.get_channel(channelName)
+        kickee = self.get_user(kickeeNick)
+        if not kickee:
+            kickee = self.create_user(kickeeNick)
+        kicker = self.get_user(kickerNick)
+        if not kicker:
+            kicker = self.create_user(kickerNick)
         log.debug(
             "User %s was kicked from %s by %s (Reason: %s)",
             kickee, channel, kicker, message
@@ -285,16 +320,12 @@ class BonesBot(irc.IRCClient):
         event = bones.event.UserKickedEvent(
             self, kickee, channel, kicker, message
         )
-        user = None
-        for tmpUser in channel.users:
-            if tmpUser.nickname == kickee:
-                user = tmpUser
-                break
-        if user in channel.users:
-            channel.users.remove(user)
-        if channel in user.channels:
-            user.channels.remove(channel)
-        bones.event.fire(self.tag, event)
+        def userKickedCleanup(event):
+            if event.user in event.channel.users:
+                event.channel.users.remove(event.user)
+            if event.channel in event.user.channels:
+                event.user.channels.remove(event.channel)
+        bones.event.fire(self.tag, event, userKickedCleanup)
 
     def action(self, user, channelName, data):
         channel = self.get_channel(channelName)
@@ -332,12 +363,14 @@ class BonesBot(irc.IRCClient):
             "User %s changed nickname to %s",
             oldname, newname
         )
-        for channelName in self.channels:
-            channel = self.get_channel(channelName)
-            for user in channel.users:
-                if user.nickname == oldname:
-                    user.nickname = newname
-                    break
+        user = self.get_user(oldname)
+        if user:
+            user.nickname = newname
+            self.users[newname] = user
+            del self.users[oldname]
+        else:
+            user = self.create_user(newname)
+
         event = bones.event.UserNickChangedEvent(self, user, oldname, newname)
         bones.event.fire(self.tag, event)
 
@@ -368,9 +401,12 @@ class BonesBot(irc.IRCClient):
 
         bones.event.fire(self.tag, event, callback=doJoin)
 
-    def userJoined(self, user, channelName):
-        log.debug("Event userJoined: %s %s", user, channelName)
-        channel = self.get_channel(channelName)
+    def userJoined(self, mask, channel):
+        channel = self.get_channel(channel)
+        user = self.get_user(mask)
+        if not user:
+            user = self.create_user(mask)
+        log.debug("Event userJoined: %s %s", user, channel)
         event = bones.event.UserJoinEvent(self, channel, user)
         user = event.user
         user.channels.append(channel)
@@ -380,7 +416,7 @@ class BonesBot(irc.IRCClient):
     def irc_PRIVMSG(self, prefix, params):
         sender = self.get_user(prefix)
         if not sender:
-            sender = bones.event.User(prefix, self)
+            sender = self.create_user(prefix)
         # Determine whether this is in a query or a channel
         # This is simply done by checking whether the first char in
         # the source name is in the `self.channel_types` array.
@@ -391,7 +427,7 @@ class BonesBot(irc.IRCClient):
         else:
             target = self.get_user(prefix)
             if not target:
-                target = bones.event.User(prefix, self)
+                target = self.create_user(prefix, self)
             specificEvent = bones.event.UserMessageEvent
 
         # Extract the message content from the protocol message.
@@ -407,6 +443,7 @@ class BonesBot(irc.IRCClient):
                 return
             elif not data['normal']:
                 return
+        log.debug("Message: %s %s: %s", sender, target, msg)
         # Send a IrcPrivmsgEvent for this event.
         event = bones.event.IrcPrivmsgEvent(self, sender, target, msg)
         bones.event.fire(self.tag, event)
@@ -454,13 +491,20 @@ class BonesBot(irc.IRCClient):
         for nick in nicks:
             if nick:
                 mode = [m for m, p in self.prefixes if p == nick[0]]
-                user = bones.event.User("1!2@3", self)
+                if mode:
+                    nickname = nick[len(mode):]
+                else:
+                    nickname = nick
+                user = self.get_user(nickname)
+                if not user:
+                    user = self.create_user(nickname)
                 user.channels.append(channel)
                 channel.users.append(user)
                 if mode:
-                    modes.append(mode[0])
-                    args.append(nick[1:])
-                    user.nickname = nick[1:]
+                    for prefixMode in mode:
+                        modes.append(prefixMode)
+                    args.append(nick[len(mode):])
+                    user.nickname = nick[len(mode):]
                 else:
                     user.nickname = nick
         if modes:

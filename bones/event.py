@@ -101,9 +101,9 @@ class Target():
     targets.
 
     :param name: a string identifying the message target, as used in protocol
-        message `MSG targetNameHere :Message to be sent"
+        message :code:`MSG targetNameHere :Message to be sent"
     :type name: string
-    :param server: the BonesBot client instance that will be used to send
+    :param server: the :class:`~bones.bot.BonesBot` client instance that will be used to send
         messages to this target.
     :type server: :class:`bones.bot.BonesBot`
 
@@ -168,7 +168,7 @@ class User(Target):
     .. attribute:: username
 
         A string of the username for the provided hostmask. Given
-        the hostmask above, the hostname will be :code:`bot`.
+        the hostmask above, the username will be :code:`bot`.
         If the provided hostmask is missing the username part, this will
         be :code:`None`.
     """
@@ -185,6 +185,9 @@ class User(Target):
             self.hostname = None
         self.channels = []
         self.user_modes = {}
+
+    def __repr__(self):
+        return "<User %s!%s@%s{%s}>" % (self.nickname, self.username if self.username else "", self.hostname if self.hostname else "", self.server.tag)
 
     def _get_nickname(self):
         return self.name
@@ -1019,7 +1022,7 @@ class UserJoinEvent(Event):
     def __init__(self, client, channel, user):
         self.client = client
         self.channel = channel
-        self.user = User(user, client)
+        self.user = user
 
 
 class UserMessageEvent(IrcPrivmsgEvent):
@@ -1098,7 +1101,7 @@ class UserPartEvent(Event):
     """
     def __init__(self, client, user, channel):
         self.client = client
-        self.user = User(user, client)
+        self.user = user
         self.channel = channel
 
 class UserQuitEvent(Event):
@@ -1145,7 +1148,7 @@ class UserQuitEvent(Event):
     """
     def __init__(self, client, user, quitMessage):
         self.client = client
-        self.user = User(user, client)
+        self.user = user
         self.quitMessage = quitMessage
 
 
@@ -1157,9 +1160,9 @@ class UserKickedEvent(Event):
     :param channel: The channel instance where this event occured.
     :type channel: :class:`bones.event.Channel`
     :param kickee: The nickname of the user who was kicked.
-    :type kickee: str.
+    :type kickee: :class:`User`
     :param kicker: The nickname of the user who kicked the kickee.
-    :type kicker: str.
+    :type kicker: :class:`User`
     :param message: The message provided with the kick, usually as a reason
         for the kick.
     :type message: str.
@@ -1176,13 +1179,13 @@ class UserKickedEvent(Event):
 
     .. attribute:: kickee
 
-        A string representing the nickname of the user who was kicked by the
-        kicker.
+        A :class:`User` instance representing the nickname of the user who
+        was kicked by the kicker.
 
     .. attribute:: kicker
 
-        A string representing the nickname of the user who kicked the kickee.
-        This is the user who initiated this event.
+        A :class:`User` instance representing the nickname of the user who
+        kicked the kickee. This is the user who initiated this event.
 
     .. attribute:: message
 
