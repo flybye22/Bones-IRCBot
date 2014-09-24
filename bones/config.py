@@ -6,14 +6,14 @@ class BaseConfiguration(object):
         self._conf = SafeConfigParser()
         self._conf.read(file)
 
-    def get(self, section, option, server=None):
+    def get(self, section, option, server=None, default=None):
         if server and self._conf.has_section("server.%s.%s" % (server, section)):
             if self._conf.has_option("server.%s.%s" % (server, section), option):
                 return self._conf.get("server.%s.%s" % (server, section), option)
         if self._conf.has_section(section):
             if self._conf.has_option(section, option):
                 return self._conf.get(section, option)
-        return None
+        return default
     
     def rehash(self):
         self._conf.read(file)
@@ -62,5 +62,18 @@ class ServerConfiguration(object):
                 if not data == "__name__":
                     self.data[stmp][data] = self.config._conf._sections[section][data.lower()]
 
-    def get(self, section, option):
-        return self.data[section.lower()][option.lower()]
+    def get(self, section, option, default=Exception):
+        """Gets a configuration value from the current bot factory's configuration set.
+
+        :param section: Name of the section that the option is defined in.
+        :type section: String
+        :param option: Name of the option to get.
+        :type option: String
+        :param default: Value to be returned if no such option could be found. :code:`default=Exception`
+            results in a compatibility mode with older modules which basically works as an override for the new
+            behaviour, resulting in option retrieval even if there's no such option.
+        """
+        if section.lower() in self.data and option.lower() in self.data[section.lower()] or default is Exception:
+            return self.data[section.lower()][option.lower()]
+        else:
+            return default
