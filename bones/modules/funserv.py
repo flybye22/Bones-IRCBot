@@ -13,8 +13,8 @@ from sqlalchemy import (
 )
 
 from bones import event
-from bones.bot import Module, urlopener
 from bones.modules.storage import Base
+from bones.bot import Module
 
 
 ##
@@ -76,7 +76,7 @@ class QDB(Module):
             else:
                 id = int(event.args[1])
             self.log.debug("Fetching qdb.us/%i", id)
-            data = urlopener.open("http://qdb.us/%i" % id)
+            data = event.client.factory.urlopener.open("http://qdb.us/%i" % id)
             if data.getcode() == 404:
                 event.client.msg(event.channel, str("[QDB #%s] Quote not found." % id))
                 return
@@ -91,7 +91,7 @@ class QDB(Module):
             return
 
         if len(event.args) <= 0 or event.args[0].lower() == "random":
-            self.cacheIfNeeded()
+            self.cacheIfNeeded(event.client.factory)
             quote = self.quotesCache.pop()
             self.sendQuote(event.client, event.channel, quote)
             return
@@ -104,10 +104,10 @@ class QDB(Module):
         for line in lines:
             client.msg(channel, str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
 
-    def cacheIfNeeded(self):
+    def cacheIfNeeded(self, factory):
         if not self.quotesCache:
             self.log.debug("Fetching new quotes from qdb.us/random")
-            html = urlopener.open("http://qdb.us/random").read()
+            html = factory.urlopener.open("http://qdb.us/random").read()
             soup = self.BeautifulSoup(html)
             data = soup.findAll("span", {"class":"qt"})
             for item in data:

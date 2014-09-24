@@ -14,9 +14,6 @@ from bones import event
 
 log = logging.getLogger(__name__)
 
-urlopener = urllib2.build_opener()
-urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.2.0-DEV')]
-
 
 class InvalidBonesModuleException(Exception):
     pass
@@ -266,6 +263,9 @@ class BonesBotFactory(protocol.ClientFactory):
         self.modules = []
         self.tag = settings.server
         self.reconnect = True
+
+        self.urlopener = urllib2.build_opener()
+        self.urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/%s' % self.versionNum)]
 
         self.reconnectAttempts = 0
 
