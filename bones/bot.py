@@ -681,8 +681,6 @@ class BonesBotFactory(protocol.ClientFactory):
 
         serverPort = int(self.settings.get("server", "port"))
         serverHost = self.settings.get("server", "host")
-        if ":" in serverHost and not ("[" and "]") in serverHost:
-            serverHost = "[%s]" % serverHost
         log_serverHost = serverHost
         if ":" in serverHost and not serverHost.startswith("[") and not serverHost.endswith("]"):
             # IPv6 address, but not enclosed in brackets
