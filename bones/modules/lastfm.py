@@ -65,7 +65,6 @@ class Lastfm(Module):
             if "error" in data:
                 self.log.error("API error %i: %s", data["error"], data["message"])
                 event.channel.msg("[Last.fm] An error occurred while processing your request. Please notify the bot manager")
-        log.debug(self.channels)
                 return
             if "track" not in data["recenttracks"] or len(data['recenttracks']['track']) < 1:
                 event.channel.msg(str("%s: No tracks found for user '%s'. Are you sure that the user exists?" % (event.user.nickname, user.username)))
