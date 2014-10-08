@@ -20,6 +20,8 @@ class Lastfm(Module):
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
         self.apikey = self.settings.get("module.Lastfm", "apikey")
+        if not self.apikey:
+            log.error("No API key provided. Last.fm will be disabled.")
         self.log = logging.getLogger(".".join([__name__, "Lastfm"]))
 
     @bones.event.handler(event=storage.DatabaseInitializedEvent)
@@ -28,6 +30,9 @@ class Lastfm(Module):
 
     @bones.event.handler(trigger="lastfm")
     def trigger(self, event):
+        if not self.apikey:
+            log.error("No API key provided. Last.fm will be disabled.")
+            event.channel.msg("[Last.fm] Configuration error; check the logs for more info.")
         argc = len(event.args)
         action = None
         nickname = None

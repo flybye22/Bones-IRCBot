@@ -643,10 +643,18 @@ class BonesBotFactory(protocol.ClientFactory):
             )
         self.realname = settings.get("bot", "realname", default=self.nickname)
         self.username = settings.get("bot", "username")
+        if not self.username:
+            try:
+                import getpass
+                self.username = getpass.getuser()
+            except:
+                pass
+        if not self.username:
+            self.username = "bones"
 
         # Build the trigger regex using the trigger prefixes
         # specified in settings
-        prefixChars = settings.get("bot", "triggerPrefixes").decode("utf-8")
+        prefixChars = settings.get("bot", "triggerPrefixes", default=".!+").decode("utf-8")
         regex = "([%s])([^ ]*)( .+)*?" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
 

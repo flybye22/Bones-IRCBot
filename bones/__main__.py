@@ -3,6 +3,7 @@ import sys
 import os
 import logging
 import subprocess
+import ConfigParser
 
 from twisted.internet import reactor
 
@@ -10,7 +11,15 @@ from bones.bot import BonesBotFactory
 from bones.config import BaseConfiguration
 
 if __name__ == "__main__":
-    logging.config.fileConfig(sys.argv[1])
+    try:
+        logging.config.fileConfig(sys.argv[1])
+    except Exception, ex:
+        import traceback
+        traceback.print_exc()
+        print "-" * 10
+        print "Couldn't load logger configuration:"
+        print ex.message
+        raise SystemExit()
     log = logging.getLogger(__package__)
     settings = BaseConfiguration(sys.argv[1])
 
