@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 urlopener = urllib2.build_opener()
 urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.2.0-DEV')]
 
+removeEmptyElementsFromList = lambda x: [e for e in x if e]
+
 
 class InvalidBonesModuleException(Exception):
     pass
@@ -516,7 +518,7 @@ class BonesBot(irc.IRCClient):
             prefix, command, params
         )
         if command.lower() == "invite" \
-                and self.factory.settings.get("bot", "joinOnInvite") == "true":
+                and self.factory.settings.get("bot", "joinOnInvite", default="false") == "true":
             log.info(
                 "Got invited to %s, joining.",
                 params[1]
@@ -629,15 +631,17 @@ class BonesBotFactory(protocol.ClientFactory):
         self.reconnectAttempts = 0
 
         self.settings = settings
-        self.channels = settings.get("bot", "channel").split("\n")
-        self.nicknames = settings.get("bot", "nickname").split("\n")
+        self.channels = settings.get("bot", "channel", default="").split("\n")
+        self.channels = removeEmptyElementsFromList(self.channels)
+        self.nicknames = settings.get("bot", "nickname", default="").split("\n")
+        self.nicknames = removeEmptyElementsFromList(self.nicknames)
         try:
             self.nickname = self.nicknames.pop(0)
         except IndexError:
             raise InvalidConfigurationException(
-                "No nicknames configured, property bot.nickname is empty"
+                "No nicknames configured, property bot.nickname does not exist or is empty."
             )
-        self.realname = settings.get("bot", "realname")
+        self.realname = settings.get("bot", "realname", default=self.nickname)
         self.username = settings.get("bot", "username")
 
         # Build the trigger regex using the trigger prefixes
@@ -646,7 +650,8 @@ class BonesBotFactory(protocol.ClientFactory):
         regex = "([%s])([^ ]*)( .+)*?" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
 
-        modules = settings.get("bot", "modules").split("\n")
+        modules = settings.get("bot", "modules", default="").split("\n")
+        modules = removeEmptyElementsFromList(modules)
         for module in modules:
             self.loadModule(module)
         bones.event.fire(self.tag, bones.event.BotInitializedEvent(self))
