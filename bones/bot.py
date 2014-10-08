@@ -118,7 +118,7 @@ class BonesBot(irc.IRCClient):
     def signedOn(self):
         self.factory.reconnectAttempts = 0
 
-        if self.factory.settings.get("server", "setBot") == "true":
+        if self.factory.settings.get("server", "setBot", default="false") == "true":
             self.mode(self.nickname, True, "B")
 
         event = bones.event.BotSignedOnEvent(self)
@@ -750,8 +750,10 @@ class BonesBotFactory(protocol.ClientFactory):
         the factory when reconnecting a lost or failed connection.
         """
 
-        serverPort = int(self.settings.get("server", "port"))
+        serverPort = int(self.settings.get("server", "port", default="6667"))
         serverHost = self.settings.get("server", "host")
+        if not serverHost:
+            raise InvalidConfigurationException("Server {} does not contain a `host` option.".format(self.tag))
         log_serverHost = serverHost
         if ":" in serverHost and not serverHost.startswith("[") and not serverHost.endswith("]"):
             # IPv6 address, but not enclosed in brackets
@@ -763,7 +765,7 @@ class BonesBotFactory(protocol.ClientFactory):
             bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
         else:
             bind_address = None
-        if self.settings.get("server", "useSSL") == "true":
+        if self.settings.get("server", "useSSL", default="false") == "true":
             log.info("Connecting to server %s:+%i", log_serverHost, serverPort)
             try:
                 from twisted.internet import ssl
