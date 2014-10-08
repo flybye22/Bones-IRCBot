@@ -195,7 +195,6 @@ class BonesBot(irc.IRCClient):
 
             elif option.startswith("CHANTYPES="):
                 self.channel_types = option[len("CHANTYPES="):]
-                print self.channel_types
 
         event = bones.event.ServerSupportEvent(self, options)
         bones.event.fire(self.tag, event)
