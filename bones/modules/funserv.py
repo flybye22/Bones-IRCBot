@@ -33,7 +33,7 @@ class QDB(Module):
             self.log.error(ex)
             raise ex
         self.settings = settings
-        self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote"))
+        self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote", default=5))
 
     @bones.event.handler(trigger="qdb")
     def cmdQdb(self, event):
@@ -104,7 +104,7 @@ class UselessResponses(Module):
         msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "", event.message)
         if "DANCE" in msg:
             if not self.danceCooldownTime:
-                self.danceCooldownTime = int(self.settings.get("module.UselessResponses", "dance.cooldown"))
+                self.danceCooldownTime = int(self.settings.get("module.UselessResponses", "dance.cooldown", "300"))
             if step == 0:
                 if event.channel.name in self.danceCooldown:
                     last = self.danceCooldown[event.channel.name]

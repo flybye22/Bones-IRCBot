@@ -28,9 +28,21 @@ class Database(Module):
     def new_session(self):
         return self.sessionmaker()
 
+    def get_config(self):
+        config = {}
+        if "storage" in self.settings.data:
+            config = self.settings.data["storage"]
+        if "sqlalchemy.url" not in config:
+            config["sqlalchemy.url"] = "sqlite:///bones.db"
+        if "sqlalchemy.encoding" not in config:
+            config["sqlalchemy.encoding"] = "utf-8"
+        if "sqlalchemy.convert_unicode" not in config:
+            config["sqlalchemy.convert_unicode"] = "true"
+        return config
+
     @bones.event.handler(event=bones.event.BotInitializedEvent)
     def botReady(self, event):
-        self.engine = engine_from_config(self.settings.data["storage"], "sqlalchemy.")
+        self.engine = engine_from_config(self.get_config(), "sqlalchemy.")
         log.debug("Connected to database")
         dbInitEvent = DatabaseInitializedEvent(self)
         bones.event.fire(event.factory.tag, dbInitEvent)

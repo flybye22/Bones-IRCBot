@@ -15,6 +15,8 @@ log = logging.getLogger(__name__)
 urlopener = urllib2.build_opener()
 urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.2.0-DEV')]
 
+removeEmptyElementsFromList = lambda x: [e for e in x if e]
+
 
 class InvalidBonesModuleException(Exception):
     pass
@@ -118,7 +120,7 @@ class BonesBot(irc.IRCClient):
     def signedOn(self):
         self.factory.reconnectAttempts = 0
 
-        if self.factory.settings.get("server", "setBot") == "true":
+        if self.factory.settings.get("server", "setBot", default="false") == "true":
             self.mode(self.nickname, True, "B")
 
         event = bones.event.BotSignedOnEvent(self)
@@ -515,7 +517,7 @@ class BonesBot(irc.IRCClient):
             prefix, command, params
         )
         if command.lower() == "invite" \
-                and self.factory.settings.get("bot", "joinOnInvite") == "true":
+                and self.factory.settings.get("bot", "joinOnInvite", default="false") == "true":
             log.info(
                 "Got invited to %s, joining.",
                 params[1]
@@ -628,24 +630,35 @@ class BonesBotFactory(protocol.ClientFactory):
         self.reconnectAttempts = 0
 
         self.settings = settings
-        self.channels = settings.get("bot", "channel").split("\n")
-        self.nicknames = settings.get("bot", "nickname").split("\n")
+        self.channels = settings.get("bot", "channel", default="").split("\n")
+        self.channels = removeEmptyElementsFromList(self.channels)
+        self.nicknames = settings.get("bot", "nickname", default="").split("\n")
+        self.nicknames = removeEmptyElementsFromList(self.nicknames)
         try:
             self.nickname = self.nicknames.pop(0)
         except IndexError:
             raise InvalidConfigurationException(
-                "No nicknames configured, property bot.nickname is empty"
+                "No nicknames configured, property bot.nickname does not exist or is empty."
             )
-        self.realname = settings.get("bot", "realname")
+        self.realname = settings.get("bot", "realname", default=self.nickname)
         self.username = settings.get("bot", "username")
+        if not self.username:
+            try:
+                import getpass
+                self.username = getpass.getuser()
+            except:
+                pass
+        if not self.username:
+            self.username = "bones"
 
         # Build the trigger regex using the trigger prefixes
         # specified in settings
-        prefixChars = settings.get("bot", "triggerPrefixes").decode("utf-8")
+        prefixChars = settings.get("bot", "triggerPrefixes", default=".!+").decode("utf-8")
         regex = "([%s])([^ ]*)( .+)*?" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
 
-        modules = settings.get("bot", "modules").split("\n")
+        modules = settings.get("bot", "modules", default="").split("\n")
+        modules = removeEmptyElementsFromList(modules)
         for module in modules:
             self.loadModule(module)
         bones.event.fire(self.tag, bones.event.BotInitializedEvent(self))
@@ -749,8 +762,10 @@ class BonesBotFactory(protocol.ClientFactory):
         the factory when reconnecting a lost or failed connection.
         """
 
-        serverPort = int(self.settings.get("server", "port"))
+        serverPort = int(self.settings.get("server", "port", default="6667"))
         serverHost = self.settings.get("server", "host")
+        if not serverHost:
+            raise InvalidConfigurationException("Server {} does not contain a `host` option.".format(self.tag))
         log_serverHost = serverHost
         if ":" in serverHost and not serverHost.startswith("[") and not serverHost.endswith("]"):
             # IPv6 address, but not enclosed in brackets
@@ -762,7 +777,7 @@ class BonesBotFactory(protocol.ClientFactory):
             bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
         else:
             bind_address = None
-        if self.settings.get("server", "useSSL") == "true":
+        if self.settings.get("server", "useSSL", default="false") == "true":
             log.info("Connecting to server %s:+%i", log_serverHost, serverPort)
             try:
                 from twisted.internet import ssl
