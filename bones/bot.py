@@ -678,8 +678,8 @@ class BonesBotFactory(protocol.ClientFactory):
             :class:`~bones.bot.NoSuchBonesException`
         """
         tmppath = path.split(".")
-        package = ".".join(tmppath[:len(tmppath)-1])
-        name = tmppath[len(tmppath)-1:len(tmppath)][0]
+        package = ".".join(tmppath[:-1])
+        name = tmppath[-1]
 
         try:
             module = __import__(package, fromlist=[name])
