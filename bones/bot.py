@@ -9,8 +9,9 @@ from twisted.internet import protocol, reactor
 
 import bones.event
 
-
+logging.addLevelName(2, "RAW")
 log = logging.getLogger(__name__)
+log.raw = lambda *args: log.log(2, *args)
 
 urlopener = urllib2.build_opener()
 urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.2.0-DEV')]
@@ -588,6 +589,14 @@ class BonesBot(irc.IRCClient):
             bones.event.fire(
                 self.tag, event, callback=eventCallback
             )
+
+    def sendLine(self, line):
+        log.raw(line)
+        irc.IRCClient.sendLine(self, line)
+
+    def lineReceived(self, line):
+        log.raw(line)
+        irc.IRCClient.lineReceived(self, line)
 
 
 class BonesBotFactory(protocol.ClientFactory):
