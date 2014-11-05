@@ -2,6 +2,9 @@
 from ConfigParser import SafeConfigParser
 
 class BaseConfiguration(object):
+    """
+    Global configuration instance.
+    """
     def __init__(self, file):
         self._conf = SafeConfigParser()
         self._conf.read(file)
@@ -22,6 +25,12 @@ class BaseConfiguration(object):
         return ServerConfiguration(server, self)
 
 class ServerConfiguration(object):
+    """
+    Server configuration instance. Makes a copy of the global configuration
+    and limits it to the scope of this server; overrides gets expanded
+    and replaces their parent options. This gets passed to bot factories and
+    subsequently to modules.
+    """
     def __init__(self, server, configuration):
         self.config = configuration
         self.server = server

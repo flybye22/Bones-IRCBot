@@ -38,6 +38,8 @@ class BonesBot(irc.IRCClient):
     def __init__(self, *args, **kwargs):
         self.channels = {}
         self.users = {}
+        # Prepare some server implementation details, to be filled out later
+        # from ISUPPORT options.
         self.channel_types = "#"
         self.channel_modes = {
             "list": [],
@@ -78,10 +80,11 @@ class BonesBot(irc.IRCClient):
         if name not in self.users:
             self.users[name] = bones.event.User(target, self)
         else:
-            raise Exception("Could not create user \"{}\": user already exists".format(target)) 
+            raise Exception("Could not create user \"{}\": user already exists".format(target))
         return self.users[name]
 
     def remove_channel(self, name):
+        # TODO: Remove the channel from all user instances.
         if name in self.channels:
             del self.channels[name]
 
@@ -118,8 +121,13 @@ class BonesBot(irc.IRCClient):
     tag = property(_get_tag)
 
     def signedOn(self):
+        """Event called when the bot receives a registration confirmation from
+        the server"""
+        # We've connected to the server, reset this so that when we disconnect
+        # we'll immediately try to reconnect.
         self.factory.reconnectAttempts = 0
 
+        # InspIRCd mode that shows "user :is a bot" in whois.
         if self.factory.settings.get("server", "setBot", default="false") == "true":
             self.mode(self.nickname, True, "B")
 
@@ -127,6 +135,7 @@ class BonesBot(irc.IRCClient):
         bones.event.fire(self.tag, event)
         log.info("Signed on as %s.", self.nickname)
 
+        # Join all the channels defined in our config.
         for channel in self.factory.channels:
             self.join(channel)
 
@@ -236,6 +245,7 @@ class BonesBot(irc.IRCClient):
         bones.event.fire(self.tag, event)
 
     def modeChanged(self, user, target, set, modes, args):
+        # TODO: Ditch this and override irc_MODE
         if set:
             setString = "+"
         else:
@@ -267,6 +277,7 @@ class BonesBot(irc.IRCClient):
             "Changed nick to %s",
             nick
         )
+        # TODO: Update client's nickname field
         event = bones.event.BotNickChangedEvent(self, nick)
         bones.event.fire(self.tag, event)
 
@@ -348,6 +359,7 @@ class BonesBot(irc.IRCClient):
 
     def topicUpdated(self, hostmask, channelName, newTopic):
         channel = self.get_channel(channelName)
+        # TODO: Use self.users and utility methods
         user = bones.event.User(hostmask, self)
         log.debug(
             "User %s changed topic of %s to %s",
@@ -453,6 +465,7 @@ class BonesBot(irc.IRCClient):
         event = specificEvent(self, sender, target, msg)
         bones.event.fire(self.tag, event)
         # Check if the message contains a trigger call.
+        # TODO: Bail if UserMessageEvent
         data = self.factory.reCommand.match(msg.decode("utf-8"))
         if data:
             trigger = data.group(2)
@@ -491,6 +504,8 @@ class BonesBot(irc.IRCClient):
         args = []
         for nick in nicks:
             if nick:
+                # TODO: Iterate over nickname until a character that isn't in
+                # self.prefixes is found.
                 mode = [m for m, p in self.prefixes if p == nick[0]]
                 if mode:
                     nickname = nick[len(mode):]
@@ -516,6 +531,7 @@ class BonesBot(irc.IRCClient):
             "Unknown RAW: %s; %s; %s",
             prefix, command, params
         )
+        # TODO: Implement as irc_INVITE
         if command.lower() == "invite" \
                 and self.factory.settings.get("bot", "joinOnInvite", default="false") == "true":
             log.info(
