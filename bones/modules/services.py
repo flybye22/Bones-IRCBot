@@ -28,7 +28,7 @@ class NickServ(Module):
         if self._disabled: return
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice", default="true") == "true" \
-                and "IDENTIFY" in event.message \
+                and "IDENTIFY" in event.message.upper() \
                 and bones.event.User(event.user, event.client).nickname.lower() == "nickserv":
             # We're good to go!
             log.info("Identifying with NickServ (triggered by notice)")
