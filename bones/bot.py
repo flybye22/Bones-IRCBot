@@ -35,7 +35,7 @@ class BonesModuleAlreadyLoadedException(Exception):
 
 
 class BonesBot(irc.IRCClient):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         self.channels = {}
         self.users = {}
         # Prepare some server implementation details, to be filled out later
@@ -813,7 +813,7 @@ class BonesBotFactory(protocol.ClientFactory):
             log.info("Connecting to server %s:%i", log_serverHost, serverPort)
             reactor.connectTCP(serverHost, serverPort, self, bindAddress=bind_address)
 
-class Module():
+class Module(object):
     """:term:`Bones module` base class
 
     :param settings: The settings for the current server factory.

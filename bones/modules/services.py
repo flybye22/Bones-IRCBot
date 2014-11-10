@@ -6,8 +6,8 @@ from bones.bot import Module
 
 
 class NickServ(Module):
-    def __init__(self, *args, **kwargs):
-        Module.__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super(self.__class__, self).__init__(self, **kwargs)
         self._disabled = True
         if not self.settings.get("services", "nickserv.password"):
             log.error("Configuration doesn't contain a NickServ password. Please add `nickserv.password` to `[services]` and make it a non-empty value.")
@@ -41,8 +41,8 @@ class NickServ(Module):
 
 class HostServ(Module):
 
-    def __init__(self, *args, **kwargs):
-        Module.__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super(self.__class__, self).__init__(self, **kwargs)
         self.channelJoinQueue = []
         self.haveVhost = False
         self.haveIdentified = False

@@ -9,8 +9,8 @@ from bones.bot import Module, urlopener
 
 
 class NickFix(Module):
-    def __init__(self, *args, **kwargs):
-        Module.__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super(self.__class__, self).__init__(**kwargs)
         self.nickIWant = None
         self.isRecovering = False
 
@@ -49,8 +49,8 @@ class Utilities(Module):
     reYouTubeLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
     reTwitterLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
 
-    def __init__(self, *args, **kwargs):
-        Module.__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super(self.__class__, self).__init__(**kwargs)
         self.ongoingPings = {}
         try:
             from bs4 import BeautifulSoup

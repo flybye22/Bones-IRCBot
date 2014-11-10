@@ -175,7 +175,7 @@ class User(Target):
     def __init__(self, mask, server):
         self.mask = mask
         tmp = mask.split("!")
-        Target.__init__(self, tmp[0], server)
+        super(self.__class__, self).__init__(tmp[0], server)
         if len(tmp) > 1:
             tmp = tmp[1].split("@")
             self.username = tmp[0]
@@ -234,7 +234,7 @@ class Channel(Target):
         topic and the user that wrote it.
     """
     def __init__(self, name, server):
-        Target.__init__(self, name, server)
+        super(self.__class__, self).__init__(name, server)
         self.modes = {}
         self.users = []
         self.topic = None
@@ -943,7 +943,7 @@ class TriggerEvent(ChannelMessageEvent):
         message, :attr:`msg`
     """
     def __init__(self, client, args=None, channel=None, user=None, msg=None, match=None):
-        ChannelMessageEvent.__init__(self, client, user, channel, msg)
+        super(self.__class__, self).__init__(client, user, channel, msg)
         self.args = args
         self.match = match
 

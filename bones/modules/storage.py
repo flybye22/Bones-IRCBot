@@ -20,8 +20,8 @@ Base = declarative_base()
 
 class Database(Module):
 
-    def __init__(self, settings):
-        self.settings = settings
+    def __init__(self, **args):
+        super(self.__class__, self).__init__(**args)
         self.sessionmaker = None
         self.engine = None
 

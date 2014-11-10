@@ -17,8 +17,8 @@ from bones.modules.utilities import unescape
 
 class Lastfm(Module):
 
-    def __init__(self, *args, **kwargs):
-        Module.__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super(self.__class__, **kwargs)
         self.apikey = self.settings.get("module.Lastfm", "apikey")
         if not self.apikey:
             log.error("No API key provided. Last.fm will be disabled.")

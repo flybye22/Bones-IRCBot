@@ -19,8 +19,8 @@ class QDB(Module):
 
     quotesCache = []
 
-    def __init__(self, settings, factory):
-        Module.__init__(self, settings, factory)
+    def __init__(self, **kwargs):
+        super(self.__class__, self).__init__(**kwargs)
         self.log = logging.getLogger(".".join([__name__, "QDB"]))
         if not self.BeautifulSoup:
             ex = Exception(
@@ -93,8 +93,8 @@ class QDB(Module):
 
 
 class UselessResponses(Module):
-    def __init__(self, *args, **kwargs):
-        Module.__init__(self, *args, **kwargs)
+    def __init__(self, **kwargs):
+        super(self.__class__, self).__init__(**kwargs)
 
         self.danceCooldown = {}
         self.danceCooldownTime = None
