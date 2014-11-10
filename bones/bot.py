@@ -281,7 +281,7 @@ class BonesBot(irc.IRCClient):
         event = bones.event.BotNickChangedEvent(self, nick)
         bones.event.fire(self.tag, event)
 
-    def userLeft(self, mask, channelName):
+    def userLeft(self, mask, channelName, partMessage):
         channel = self.get_channel(channelName)
         user = self.get_user(mask)
         if not user:
@@ -569,9 +569,10 @@ class BonesBot(irc.IRCClient):
     def irc_PART(self, prefix, params):
         nick = prefix.split("!")[0]
         if nick.lower() == self.nickname.lower():
-            self.left(params[-1])
+            self.left(params[0])
         else:
-            self.userLeft(prefix, params[-1])
+            msg = params[-1] if len(params) > 1 else None
+            self.userLeft(prefix, params[0], msg)
 
     def irc_QUIT(self, prefix, params):
         self.userQuit(prefix, params[0])
