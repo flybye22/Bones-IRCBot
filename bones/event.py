@@ -1,4 +1,6 @@
+import inspect
 import logging
+
 from twisted.internet import threads
 
 log = logging.getLogger(__name__)
@@ -86,14 +88,14 @@ def register(obj, server):
     :type server: :class:`bones.bot.BonesBot`
     """
     klass = obj.__class__
-    for name, item in klass.__dict__.iteritems():
-        if getattr(item, '_event', None) is not None:
-            for event in item._event:
+    for name, method in inspect.getmembers(klass, lambda x: inspect.ismethod(x) or inspect.isfunction(x)):
+        if getattr(method, '_event', None) is not None:
+            for event in method._event:
                 if server.lower() not in eventHandlers:
                     eventHandlers[server.lower()] = {}
                 if event not in eventHandlers[server.lower()]:
                     eventHandlers[server.lower()][event] = []
-                eventHandlers[server.lower()][event].append({"c": obj, "f": item})
+                eventHandlers[server.lower()][event].append({"c": obj, "f": method})
 
 
 class Target():
