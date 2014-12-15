@@ -791,7 +791,7 @@ class BonesBotFactory(protocol.ClientFactory):
             # IPv6 address and enclosed in brackets
             serverHost = serverHost[1:-1]
         if self.settings.get("bot", "bindAddress"):
-            bind_address = ( self.settings.get("bot", "bindAddress"), 0 )
+            bind_address = (self.settings.get("bot", "bindAddress"), 0)
         else:
             bind_address = None
         if self.settings.get("server", "useSSL", default="false") == "true":
@@ -818,6 +818,8 @@ class Module():
 
     :param settings: The settings for the current server factory.
     :type settings: :class:`bones.config.ServerConfiguration`
+    :param factory: The bot factory that instanciated this module.
+    :type factory: :class:`bones.bot.BonesBotFactory`
 
     .. attribute:: settings
 

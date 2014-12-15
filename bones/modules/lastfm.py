@@ -1,3 +1,4 @@
+# -*- encoding: utf-8 -*-
 from datetime import datetime
 import json
 import logging
@@ -12,7 +13,6 @@ from sqlalchemy import (
 import bones.event
 from bones.bot import Module, urlopener
 from bones.modules import storage
-from bones.modules.utilities import unescape
 
 
 class Lastfm(Module):
@@ -20,8 +20,6 @@ class Lastfm(Module):
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
         self.apikey = self.settings.get("module.Lastfm", "apikey")
-        if not self.apikey:
-            log.error("No API key provided. Last.fm will be disabled.")
         self.log = logging.getLogger(".".join([__name__, "Lastfm"]))
 
     @bones.event.handler(event=storage.DatabaseInitializedEvent)
@@ -30,9 +28,6 @@ class Lastfm(Module):
 
     @bones.event.handler(trigger="lastfm")
     def trigger(self, event):
-        if not self.apikey:
-            log.error("No API key provided. Last.fm will be disabled.")
-            event.channel.msg("[Last.fm] Configuration error; check the logs for more info.")
         argc = len(event.args)
         action = None
         nickname = None
@@ -80,8 +75,12 @@ class Lastfm(Module):
             if "@attr" in track and "nowplaying" in track["@attr"] and track["@attr"]["nowplaying"].lower() == "true":
                 loved = ""
                 if "loved" in track and track["loved"] == "1":
-                    loved = "\x034<3\x03"
-                msg = "'%s' is now playing: %s - %s %s" % (user.username, artist, tracktitle, loved)
+                    loved = u"\x03♥︎\x03"
+                try:
+                    pass
+                except:
+                    pass
+                msg = "'%s' is now playing: %s - %s %s" % (user.username, tracktitle, artist, loved)
             else:
                 timestamp = track["date"]["uts"]
                 date = []
@@ -111,8 +110,8 @@ class Lastfm(Module):
                 else:
                     suffix = ""
                 date.append("%s minute%s" % (minutes, suffix))
-                msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), artist, tracktitle)
-            event.channel.msg(str(unescape(msg).encode("utf-8")))
+                msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), tracktitle, artist)
+            event.channel.msg(str(msg.encode("utf-8")))
             return
 
         elif action == "-r":
