@@ -75,7 +75,7 @@ class Lastfm(Module):
             if "@attr" in track and "nowplaying" in track["@attr"] and track["@attr"]["nowplaying"].lower() == "true":
                 loved = ""
                 if "loved" in track and track["loved"] == "1":
-                    loved = u"\x03♥︎\x03"
+                    loved = u"\x034♥︎\x03"
                 try:
                     pass
                 except:
