@@ -80,7 +80,7 @@ class Lastfm(Module):
                     pass
                 except:
                     pass
-                msg = "'%s' is now playing: %s - %s %s" % (user.username, tracktitle, artist, loved)
+                msg = "'%s' is now playing: %s - %s %s" % (user.username, artist, tracktitle, loved)
             else:
                 timestamp = track["date"]["uts"]
                 date = []
@@ -110,7 +110,7 @@ class Lastfm(Module):
                 else:
                     suffix = ""
                 date.append("%s minute%s" % (minutes, suffix))
-                msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), tracktitle, artist)
+                msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), artist, tracktitle)
             event.channel.msg(str(msg.encode("utf-8")))
             return
 
