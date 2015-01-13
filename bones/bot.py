@@ -670,8 +670,8 @@ class BonesBotFactory(protocol.ClientFactory):
 
         # Build the trigger regex using the trigger prefixes
         # specified in settings
-        prefixChars = settings.get("bot", "triggerPrefixes", default=".!+").decode("utf-8")
-        regex = "([%s])([^ ]*)( .+)*?" % prefixChars
+        prefixChars = settings.get("bot", "triggerPrefixes", default="+").decode("utf-8")
+        regex = "^([%s])([^ ]*)( .+)*?$" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
 
         modules = settings.get("bot", "modules", default="").split("\n")
