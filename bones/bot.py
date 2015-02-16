@@ -86,8 +86,12 @@ class BonesBot(irc.IRCClient):
 
     def remove_channel(self, name):
         # TODO: Remove the channel from all user instances.
-        if name in self.channels:
-            del self.channels[name]
+        if name not in self.channels:
+            return
+        channel = self.channels[name]
+        for user in channel.users:
+            user.channels.remove(channel)
+        del self.channels[name]
 
     def _get_nickname(self):
         return self.factory.nickname
@@ -383,6 +387,18 @@ class BonesBot(irc.IRCClient):
         user = self.get_user(oldname)
         if user:
             user.nickname = newname
+            # Set the target name too. This is needed for user.msg and the like
+            user.name = newname
+            # Fix the prefix mode listings
+            for channelname in self.channels:
+                channel = self.channels[channelname]
+                for (mode, prefix) in self.prefixes:
+                    if mode in channel.modes and \
+                            oldname in channel.modes[mode]:
+                        channel.modes[mode].remove(oldname)
+                        channel.modes[mode].append(newname)
+                        log.debug("Mode refresh in %s: -%s+%s %s %s",
+                                  channel, mode, mode, oldname, newname)
             self.users[newname] = user
             del self.users[oldname]
         else:
@@ -583,6 +599,13 @@ class BonesBot(irc.IRCClient):
     def irc_QUIT(self, prefix, params):
         self.userQuit(prefix, params[0])
 
+    def left(self, channel):
+        def callback(event):
+            self.remove_channel(event.channel)
+
+        event = bones.event.BotPartEvent(self, channel)
+        bones.event.fire(self.tag, event, callback=callback)
+
     def ctcpQuery_VERSION(self, user, channel, data):
         if data is None and self.versionName:
             event = bones.event.CTCPVersionEvent(self, user)
@@ -727,7 +750,7 @@ class BonesBotFactory(protocol.ClientFactory):
                 "(AttributeException: %s)" %
 
                 (path, ex_raised.message)
-                )
+            )
             log.exception(ex)
             raise ex
 

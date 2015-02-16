@@ -480,6 +480,28 @@ class BotNickChangedEvent(Event):
         self.nick = nick
 
 
+class BotPartEvent(Event):
+    """An event that is fired whenever the bot leaves a channel.
+
+    :param client: The bot instance that this event originated from.
+    :type client: :class:`bones.bot.BonesBot`
+    :param channel: The name of the channel the bot parted from.
+    :type channel: str.
+
+    .. attribute:: channel
+
+        A string representation of the name of the channel the bot parted from.
+
+    .. attribute:: client
+
+        The :class:`bones.bot.BonesBot` instance representing the connection
+        to the server that this event originated from.
+    """
+    def __init__(self, client, channel):
+        self.client = client
+        self.channel = channel
+
+
 class BotPreJoinEvent(Event):
     """
     Called by the bot before the bot joins a channel. This may be
@@ -1107,7 +1129,8 @@ class UserPartEvent(Event):
 
     .. attribute:: channel
 
-        A string representation of the name of the channel the parted from.
+        A string representation of the name of the channel the user parted
+        from.
 
     .. attribute:: client
 
