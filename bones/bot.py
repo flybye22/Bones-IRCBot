@@ -47,7 +47,7 @@ class BonesBot(irc.IRCClient):
             "set": [],
             "never": [],
         }
-        self.prefixes = [("o","@"),("v","+")]
+        self.prefixes = [("o", "@"), ("v", "+")]
 
     def get_channel(self, name):
         """Returns the Channel object for the given channel."""
@@ -80,7 +80,8 @@ class BonesBot(irc.IRCClient):
         if name not in self.users:
             self.users[name] = bones.event.User(target, self)
         else:
-            raise Exception("Could not create user \"{}\": user already exists".format(target))
+            error = "Could not create user \"{}\": user already exists"
+            raise Exception(error.format(target))
         return self.users[name]
 
     def remove_channel(self, name):
@@ -128,7 +129,8 @@ class BonesBot(irc.IRCClient):
         self.factory.reconnectAttempts = 0
 
         # InspIRCd mode that shows "user :is a bot" in whois.
-        if self.factory.settings.get("server", "setBot", default="false") == "true":
+        if self.factory.settings.get("server", "setBot", default="false") \
+                == "true":
             self.mode(self.nickname, True, "B")
 
         event = bones.event.BotSignedOnEvent(self)
@@ -291,11 +293,11 @@ class BonesBot(irc.IRCClient):
             user, channel
         )
 
-        event = bones.event.UserPartEvent(self, user, channel)
         def userPartCleanup(event):
             if event.user in event.channel.users:
                 log.debug("Removing %s from %s", event.user, event.channel)
                 event.channel.users.remove(event.user)
+        event = bones.event.UserPartEvent(self, user, channel)
         bones.event.fire(self.tag, event, callback=userPartCleanup)
 
     def userQuit(self, mask, quitMessage):
@@ -306,7 +308,7 @@ class BonesBot(irc.IRCClient):
             "User %s quit (Reason: %s)",
             user, quitMessage
         )
-        event = bones.event.UserQuitEvent(self, user, quitMessage)
+
         def userQuitCleanup(event):
             for channelName in self.channels:
                 channel = self.get_channel(channelName)
@@ -315,6 +317,7 @@ class BonesBot(irc.IRCClient):
                     channel.users.remove(event.user)
             log.debug("Deleting %s", event.user)
             del event.user
+        event = bones.event.UserQuitEvent(self, user, quitMessage)
         bones.event.fire(self.tag, event, callback=userQuitCleanup)
 
     def userKicked(self, kickeeNick, channelName, kickerNick, message):
@@ -329,14 +332,15 @@ class BonesBot(irc.IRCClient):
             "User %s was kicked from %s by %s (Reason: %s)",
             kickee, channel, kicker, message
         )
-        event = bones.event.UserKickedEvent(
-            self, kickee, channel, kicker, message
-        )
+
         def userKickedCleanup(event):
             if event.user in event.channel.users:
                 event.channel.users.remove(event.user)
             if event.channel in event.user.channels:
                 event.user.channels.remove(event.channel)
+        event = bones.event.UserKickedEvent(
+            self, kickee, channel, kicker, message
+        )
         bones.event.fire(self.tag, event, userKickedCleanup)
 
     def action(self, user, channelName, data):
@@ -478,7 +482,8 @@ class BonesBot(irc.IRCClient):
                 self, user=sender, channel=target, msg=msg, args=args,
                 match=data
             )
-            bones.event.fire(self.tag, "<Trigger: %s>" % trigger.lower(), triggerEvent)
+            bones.event.fire(self.tag, "<Trigger: %s>" % trigger.lower(),
+                             triggerEvent)
 
     def pong(self, user, secs):
         log.debug(
@@ -532,14 +537,15 @@ class BonesBot(irc.IRCClient):
             prefix, command, params
         )
         # TODO: Implement as irc_INVITE
-        if command.lower() == "invite" \
-                and self.factory.settings.get("bot", "joinOnInvite", default="false") == "true":
+        if command.lower() == "invite" and self.factory.settings.get(
+                "bot", "joinOnInvite", default="false") == "true":
             log.info(
                 "Got invited to %s, joining.",
                 params[1]
             )
             self.join(params[1])
-        event = bones.event.IRCUnknownCommandEvent(self, prefix, command, params)
+        event = bones.event.IRCUnknownCommandEvent(self, prefix, command,
+                                                   params)
         bones.event.fire(self.tag, event)
 
     def irc_ERR_NICKNAMEINUSE(self, prefix, params):
@@ -649,13 +655,15 @@ class BonesBotFactory(protocol.ClientFactory):
         self.settings = settings
         self.channels = settings.get("bot", "channel", default="").split("\n")
         self.channels = removeEmptyElementsFromList(self.channels)
-        self.nicknames = settings.get("bot", "nickname", default="").split("\n")
+        self.nicknames = settings.get("bot", "nickname", default="") \
+            .split("\n")
         self.nicknames = removeEmptyElementsFromList(self.nicknames)
         try:
             self.nickname = self.nicknames.pop(0)
         except IndexError:
             raise InvalidConfigurationException(
-                "No nicknames configured, property bot.nickname does not exist or is empty."
+                "No nicknames configured, property bot.nickname does not "
+                "exist or is empty."
             )
         self.realname = settings.get("bot", "realname", default=self.nickname)
         self.username = settings.get("bot", "username")
@@ -670,7 +678,8 @@ class BonesBotFactory(protocol.ClientFactory):
 
         # Build the trigger regex using the trigger prefixes
         # specified in settings
-        prefixChars = settings.get("bot", "triggerPrefixes", default="+").decode("utf-8")
+        prefixChars = settings.get("bot", "triggerPrefixes", default="+") \
+            .decode("utf-8")
         regex = "^([%s])([^ ]*)( .+)*?$" % prefixChars
         self.reCommand = re.compile(regex, re.UNICODE)
 
@@ -782,12 +791,16 @@ class BonesBotFactory(protocol.ClientFactory):
         serverPort = int(self.settings.get("server", "port", default="6667"))
         serverHost = self.settings.get("server", "host")
         if not serverHost:
-            raise InvalidConfigurationException("Server {} does not contain a `host` option.".format(self.tag))
+            raise InvalidConfigurationException(
+                "Server {} does not contain a `host` option.".format(self.tag)
+            )
         log_serverHost = serverHost
-        if ":" in serverHost and not serverHost.startswith("[") and not serverHost.endswith("]"):
+        if ":" in serverHost and not serverHost.startswith("[") \
+                and not serverHost.endswith("]"):
             # IPv6 address, but not enclosed in brackets
             log_serverHost = "[%s]" % serverHost
-        elif ":" in serverHost and (serverHost.startswith("[") and serverHost.endswith("]")):
+        elif ":" in serverHost and (serverHost.startswith("[")
+                                    and serverHost.endswith("]")):
             # IPv6 address and enclosed in brackets
             serverHost = serverHost[1:-1]
         if self.settings.get("bot", "bindAddress"):
@@ -807,11 +820,14 @@ class BonesBotFactory(protocol.ClientFactory):
                 log.exception(ex)
                 raise ex
             reactor.connectSSL(
-                serverHost, serverPort, self, ssl.ClientContextFactory(), bindAddress=bind_address
+                serverHost, serverPort, self, ssl.ClientContextFactory(),
+                bindAddress=bind_address
             )
         else:
             log.info("Connecting to server %s:%i", log_serverHost, serverPort)
-            reactor.connectTCP(serverHost, serverPort, self, bindAddress=bind_address)
+            reactor.connectTCP(serverHost, serverPort, self,
+                               bindAddress=bind_address)
+
 
 class Module():
     """:term:`Bones module` base class
@@ -829,8 +845,8 @@ class Module():
 
     .. attribute:: factory
 
-        A :class:`bones.bot.BonesBotFactory` instance representing the factory which
-        instanciates the clients whom this module is used with.
+        A :class:`bones.bot.BonesBotFactory` instance representing the factory
+        which instanciates the clients whom this module is used with.
     """
 
     def __init__(self, settings, factory):

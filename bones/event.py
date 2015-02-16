@@ -88,14 +88,18 @@ def register(obj, server):
     :type server: :class:`bones.bot.BonesBot`
     """
     klass = obj.__class__
-    for name, method in inspect.getmembers(klass, lambda x: inspect.ismethod(x) or inspect.isfunction(x)):
+    is_handler = lambda x: inspect.ismethod(x) or inspect.isfunction(x)
+    for name, method in inspect.getmembers(klass, is_handler):
         if getattr(method, '_event', None) is not None:
             for event in method._event:
                 if server.lower() not in eventHandlers:
                     eventHandlers[server.lower()] = {}
                 if event not in eventHandlers[server.lower()]:
                     eventHandlers[server.lower()][event] = []
-                eventHandlers[server.lower()][event].append({"c": obj, "f": method})
+                eventHandlers[server.lower()][event].append({
+                    "c": obj,
+                    "f": method,
+                })
 
 
 class Target():
@@ -105,14 +109,14 @@ class Target():
     :param name: a string identifying the message target, as used in protocol
         message :code:`MSG targetNameHere :Message to be sent"
     :type name: string
-    :param server: the :class:`~bones.bot.BonesBot` client instance that will be used to send
-        messages to this target.
+    :param server: the :class:`~bones.bot.BonesBot` client instance that will
+        be used to send messages to this target.
     :type server: :class:`bones.bot.BonesBot`
 
     .. attribute:: name
 
-        String with the target name. This could for example be a nick, a hostname
-        or a channel name.
+        String with the target name. This could for example be a nick, a
+        hostname or a channel name.
 
     .. attribute:: server
 
@@ -189,7 +193,12 @@ class User(Target):
         self.user_modes = {}
 
     def __repr__(self):
-        return "<User %s!%s@%s{%s}>" % (self.nickname, self.username if self.username else "", self.hostname if self.hostname else "", self.server.tag)
+        return "<User %s!%s@%s{%s}>" % (
+            self.nickname,
+            self.username if self.username else "",
+            self.hostname if self.hostname else "",
+            self.server.tag
+        )
 
     def _get_nickname(self):
         return self.name
@@ -263,33 +272,39 @@ class Channel(Target):
     def _set_modes(self, modes, args, set):
         for mode in modes:
             if set:
-                if mode in self.server.channel_modes["list"] or \
-                        [True for m, p in self.server.prefixes if m == mode]:
-                    if mode not in self.modes:
-                        self.modes[mode] = []
-                    self.modes[mode].append(args.pop(0))
-                elif mode in self.server.channel_modes["always"]:
-                    self.modes[mode] = args.pop(0)
-                elif mode in self.server.channel_modes["set"]:
-                    self.modes[mode] = args.pop(0)
-                else:
-                    self.modes[mode] = True
+                self._set_mode(mode, args)
             else:
-                if mode in self.server.channel_modes["list"] or \
-                        [True for m, p in self.server.prefixes if m == mode]:
-                    arg = args.pop(0)
-                    if mode in self.modes and arg in self.modes[mode]:
-                        self.modes[mode].remove(arg)
-                elif mode in self.server.channel_modes["always"]:
-                    arg = args.pop(0)
-                    if mode in self.modes and arg:
-                        del self.modes[mode]
-                elif mode in self.server.channel_modes["set"]:
-                    if mode in self.modes:
-                        del self.modes[mode]
-                else:
-                    if mode in self.modes:
-                        del self.modes[mode]
+                self._unset_mode(mode, args)
+
+    def _set_mode(self, mode, args):
+        if mode in self.server.channel_modes["list"] or \
+                [True for m, p in self.server.prefixes if m == mode]:
+            if mode not in self.modes:
+                self.modes[mode] = []
+            self.modes[mode].append(args.pop(0))
+        elif mode in self.server.channel_modes["always"]:
+            self.modes[mode] = args.pop(0)
+        elif mode in self.server.channel_modes["set"]:
+            self.modes[mode] = args.pop(0)
+        else:
+            self.modes[mode] = True
+
+    def _unset_mode(self, mode, args):
+        if mode in self.server.channel_modes["list"] or \
+                [True for m, p in self.server.prefixes if m == mode]:
+            arg = args.pop(0)
+            if mode in self.modes and arg in self.modes[mode]:
+                self.modes[mode].remove(arg)
+        elif mode in self.server.channel_modes["always"]:
+            arg = args.pop(0)
+            if mode in self.modes and arg:
+                del self.modes[mode]
+        elif mode in self.server.channel_modes["set"]:
+            if mode in self.modes:
+                del self.modes[mode]
+        else:
+            if mode in self.modes:
+                del self.modes[mode]
 
     def kick(self, user, reason=None):
         """
@@ -600,8 +615,8 @@ class IrcPrivmsgEvent(Event):
     """Event fired when the bot receives a message from another user,
     either over a query or from a channel.
 
-    :param client: A :class:`~bones.bot.BonesBot` instance representing the current
-        server connection.
+    :param client: A :class:`~bones.bot.BonesBot` instance representing the
+        current server connection.
     :type client: :class:`bones.bot.BonesBot`
     :param user: The hostmask of the user who sent this message.
     :type user: :class:`bones.event.User`
@@ -622,9 +637,10 @@ class IrcPrivmsgEvent(Event):
 
     .. attribute:: channel
 
-        A :class:`~bones.bot.Target` instance representing the communication channel
-        this message was sent to. This may be an object something that inherits
-        `~bones.bot.Target`, like `~bones.bot.Channel` and `~bones.bot.User`.
+        A :class:`~bones.bot.Target` instance representing the communication
+        channel this message was sent to. This may be an object something that
+        inherits `~bones.bot.Target`, like `~bones.bot.Channel` and
+        `~bones.bot.User`.
 
     .. attribute:: user
 
@@ -643,8 +659,8 @@ class IrcPrivmsgEvent(Event):
 
         :param message: The reply to this event.
         :type message: string
-        :param separator: The separator used between a `~bones.event.User`'s nickname
-            and the provided message.
+        :param separator: The separator used between a `~bones.event.User`'s
+            nickname and the provided message.
         :type message: string
         :default message: ": "
         """
@@ -700,8 +716,8 @@ class PrivmsgEvent(Event):
 
     .. deprecated:: Use `bones.event.IrcPrivmsgEvent` instead.
 
-    :param client: A :class:`~bones.bot.BonesBot` instance representing the current
-        server connection.
+    :param client: A :class:`~bones.bot.BonesBot` instance representing the
+        current server connection.
     :type client: :class:`bones.bot.BonesBot`
     :param user: The hostmask of the user who sent this message.
     :type user: string
@@ -722,9 +738,10 @@ class PrivmsgEvent(Event):
 
     .. attribute:: channel
 
-        A :class:`~bones.bot.Target` instance representing the communication channel
-        this message was sent to. This may be an object something that inherits
-        `~bones.bot.Target`, like `~bones.bot.Channel` and `~bones.bot.User`.
+        A :class:`~bones.bot.Target` instance representing the communication
+        channel this message was sent to. This may be an object something that
+        inherits `~bones.bot.Target`, like `~bones.bot.Channel` and
+        `~bones.bot.User`.
 
     .. attribute:: user
 
@@ -876,8 +893,8 @@ class ServerOpCountEvent(Event):
 
     .. attribute:: client
 
-        A :class:`bones.bot.BonesBot` instance representing the server connection
-        which received this event.
+        A :class:`bones.bot.BonesBot` instance representing the server
+        connection which received this event.
 
     .. attribute:: ops
 
@@ -898,13 +915,13 @@ class ServerSupportEvent(Event):
 
     .. attribute:: client
 
-        A :class:`bones.bot.BonesBot` instance representing the server connection
-        which received this event.
+        A :class:`bones.bot.BonesBot` instance representing the server
+        connection which received this event.
 
     .. attribute:: options
 
-        A list of all the different options the server supports, in strings with
-        the format "KEY=VALUE".
+        A list of all the different options the server supports, in strings
+        with the format "KEY=VALUE".
     """
     def __init__(self, client, options):
         self.client = client
@@ -944,7 +961,8 @@ class TriggerEvent(ChannelMessageEvent):
         The regex match object that was returned while parsing the original
         message, :attr:`msg`
     """
-    def __init__(self, client, args=None, channel=None, user=None, msg=None, match=None):
+    def __init__(self, client, args=None, channel=None, user=None, msg=None,
+                 match=None):
         ChannelMessageEvent.__init__(self, client, user, channel, msg)
         self.args = args
         self.match = match
@@ -1098,13 +1116,14 @@ class UserPartEvent(Event):
 
     .. attribute:: user
 
-        A :class:`~bones.event.User` instance representing the nickname of the user who parted from the
-        channel.
+        A :class:`~bones.event.User` instance representing the nickname of the
+        user who parted from the channel.
     """
     def __init__(self, client, user, channel):
         self.client = client
         self.user = user
         self.channel = channel
+
 
 class UserQuitEvent(Event):
     """An event that is fired whenever a user quits IRC, or in other words
@@ -1139,7 +1158,8 @@ class UserQuitEvent(Event):
 
     .. attribute:: user
 
-        A :class:`~bones.event.User` instance representing the nickname of the user who quit IRC.
+        A :class:`~bones.event.User` instance representing the nickname of the
+        user who quit IRC.
 
     .. attribute:: quitMessage
 

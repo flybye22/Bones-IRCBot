@@ -1,9 +1,6 @@
 # -*- encoding: utf8 -*-
 import sys
-import os
 import logging
-import subprocess
-import ConfigParser
 
 from twisted.internet import reactor
 

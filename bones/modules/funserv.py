@@ -1,6 +1,5 @@
 # -*- encoding: utf8 -*-
 import re
-import htmlentitydefs
 import random
 import logging
 from datetime import datetime
@@ -33,12 +32,13 @@ class QDB(Module):
             self.log.error(ex)
             raise ex
         self.settings = settings
-        self.maxLinesPerQuote = int(self.settings.get("module.qdb", "maxLinesPerQuote", default=5))
+        self.maxLinesPerQuote = int(
+            self.settings.get("module.qdb", "maxLinesPerQuote", default=5))
 
     @bones.event.handler(trigger="qdb")
     def cmdQdb(self, event):
         if len(event.args) == 1 and event.args[0].isdigit() \
-        or len(event.args) >= 2 and event.args[0].lower() == "read":
+                or len(event.args) >= 2 and event.args[0].lower() == "read":
             if event.args[0].isdigit():
                 id = int(event.args[0])
             else:
@@ -58,7 +58,10 @@ class QDB(Module):
                 "Got unknown HTTP error code %i when fetching qdb.us/%i",
                 data.getcode(), id
             )
-            event.channel.msg(str("[QDB] An unknown exception occurred. Please notify the bot master and try again later."))
+            event.channel.msg(str(
+                "[QDB] An unknown exception occurred. Please notify the bot "
+                "master and try again later."
+            ))
             return
 
         if len(event.args) <= 0 or event.args[0].lower() == "random":
@@ -70,10 +73,17 @@ class QDB(Module):
     def sendQuote(self, channel, quote):
         lines = quote[1].split("\n")
         if len(lines) > self.maxLinesPerQuote:
-            channel.msg(str("[QDB #%s] Quote too long, read it at QDB instead: http://qdb.us/%s" % (quote[0], quote[0])))
+            channel.msg(str(
+                "[QDB #%s] Quote too long, read it at QDB instead: "
+                "http://qdb.us/%s"
+                % (quote[0], quote[0])
+            ))
             return
         for line in lines:
-            channel.msg(str(("[QDB #%s] %s" % (quote[0], line)).encode("utf-8")))
+            channel.msg(str((
+                "[QDB #%s] %s"
+                % (quote[0], line)
+            ).encode("utf-8")))
 
     def cacheIfNeeded(self):
         """
@@ -84,7 +94,7 @@ class QDB(Module):
             self.log.debug("Fetching new quotes from qdb.us/random")
             html = urlopener.open("http://qdb.us/random").read()
             soup = self.BeautifulSoup(html)
-            data = soup.findAll("span", {"class":"qt"})
+            data = soup.findAll("span", {"class": "qt"})
             for item in data:
                 id = item["id"].split("qt")[1]
                 self.quotesCache.append((id, item.text))
@@ -101,10 +111,12 @@ class UselessResponses(Module):
 
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def DANCE(self, event, step=0):
-        msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "", event.message)
+        msg = re.sub("\x02|\x1f|\x1d|\x16|\x0f|\x03\d{0,2}(,\d{0,2})?", "",
+                     event.message)
         if "DANCE" in msg:
             if not self.danceCooldownTime:
-                self.danceCooldownTime = int(self.settings.get("module.UselessResponses", "dance.cooldown", "300"))
+                self.danceCooldownTime = int(self.settings.get(
+                    "module.UselessResponses", "dance.cooldown", "300"))
             if step == 0:
                 if event.channel.name in self.danceCooldown:
                     last = self.danceCooldown[event.channel.name]
@@ -112,10 +124,12 @@ class UselessResponses(Module):
                     delta = now - last
                     if delta.seconds < self.danceCooldownTime:
                         wait = self.danceCooldownTime - delta.seconds
-                        event.user.notice("Please wait %s more seconds." % wait)
+                        event.user.notice("Please wait %s more seconds."
+                                          % wait)
                         return
                 self.danceCooldown[event.channel.name] = datetime.utcnow()
-                event.client.ctcpMakeQuery(event.channel.name, [('ACTION', "dances")])
+                event.client.ctcpMakeQuery(event.channel.name,
+                                           [('ACTION', "dances")])
                 reactor.callLater(1.5, self.DANCE, event, step=1)
             elif step == 1:
                 event.channel.msg(r":D\-<")
@@ -145,4 +159,8 @@ class UselessResponses(Module):
 
     @bones.event.handler(trigger="huehue")
     def cmdHueHue(self, event):
-        event.channel.msg("ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ")
+        event.channel.msg(
+            "ヾ（´▽｀） \x038ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x0312ＨＵＥ"
+            "\x039ＨＵＥ\x034ＨＵＥ\x0313ＨＵＥ\x038ＨＵＥ\x039ＨＵＥ"
+            "\x0311ＨＵＥＨＵＥ\x0312ＨＵＥ"
+        )

@@ -1,6 +1,5 @@
 # -*- encoding: utf8 -*-
 import re
-import htmlentitydefs
 import logging
 log = logging.getLogger(__name__)
 
@@ -18,8 +17,9 @@ class NickFix(Module):
     @bones.event.handler(event=bones.event.UserNickChangedEvent)
     def somethingHappened(self, myEvent):
         user = None
-        if self.nickIWant == None:
-            self.nickIWant = self.settings.get("bot", "nickname").split("\n")[0]
+        if self.nickIWant is None:
+            self.nickIWant = \
+                self.settings.get("bot", "nickname").split("\n")[0]
 
         if isinstance(myEvent, bones.event.UserNickChangedEvent) is True:
             user = myEvent.oldname
@@ -27,7 +27,8 @@ class NickFix(Module):
             user = myEvent.user.nickname
 
         if user.lower() == self.nickIWant.lower():
-            myEvent.client.factory.nicknames = self.settings.get("bot", "nickname").split("\n")[1:]
+            myEvent.client.factory.nicknames = \
+                self.settings.get("bot", "nickname").split("\n")[1:]
             self.isRecovering = True
             myEvent.client.setNick(self.nickIWant)
 
@@ -46,8 +47,8 @@ class NickFix(Module):
 class Utilities(Module):
     bs = None
 
-    reYouTubeLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
-    reTwitterLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
+    reYouTubeLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)") # NOQA
+    reTwitterLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE) # NOQA
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
@@ -56,7 +57,10 @@ class Utilities(Module):
             from bs4 import BeautifulSoup
             self.bs = BeautifulSoup
         except ImportError:
-            log.warn("Unmet dependency BeautifulSoup4: The URL checkers will be disabled.")
+            log.warn(
+                "Unmet dependency BeautifulSoup4: The URL checkers will be "
+                "disabled."
+            )
 
     @bones.event.handler(trigger="ping")
     def cmdPing(self, event):
@@ -65,7 +69,11 @@ class Utilities(Module):
             self.ongoingPings[nick] = event.channel.name
             event.user.ping()
         else:
-            event.user.notice("Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
+            event.user.notice(
+                "Please wait until your ongoing ping in %s is finished until "
+                "trying again."
+                % self.ongoingPings[nick]
+            )
 
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_Twitter(self, event):
@@ -76,10 +84,17 @@ class Utilities(Module):
                     url = data.group(0)
                     html = urlopener.open(url).read()
                     soup = self.bs(html)
-                    tweet = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("p", {"class":"tweet-text"}).text
+                    tweet = soup \
+                        .find("div", {"class": "permalink-inner permalink-tweet-container"}) \
+                        .find("p", {"class": "tweet-text"}) \
+                        .text
                     tweet = u"↵ ".join(tweet.split("\n"))
-                    user = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("span", {"class":"username js-action-profile-name"}).text
-                    msg = u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s" % (tweet, user)
+                    user = soup \
+                        .find("div", {"class": "permalink-inner permalink-tweet-container"}) \
+                        .find("span", {"class": "username js-action-profile-name"}) \
+                        .text
+                    msg = (u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s"
+                           % (tweet, user))
                     event.channel.msg(msg.encode("utf-8"))
 
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
@@ -92,8 +107,9 @@ class Utilities(Module):
                     url = "http://youtu.be/%s" % vid
                     html = urlopener.open(url).read()
                     soup = self.bs(html)
-                    title = soup.find("span", {"id":"eow-title"}).text.strip()
-                    msg = u"\x0314You\x035Tube \x034::\x03 %s \x034::\x03 %s" % (title, url)
+                    title = soup.find("span", {"id": "eow-title"}).text.strip()
+                    msg = (u"\x0314You\x035Tube \x034::\x03 %s \x034::\x03 %s"
+                           % (title, url))
                     msg = u"↵ ".join(msg.split("\n"))
                     if title:
                         event.channel.msg(msg.encode("utf-8"))
@@ -102,6 +118,6 @@ class Utilities(Module):
     def eventPingResponseReceive(self, event):
         nick = event.user.nickname
         if nick in self.ongoingPings:
-            event.user.notice("%s: Your response time was %.3f seconds." % (nick, event.secs))
+            event.user.notice("%s: Your response time was %.3f seconds."
+                              % (nick, event.secs))
             del self.ongoingPings[nick]
-

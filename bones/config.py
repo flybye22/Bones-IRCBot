@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 from ConfigParser import SafeConfigParser
 
+
 class BaseConfiguration(object):
     """
     Global configuration instance.
@@ -10,9 +11,10 @@ class BaseConfiguration(object):
         self._conf.read(file)
 
     def get(self, section, option, server=None):
-        if server and self._conf.has_section("server.%s.%s" % (server, section)):
-            if self._conf.has_option("server.%s.%s" % (server, section), option):
-                return self._conf.get("server.%s.%s" % (server, section), option)
+        keys = (server, section)
+        if server and self._conf.has_section("server.%s.%s" % keys):
+            if self._conf.has_option("server.%s.%s" % keys, option):
+                return self._conf.get("server.%s.%s" % keys, option)
         if self._conf.has_section(section):
             if self._conf.has_option(section, option):
                 return self._conf.get(section, option)
@@ -23,6 +25,7 @@ class BaseConfiguration(object):
 
     def server(self, server):
         return ServerConfiguration(server, self)
+
 
 class ServerConfiguration(object):
     """
@@ -53,7 +56,8 @@ class ServerConfiguration(object):
             else:
                 for data in self.config._conf._sections[section]:
                     if not data == "__name__":
-                        self.data[section.lower()][data] = self.config._conf._sections[section][data]
+                        self.data[section.lower()][data] = self.config \
+                            ._conf._sections[section][data]
 
         for section in queue:
             tmp = section.split(".")
@@ -69,10 +73,12 @@ class ServerConfiguration(object):
                 self.data[stmp] = {}
             for data in self.config._conf._sections[section]:
                 if not data == "__name__":
-                    self.data[stmp][data] = self.config._conf._sections[section][data.lower()]
+                    self.data[stmp][data] = self.config._conf \
+                        ._sections[section][data.lower()]
 
     def get(self, section, option, default=None):
-        if section.lower() in self.data and option.lower() in self.data[section.lower()]:
+        if section.lower() in self.data \
+                and option.lower() in self.data[section.lower()]:
             return self.data[section.lower()][option.lower()]
         else:
             return default

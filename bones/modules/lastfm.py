@@ -42,10 +42,12 @@ class Lastfm(Module):
 
         session = self.db.new_session()
         if not action:
-            user = session.query(User).filter(User.nickname == nickname).first()
+            user = session.query(User).filter(User.nickname == nickname) \
+                .first()
             if not user:
                 event.channel.msg(
-                    str("%s: No user registered for nick '%s'" % (event.user.nickname, nickname))
+                    str("%s: No user registered for nick '%s'"
+                        % (event.user.nickname, nickname))
                 )
                 return
             params = urllib.urlencode({
@@ -56,23 +58,39 @@ class Lastfm(Module):
                 "extended": 1
             })
             try:
-                data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s" % params).read()
+                data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s"
+                                      % params).read()
                 data = json.loads(data)
             except:
-                event.channel.msg("[Last.fm] An unexpected error occurred. Please tell the bot manager to file a bug report.")
-                self.log.exception("An error occurred while fetching user.getRecentTracks for user %s", nickname)
+                event.channel.msg(
+                    "[Last.fm] An unexpected error occurred. Please tell the "
+                    "bot manager to file a bug report."
+                )
+                self.log.exception(
+                    "An error occurred while fetching user.getRecentTracks for"
+                    "user %s", nickname)
                 return
             if "error" in data:
-                self.log.error("API error %i: %s", data["error"], data["message"])
-                event.channel.msg("[Last.fm] An error occurred while processing your request. Please notify the bot manager")
+                self.log.error("API error %i: %s", data["error"],
+                               data["message"])
+                event.channel.msg(
+                    "[Last.fm] An error occurred while processing your "
+                    "request. Please notify the bot manager"
+                )
                 return
-            if "track" not in data["recenttracks"] or len(data['recenttracks']['track']) < 1:
-                event.channel.msg(str("%s: No tracks found for user '%s'. Are you sure that the user exists?" % (event.user.nickname, user.username)))
+            if "track" not in data["recenttracks"] \
+                    or len(data['recenttracks']['track']) < 1:
+                event.channel.msg(str(
+                    "%s: No tracks found for user '%s'. Are you sure that the "
+                    "user exists?"
+                    % (event.user.nickname, user.username)
+                ))
                 return
             track = data['recenttracks']['track'][0]
             artist = track["artist"]["name"]
             tracktitle = track["name"]
-            if "@attr" in track and "nowplaying" in track["@attr"] and track["@attr"]["nowplaying"].lower() == "true":
+            if "@attr" in track and "nowplaying" in track["@attr"] \
+                    and track["@attr"]["nowplaying"].lower() == "true":
                 loved = ""
                 if "loved" in track and track["loved"] == "1":
                     loved = u"\x034♥︎\x03"
@@ -80,7 +98,9 @@ class Lastfm(Module):
                     pass
                 except:
                     pass
-                msg = "'%s' is now playing: %s - %s %s" % (user.username, artist, tracktitle, loved)
+                msg = "'%s' is now playing: %s - %s %s" % (user.username,
+                                                           artist, tracktitle,
+                                                           loved)
             else:
                 timestamp = track["date"]["uts"]
                 date = []
@@ -110,35 +130,45 @@ class Lastfm(Module):
                 else:
                     suffix = ""
                 date.append("%s minute%s" % (minutes, suffix))
-                msg = "'%s' is not playing anything now, but played this %s ago: %s - %s" % (user.username, ", ".join(date), artist, tracktitle)
+                msg = (
+                    "'%s' is not playing anything now, but played this %s "
+                    "ago: %s - %s"
+                    % (user.username, ", ".join(date), artist, tracktitle)
+                )
             event.channel.msg(str(msg.encode("utf-8")))
             return
 
         elif action == "-r":
             if not nickname:
-                event.user.notice(str("[Last.fm] You need to provide a Last.fm username."))
+                event.user.notice(str(
+                    "[Last.fm] You need to provide a Last.fm username."))
                 return
 
-            user = session.query(User).filter(User.nickname == event.user.nickname).first()
+            user = session.query(User) \
+                .filter(User.nickname == event.user.nickname).first()
             if not user:
                 user = User(event.user.nickname)
             user.username = nickname
             session.begin()
             session.add(user)
             session.commit()
-            event.user.notice(str("[Last.fm] Registered '%s' to your nick" % nickname))
+            event.user.notice(str(
+                "[Last.fm] Registered '%s' to your nick" % nickname))
             return
 
         elif action == "-d":
-            user = session.query(User).filter(User.nickname == event.user.nickname).first()
+            user = session.query(User) \
+                .filter(User.nickname == event.user.nickname).first()
             if not user:
-                event.user.notice(str("[Last.fm] No user registered for nick '%s'" % nickname))
+                event.user.notice(str(
+                    "[Last.fm] No user registered for nick '%s'" % nickname))
                 return
 
             session.begin()
             session.delete(user)
             session.commit()
-            event.channel.notice(str("[Last.fm] Unregistered your nick from '%s'" % user.username))
+            event.channel.notice(str(
+                "[Last.fm] Unregistered your nick from '%s'" % user.username))
             return
 
 
@@ -167,9 +197,11 @@ if __name__ == "__main__":
         print "Error: Config file does not contain a 'storage' section."
         sys.exit(1)
     elif "sqlalchemy.url" not in settings._sections["storage"]:
-        print "Error: Section 'storage' does not contain an 'sqlalchemy.url' key."
+        print ("Error: Section 'storage' does not contain an 'sqlalchemy.url' "
+               "key.")
         sys.exit(1)
-    print "Connecting to '%s'..." % settings._sections["storage"]["sqlalchemy.url"]
+    print ("Connecting to '%s'..."
+           % settings._sections["storage"]["sqlalchemy.url"])
     engine = engine_from_config(settings._sections["storage"], "sqlalchemy.")
     print "Creating table '%s'..." % User.__tablename__
     from bones.modules.storage import Base

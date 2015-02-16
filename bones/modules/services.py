@@ -10,7 +10,11 @@ class NickServ(Module):
         Module.__init__(self, *args, **kwargs)
         self._disabled = True
         if not self.settings.get("services", "nickserv.password"):
-            log.error("Configuration doesn't contain a NickServ password. Please add `nickserv.password` to `[services]` and make it a non-empty value.")
+            log.error(
+                "Configuration doesn't contain a NickServ password. Please "
+                "add `nickserv.password` to `[services]` and make it a "
+                "non-empty value."
+            )
             log.error("NickServ module will be disabled.")
             self._disabled = False
 
@@ -18,10 +22,15 @@ class NickServ(Module):
     def identifySignOn(self, event):
         if not self._disabled: return
         # Make sure that we're supposed to identify now.
-        if self.settings.get("services", "nickserv.waitForNotice", default="true") == "false":
+        if self.settings.get("services", "nickserv.waitForNotice",
+                             default="true") == "false":
             # We're good to go!
             log.info("Identifying with NickServ")
-            event.client.msg("NickServ", "IDENTIFY %s" % self.settings.get("services", "nickserv.password"))
+            event.client.msg(
+                "NickServ",
+                "IDENTIFY %s" % self.settings.get("services",
+                                                  "nickserv.password")
+            )
 
     @bones.event.handler(event=bones.event.BotNoticeReceivedEvent)
     def identifyNotice(self, event):
@@ -29,7 +38,8 @@ class NickServ(Module):
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice", default="true") == "true" \
                 and "IDENTIFY" in event.message.upper() \
-                and bones.event.User(event.user, event.client).nickname.lower() == "nickserv":
+                and bones.event.User(event.user, event.client) \
+                .nickname.lower() == "nickserv":
             # We're good to go!
             log.info("Identifying with NickServ (triggered by notice)")
             event.client.msg(

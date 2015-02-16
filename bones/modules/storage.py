@@ -2,15 +2,10 @@ import logging
 log = logging.getLogger(__name__)
 
 from sqlalchemy import engine_from_config
-from sqlalchemy import (
-    Column,
-    Text,
-    Integer,
-    )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (
     sessionmaker,
-    )
+)
 
 import bones.event
 from bones.bot import Module
@@ -20,8 +15,8 @@ Base = declarative_base()
 
 class Database(Module):
 
-    def __init__(self, settings):
-        self.settings = settings
+    def __init__(self, **args):
+        Module.__init__(self, **args)
         self.sessionmaker = None
         self.engine = None
 
