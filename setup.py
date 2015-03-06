@@ -11,4 +11,8 @@ bot development using modules able to handle e.g. triggers and such.""",
     author_email="simen4000+github-bones@gmail.com",
     url="http://github.com/404d/Bones-IRCBot",
     packages=["bones"],
+    install_requirements=[
+        'Twisted==15.0.0',
+        'zope.interface==4.1.2',
+    ]
 )
