@@ -1,44 +1,10 @@
 # -*- encoding: utf8 -*-
 import re
-import htmlentitydefs
 import logging
 log = logging.getLogger(__name__)
 
-from bones import event
+import bones.event
 from bones.bot import Module
-
-
-##
-# Removes HTML or XML character references and entities from a text string.
-#
-# 404d edit start:
-# Code snippet obtained from http://effbot.org/zone/re-sub.htm#unescape-html
-# This code snippet have been slightly altered to fix some issues with htmlparser and/or htmlentitydefs choking on some UTF-8 characters.
-# 404d edit end
-#
-# @param text The HTML (or XML) source text.
-# @return The plain text, as a Unicode string, if necessary.
-
-def unescape(text):
-    def fixup(m):
-        text = m.group(0)
-        if text[:2] == "&#":
-            # character reference
-            try:
-                if text[:3] == "&#x":
-                    return unichr(int(text[3:-1], 16))
-                else:
-                    return unichr(int(text[2:-1]))
-            except ValueError:
-                pass
-        else:
-            # named entity
-            try:
-                text = chr(htmlentitydefs.name2codepoint[text[1:-1]])
-            except KeyError:
-                pass
-        return text # leave as is
-    return re.sub(ur"&#?\w+;", fixup, text, re.UNICODE)
 
 
 class NickFix(Module):
@@ -47,29 +13,31 @@ class NickFix(Module):
         self.nickIWant = None
         self.isRecovering = False
 
-    @event.handler(event="UserQuit")
-    @event.handler(event="UserNickChanged")
+    @bones.event.handler(event=bones.event.UserQuitEvent)
+    @bones.event.handler(event=bones.event.UserNickChangedEvent)
     def somethingHappened(self, myEvent):
         user = None
-        if self.nickIWant == None:
-            self.nickIWant = self.settings.get("bot", "nickname").split("\n")[0]
+        if self.nickIWant is None:
+            self.nickIWant = \
+                self.settings.get("bot", "nickname").split("\n")[0]
 
-        if isinstance(myEvent, event.UserNickChangedEvent) is True:
+        if isinstance(myEvent, bones.event.UserNickChangedEvent) is True:
             user = myEvent.oldname
         else:
-            user = myEvent.user
+            user = myEvent.user.nickname
 
         if user.lower() == self.nickIWant.lower():
-            myEvent.client.factory.nicknames = self.settings.get("bot", "nickname").split("\n")[1:]
+            myEvent.client.factory.nicknames = \
+                self.settings.get("bot", "nickname").split("\n")[1:]
             self.isRecovering = True
             myEvent.client.setNick(self.nickIWant)
 
-    @event.handler(event="BotSignedOn")
+    @bones.event.handler(event=bones.event.BotSignedOnEvent)
     def resetMe(self, event):
         self.isRecovering = False
         self.nickIWant = None
 
-    @event.handler(event="PreNicknameInUseError")
+    @bones.event.handler(event=bones.event.PreNicknameInUseError)
     def shouldWeEvenTry(self, event):
         if self.isRecovering:
             event.isCancelled = True
@@ -78,9 +46,9 @@ class NickFix(Module):
 
 class Utilities(Module):
     bs = None
-    
-    reYouTubeLink = re.compile("http(s)?\:\/\/(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")
-    reTwitterLink = re.compile("https?\:\/\/twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)
+
+    reYouTubeLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")  # NOQA
+    reTwitterLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)  # NOQA
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
@@ -89,53 +57,79 @@ class Utilities(Module):
             from bs4 import BeautifulSoup
             self.bs = BeautifulSoup
         except ImportError:
-            log.warn("Unmet dependency BeautifulSoup4: The URL checkers will be disabled.")
+            log.warn(
+                "Unmet dependency BeautifulSoup4: The URL checkers will be "
+                "disabled."
+            )
 
-    @event.handler(trigger="ping")
+    @bones.event.handler(trigger="ping")
     def cmdPing(self, event):
         nick = event.user.nickname
         if nick not in self.ongoingPings:
-            self.ongoingPings[nick] = event.channel
-            event.client.ping(nick)
+            self.ongoingPings[nick] = event.channel.name
+            event.user.ping()
         else:
-            event.client.notice(nick, "Please wait until your ongoing ping in %s is finished until trying again." % self.ongoingPings[nick])
-            
-    @event.handler(event="privmsg")
+            event.user.notice(
+                "Please wait until your ongoing ping in %s is finished until "
+                "trying again."
+                % self.ongoingPings[nick]
+            )
+
+    @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_Twitter(self, event):
         if self.bs is not None:
-            if "twitter" in event.msg and "http" in event.msg:
-                data = self.reTwitterLink.search(event.msg)
+            if "twitter" in event.message and "http" in event.message:
+                data = self.reTwitterLink.search(event.message)
                 if data:
                     url = data.group(0)
                     html = event.client.factory.urlopener.open(url).read()
                     soup = self.bs(html)
-                    tweet = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("p", {"class":"tweet-text"}).text
-                    user = soup.find("div", {"class":"permalink-inner permalink-tweet-container"}).find("span", {"class":"username js-action-profile-name"}).text
-                    msg = u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s" % (tweet, user)
-                    msg = unescape(msg)
-                    msg = msg.encode("utf-8")
-                    msg = str(msg)
-                    event.client.msg(event.channel, msg)
+                    tweet = soup \
+                        .find("div", {"class": "permalink-inner permalink-tweet-container"}) \
+                        .find("p", {"class": "tweet-text"}) \
+                        .text
+                    tweet = u"↵ ".join(tweet.split("\n"))
+                    user = soup \
+                        .find("div", {"class": "permalink-inner permalink-tweet-container"}) \
+                        .find("span", {"class": "username js-action-profile-name"}) \
+                        .text
 
-    @event.handler(event="privmsg")
+                    # shitty fix for pic.twitter.com links
+                    # could be improved by going through all links, check
+                    # whether they start with http and if not replace the
+                    # nodeText with the href attribute.
+                    out = []
+                    for word in tweet.split(" "):
+                        if word.startswith("pic.twitter.com"):
+                            word = "https://%s" % word
+                        out.append(word)
+                    tweet = " ".join(out)
+
+                    msg = (u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s"
+                           % (tweet, user))
+                    event.channel.msg(msg.encode("utf-8"))
+
+    @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_YouTube(self, event):
         if self.bs is not None:
-            if "youtu" in event.msg and "http" in event.msg:
-                data = self.reYouTubeLink.search(event.msg)
+            if "youtu" in event.message and "http" in event.message:
+                data = self.reYouTubeLink.search(event.message)
                 if data:
                     vid = data.group(5)
                     url = "http://youtu.be/%s" % vid
                     html = event.client.factory.urlopener.open(url).read()
                     soup = self.bs(html)
-                    title = soup.find("span", {"id":"eow-title"}).text.strip()
+                    title = soup.find("span", {"id": "eow-title"}).text.strip()
+                    msg = (u"\x0314You\x035Tube \x034::\x03 %s \x034::\x03 %s"
+                           % (title, url))
+                    msg = u"↵ ".join(msg.split("\n"))
                     if title:
-                        event.client.msg(event.channel, str("\x030,1You\x030,4Tube\x03 \x034::\x03 %s \x034::\x03 %s" % (unescape(title), url)).replace("\n", ""))
-        
-    @event.handler(event="CTCPPong")
+                        event.channel.msg(msg.encode("utf-8"))
+
+    @bones.event.handler(event=bones.event.CTCPPongEvent)
     def eventPingResponseReceive(self, event):
         nick = event.user.nickname
         if nick in self.ongoingPings:
-            channel = self.ongoingPings[nick]
-            event.client.msg(channel, "%s: Your response time was %.3f seconds." % (nick, event.secs))
+            event.user.notice("%s: Your response time was %.3f seconds."
+                              % (nick, event.secs))
             del self.ongoingPings[nick]
-    
