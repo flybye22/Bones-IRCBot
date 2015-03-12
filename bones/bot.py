@@ -176,10 +176,6 @@ class BonesBot(irc.IRCClient):
         bones.event.fire(self.tag, event)
 
     def isupport(self, options):
-        log.debug(
-            "Received server support flags: %s",
-            " ".join(options)
-        )
         for option in options:
             if option.startswith("PREFIX=("):
                 data = option[len("PREFIX=("):]
@@ -227,10 +223,6 @@ class BonesBot(irc.IRCClient):
         bones.event.fire(self.tag, event)
 
     def noticed(self, user, channel, message):
-        log.debug(
-            "NOTICE in %s from %s: %s",
-            channel, user, message
-        )
         event = bones.event.BotNoticeReceivedEvent(
             self, user, channel, message
         )
@@ -241,7 +233,9 @@ class BonesBot(irc.IRCClient):
             setString = "+"
         else:
             setString = "-"
-        log.debug(
+        # TODO: This should be changed as a part of the interface for mode
+        # changing we'll make at one point in time.
+        log.info(
             "Mode change in %s: %s set %s%s (%s)",
             target, user, setString, modes, args
         )
@@ -276,7 +270,7 @@ class BonesBot(irc.IRCClient):
         user = self.get_user(mask)
         if not user:
             user = self.create_user(mask)
-        log.debug(
+        log.info(
             "User %s parted from %s",
             user, channel
         )
@@ -292,7 +286,7 @@ class BonesBot(irc.IRCClient):
         user = self.get_user(mask)
         if not user:
             user = self.create_user(mask)
-        log.debug(
+        log.info(
             "User %s quit (Reason: %s)",
             user, quitMessage
         )
@@ -458,7 +452,7 @@ class BonesBot(irc.IRCClient):
         if data:
             trigger = data.group(2)
             args = msg.split(" ")[1:]
-            log.info(
+            log.debug(
                 "Received trigger %s%s.",
                 data.group(1), trigger
             )
@@ -710,7 +704,7 @@ class BonesBotFactory(protocol.ClientFactory):
                 "(AttributeException: %s)" %
 
                 (path, ex_raised.message)
-                )
+            )
             log.exception(ex)
             raise ex
 
