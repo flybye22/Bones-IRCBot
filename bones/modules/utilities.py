@@ -93,6 +93,18 @@ class Utilities(Module):
                         .find("div", {"class": "permalink-inner permalink-tweet-container"}) \
                         .find("span", {"class": "username js-action-profile-name"}) \
                         .text
+
+                    # shitty fix for pic.twitter.com links
+                    # could be improved by going through all links, check
+                    # whether they start with http and if not replace the
+                    # nodeText with the href attribute.
+                    out = []
+                    for word in tweet.split(" "):
+                        if word.startswith("pic.twitter.com"):
+                            word = "https://%s" % word
+                        out.append(word)
+                    tweet = " ".join(out)
+
                     msg = (u"\x0310Twitter\x03 \x0311::\x03 %s \x0311––\x03 %s"
                            % (tweet, user))
                     event.channel.msg(msg.encode("utf-8"))
