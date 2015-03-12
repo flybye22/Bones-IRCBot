@@ -1016,8 +1016,8 @@ class UserActionEvent(Event):
 
     :param client: The bot instance where this event occured.
     :type client: :class:`bones.bot.BonesBot`
-    :param user: The hostmask of the user which initiated this event.
-    :type user: str.
+    :param user: The user that initiated this event.
+    :type user: :class:`bones.event.User`
     :param channel: The channel the :code:`CTCP ACTION` was sent to.
     :type channel: str.
     :param data: The text which is actioned.
@@ -1051,7 +1051,7 @@ class UserActionEvent(Event):
     """
     def __init__(self, client, user, channel, data):
         self.client = client
-        self.user = User(user, client)
+        self.user = user
         self.channel = channel
         self.data = data
 

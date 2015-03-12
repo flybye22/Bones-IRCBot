@@ -344,6 +344,7 @@ class BonesBot(irc.IRCClient):
 
     def action(self, user, channelName, data):
         channel = self.get_channel(channelName)
+        user = self.get_user(user)
         log.debug(
             "User %s actioned in %s: %s",
             user, channel, data
@@ -362,11 +363,10 @@ class BonesBot(irc.IRCClient):
 
     def topicUpdated(self, hostmask, channelName, newTopic):
         channel = self.get_channel(channelName)
-        # TODO: Use self.users and utility methods
-        user = bones.event.User(hostmask, self)
+        user = self.get_user(hostmask)
         log.debug(
             "User %s changed topic of %s to %s",
-            user.nickname, channel, newTopic
+            user, channel, newTopic
         )
         channel.topic = bones.event.Topic(newTopic, user)
         event = bones.event.ChannelTopicChangedEvent(
