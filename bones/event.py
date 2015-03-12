@@ -12,16 +12,27 @@ def fire(server, event, *args, **kwargs):
     """Call all event handlers with the specified event identifier
     registered to the provided server with the provided arguments.
 
-    This may be called by your :term:`Bones module` to create and
-    provide custom events. :code:`*args` and :code:`**kwargs` will
-    be passed on to the event handlers.
+    This may be called in your :term:`Bones module` to fire custom events.
 
-    :param server: the server tag for the server this event occured
-        at.
+    .. note::
+
+        You should create a class that inherits from
+        :class:`~bones.event.Event`, and put your arguments inside this.
+
+    .. warning::
+
+        Using this to alter standard bot behaviour is not supported! This means
+        doing anything like (but not limited to) firing events that are
+        supposed to be handled by the bot core, for example
+        :class:`~bones.event.PrivmsgEvent`.
+
+    :param server: the server tag that identifies the server this occured on
     :type server: str
-    :param event: the event instance or the event identifier for the
-        event which occured.
+    :param event: an event instance or event identifier
     :type event: object
+    :param callback: a callable that should be called after all event handlers
+        have been triggered
+    :type callback: callable
     """
     def threadedFire(server, event, *args, **kwargs):
         callback = None
@@ -36,7 +47,7 @@ def fire(server, event, *args, **kwargs):
                 for h in eventHandlers[server.lower()][event]:
                     try:
                         h['f'](h['c'], *args, **kwargs)
-                    except Exception, ex:
+                    except Exception as ex:
                         log.exception(ex)
         if callback:
             callback(*args, **kwargs)
@@ -44,18 +55,20 @@ def fire(server, event, *args, **kwargs):
 
 
 def handler(event=None, trigger=None):
-    """Register the decorated method as an event handler for the supplied
-    :term:`event` or :term:`trigger`.
+    """Marks the decorated callable as an event handler for the given type of
+    :term:`event`, or as a trigger handler for the given :term:`trigger`.
 
-    You can only supply one event/trigger per decorator call, and you can
-    not supply both event and trigger in the same call. You cannot leave both
-    of them empty.
+    .. note:: For all events that are tied to Bones core, the event identifier
+        is the class definition of an event.
 
-    :param event: the class of the event you are going to handle
-        (defaults to None).
-    :type event: object.
-    :param trigger: the trigger command to react to (defaults to None).
-    :type trigger: str.
+    .. warning:: You are free to use one callable for multiple events or
+        multiple triggers, but it is not supported to use the same callable for
+        both event handling and trigger handling.
+
+    :param event: the identifier for the event you are going to handle
+    :type event: object
+    :param trigger: the trigger command to react to
+    :type trigger: str
     """
     def realHandler(func):
         if event is not None or trigger is not None:
@@ -107,7 +120,7 @@ class Target():
     targets.
 
     :param name: a string identifying the message target, as used in protocol
-        message :code:`MSG targetNameHere :Message to be sent"
+        message :code:`MSG targetNameHere :Message to be sent`
     :type name: string
     :param server: the :class:`~bones.bot.BonesBot` client instance that will
         be used to send messages to this target.
@@ -308,27 +321,33 @@ class Channel(Target):
 
     def kick(self, user, reason=None):
         """
-        Kicks the specified user from the channel.
+        Kick a user from the channel.
 
-        .. attribute:: reason
+        :param user: The user that should be kicked.
+        :type user: :class:`~bones.event.User`
 
-            A string that will be supplied with the kick as a reason for the
-            kick.
-
-        .. attribute:: user
-
-            The :class:`~bones.event.User` instance that represents the user
-            to be kicked.
+        :param reason: A message that will be shown to users in the channel
+            when kicking :code:`user`.
+        :type reason: str
         """
         self.server.kick(self.name, user.name, reason)
+
+    def part(self, reason=None):
+        """
+        Makes the bot part the channel.
+
+        :param reason: The part message that will be sent to the channel when
+            parting the channel.
+        :type reason: str
+        """
+        self.server.part(self.name, reason)
 
     def setTopic(self, topic):
         """
         Changes the channel's topic.
 
-        .. attribute:: topic
-
-            A string that will be used as the new topic.
+        :param topic: The topic that should be changed to.
+        :type topic: str
         """
         self.server.topic(self.name, topic)
 
@@ -337,8 +356,9 @@ class Topic():
     """Utility class representing a topic in a channel.
 
     .. attribute:: text
+        :type: str
 
-        A string containing the current topic of the channel.
+        The channel's current topic.
 
     .. attribute:: user
 
