@@ -8,7 +8,7 @@ from bones.bot import Module
 class NickServ(Module):
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
-        self._disabled = True
+        self._disabled = False
         if not self.settings.get("services", "nickserv.password"):
             log.error(
                 "Configuration doesn't contain a NickServ password. Please "
@@ -16,11 +16,11 @@ class NickServ(Module):
                 "non-empty value."
             )
             log.error("NickServ module will be disabled.")
-            self._disabled = False
+            self._disabled = True
 
     @bones.event.handler(event=bones.event.BotSignedOnEvent)
     def identifySignOn(self, event):
-        if not self._disabled: return
+        if self._disabled: return
         # Make sure that we're supposed to identify now.
         if self.settings.get("services", "nickserv.waitForNotice",
                              default="true") == "false":
