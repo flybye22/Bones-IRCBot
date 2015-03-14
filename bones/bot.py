@@ -861,6 +861,10 @@ class BonesBotFactory(protocol.ClientFactory):
             serverHost = serverHost[1:-1]
         if self.settings.get("bot", "bindAddress", default=None):
             bind_address = (self.settings.get("bot", "bindAddress"), 0)
+            # Strip brackets if we're getting an IPv6 address
+            if ":" in bind_address[0] and (bind_address[0].startswith("[")
+                                           and bind_address[0].endswith("]")):
+                bind_address = (bind_address[0][1:-1], bind_address[1])
         else:
             bind_address = None
         if self.settings.get("server", "useSSL", default="false") == "true":
