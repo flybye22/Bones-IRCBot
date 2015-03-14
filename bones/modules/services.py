@@ -1,38 +1,73 @@
 import logging
 log = logging.getLogger(__name__)
 
-from bones import event as events
+import bones.event
 from bones.bot import Module
 
+
 class NickServ(Module):
-    @events.handler(event="BotSignedOn")
-    def identifySignOn(self, event):
-        # Make sure that we're supposed to identify now.
-        if self.settings.get("services", "nickserv.waitForNotice") == "false":
-            # We're good to go!
-            log.info("Identifying with NickServ")
-            event.client.msg("NickServ", "IDENTIFY %s" % self.settings.get("services", "nickserv.password"))
-
-    @events.handler(event="BotNoticeReceived")
-    def identifyNotice(self, event):
-        # Make sure that we're supposed to identify now.
-        if self.settings.get("services", "nickserv.waitForNotice") == "true" \
-        and "IDENTIFY" in event.message \
-        and events.User(event.user).nickname.lower() == "nickserv":
-            # We're good to go!
-            log.info("Identifying with NickServ (triggered by notice)")
-            event.client.msg("NickServ", "IDENTIFY %s" % self.settings.get("services", "nickserv.password"))
-
-class HostServ(Module):
-    channelJoinQueue = []
-    haveVhost = False
-    haveIdentified = False
-    
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
-        log.info("HostServ module enabled, all joins will be cancelled until we have received a vhost.")
+        self._disabled = False
+        if not self.settings.get("services", "nickserv.password"):
+            log.error(
+                "Configuration doesn't contain a NickServ password. Please "
+                "add `nickserv.password` to `[services]` and make it a "
+                "non-empty value."
+            )
+            log.error("NickServ module will be disabled.")
+            self._disabled = True
 
-    @events.handler(event="BotPreJoin")
+    @bones.event.handler(event=bones.event.BotSignedOnEvent)
+    def identifySignOn(self, event):
+        if self._disabled: return
+        # Make sure that we're supposed to identify now.
+        if self.settings.get("services", "nickserv.waitForNotice",
+                             default="true") == "false":
+            # We're good to go!
+            log.info("Identifying with NickServ")
+            event.client.msg(
+                "NickServ",
+                "IDENTIFY %s" % self.settings.get("services",
+                                                  "nickserv.password")
+            )
+
+    @bones.event.handler(event=bones.event.BotNoticeReceivedEvent)
+    def identifyNotice(self, event):
+        if self._disabled: return
+        # Make sure that we're supposed to identify now.
+        if self.settings.get("services", "nickserv.waitForNotice", default="true") == "true" \
+                and "IDENTIFY" in event.message.upper() \
+                and bones.event.User(event.user, event.client) \
+                .nickname.lower() == "nickserv":
+            # We're good to go!
+            log.info("Identifying with NickServ (triggered by notice)")
+            event.client.msg(
+                "NickServ",
+                "IDENTIFY %s" %
+                (self.settings.get("services", "nickserv.password"),)
+            )
+
+
+class HostServ(Module):
+
+    def __init__(self, *args, **kwargs):
+        Module.__init__(self, *args, **kwargs)
+        self.channelJoinQueue = []
+        self.haveVhost = False
+        self.haveIdentified = False
+        log.info(
+            "HostServ module enabled, all joins will be cancelled until we "
+            "have received a vhost."
+        )
+
+    @bones.event.handler(event=bones.event.BotSignedOnEvent)
+    def cleanup(self, event):
+        self.channelJoinQueue = []
+        self.haveVhost = False
+        self.haveIdentified = False
+
+    @bones.event.handler(event=bones.event.BotPreJoinEvent)
     def preventUncloakedJoins(self, event):
         # One of the most important things we need to do is prevent
         # joining while we do not have a vhost
@@ -43,18 +78,19 @@ class HostServ(Module):
             # Cancel the event so that the bot won't join the channel
             event.isCancelled = True
 
-    @events.handler(event="irc_unknown")
-    def manageReplies(self, client, prefix, command, params):
+    @bones.event.handler(event=bones.event.IRCUnknownCommandEvent)
+    def manageReplies(self, event):
         # If the server is using cloaks, it will send a 396 while
         # giving us a cloak. Therefore we need to wait until we've
         # identified with services
-        if command == "900":
+        if event.command == "900":
             self.haveIdentified = True
-        
-        # Now that we've finally gotten our vhost, let's join all those channels!
-        elif command == "396" and self.haveIdentified:
+
+        # Now that we've finally gotten our vhost, let's join all
+        # those channels!
+        elif event.command == "396" and self.haveIdentified:
             log.info("Received Vhost, joining all queued channels")
             # As we've got a vhost, we shouldn't prevent joins anymore.
             self.haveVhost = True
             while self.channelJoinQueue:
-                client.join(self.channelJoinQueue.pop())
+                event.client.join(self.channelJoinQueue.pop())
