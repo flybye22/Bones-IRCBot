@@ -16,16 +16,16 @@ from sqlalchemy.orm import (
 from sqlalchemy.sql.expression import func
 
 from bones import event as events
+import bones.event
 from bones.bot import Module, urlopener
-from bones.modules.storage import Base
-from bones.modules.utilities import unescape
+from bones.modules import storage
 
 
 class UserQuotes(Module):
 
-    @events.handler(event="storage.Database:init")
-    def gotDB(self, db):
-        self.db = db
+    @events.handler(event=storage.DatabaseInitializedEvent)
+    def gotDB(self, event):
+        self.db = event.module
 
     @events.handler(trigger="quoterandom")
     def trigger(self, event):
@@ -35,28 +35,28 @@ class UserQuotes(Module):
             nick = event.args[0]
         quote = session.query(UserQuote).filter(UserQuote.nickname==nick).order_by(func.random()).limit(1).first()
         if not quote:
-            event.client.msg(event.channel, str("%s: The specified user is very quiet!" % event.user.nickname))
+            event.channel.msg(str("%s: The specified user is very quiet!" % event.user.nickname))
             return
         style = "<%s> %s"
         if quote.type == "action":
             style = "* %s %s"
-        event.client.msg(event.channel, str((style % (quote.nickname, quote.quote)).encode("utf-8")))
+        event.channel.msg(str((style % (quote.nickname, quote.quote)).encode("utf-8")))
 
-    @events.handler(event="Privmsg")
-    @events.handler(event="UserAction")
+    @events.handler(event=bones.event.ChannelMessageEvent)
+    @events.handler(event=bones.event.UserActionEvent)
     def logQuote(self, event):
         if isinstance(event, events.UserActionEvent):
             eventtype = "action"
             msg = event.data
         else:
             eventtype = "privmsg"
-            msg = event.msg
+            msg = event.message
         tmp = msg.strip()
         if tmp[1:].lower() != "quoterandom":
             session = self.db.new_session()
             quote = UserQuote(
                     event.user.nickname,
-                    event.channel,
+                    event.channel.name,
                     msg.decode("utf-8", "ignore"),
                     eventtype
                 )
@@ -68,76 +68,76 @@ class UserQuotes(Module):
 
 class ChannelQuotes(Module):
 
-    @events.handler(event="storage.Database:init")
-    def gotDB(self, db):
-        self.db = db
+    @events.handler(event=storage.DatabaseInitializedEvent)
+    def gotDB(self, event):
+        self.db = event.module
 
     @events.handler(trigger="quote")
     def trigger(self, event):
         if len(event.args) < 1 or event.args[0].lower() not in ["read", "random", "add", "delete", "search"]:
-            event.client.notice(event.user.nickname, str("[Quote] Need one of the following arguments: 'read', 'random', 'add', 'delete'"))
+            event.user.notice(str("[Quote] Need one of the following arguments: 'read', 'random', 'add', 'delete'"))
             return
 
         if event.args[0].lower() == "add":
             quote = " ".join(event.args[1:])
             if quote.isspace() or quote == "":
-                event.client.notice(event.user.nickname, str("[Quote] That quote is empty!"))
+                event.user.notice(str("[Quote] That quote is empty!"))
                 return
 
             cquote = ChannelQuote(
                     event.user.nickname,
-                    event.channel,
+                    event.channel.name,
                     quote.decode("utf-8", "ignore"),
                 )
             session = self.db.new_session()
             session.begin()
             session.add(cquote)
             session.commit()
-            event.client.msg(event.channel, "Quote #%i saved." % cquote.id)
+            event.channel.msg("Quote #%i saved." % cquote.id)
             return
 
         if event.args[0].lower() == "delete":
             if not len(event.args) >= 2:
-                event.client.notice(event.user.nickname, "[Quote] You need to provide a quote id!")
+                event.user.notice("[Quote] You need to provide a quote id!")
                 return
             if not event.args[1].isdigit():
-                event.client.notice(event.user.nickname, "[Quote] Quote id needs to be a number!")
+                event.user.notice("[Quote] Quote id needs to be a number!")
                 return
 
             session = self.db.new_session()
             quote = session.query(ChannelQuote).filter(ChannelQuote.id==event.args[1]).limit(1).first()
 
             if not quote:
-                event.client.notice(event.user.nickname, "[Quote] No such quote '%s'" % event.args[1])
+                event.channel.notice("[Quote] No such quote '%s'" % event.args[1])
                 return
 
             dateThen = quote.timestamp.replace(tzinfo=None)
             dateNow = datetime.now()
             diff = dateNow - dateThen
             if quote.submitter != event.user.nickname:
-                event.client.notice(event.user.nickname, "[Quote] You do not have permission do delete this quote.")
+                event.user.notice("[Quote] You do not have permission do delete this quote.")
                 return
             if diff.seconds > 3600:
-                event.client.notice(event.user.nickname, "[Quote] This quote has been archived and thus cannot be removed.")
+                event.user.notice("[Quote] This quote has been archived and thus cannot be removed.")
                 return
 
             session.begin()
             session.delete(quote)
             session.commit()
-            event.client.msg(event.channel, "[Quote] Quote #%s deleted." % event.args[1])
+            event.channel.msg("[Quote] Quote #%s deleted." % event.args[1])
             return
 
         if event.args[0].lower() == "random":
             session = self.db.new_session()
-            quote = session.query(ChannelQuote).filter(ChannelQuote.channel==event.channel).order_by(func.random()).limit(1).first()
+            quote = session.query(ChannelQuote).filter(ChannelQuote.channel==event.channel.name).order_by(func.random()).limit(1).first()
             self.sendQuote(event, quote)
             return
 
         if event.args[0].lower() == "search":
             if len(event.args) < 2:
-                event.client.notice(event.user.nickname, "[Quote] You need to provide a search term!")
+                event.user.notice("[Quote] You need to provide a search term!")
                 return
-            
+
             session = self.db.new_session()
             quotes = session.query(ChannelQuote).filter(ChannelQuote.quote.like("%%%s%%" % " ".join(event.args[1:]))).order_by(ChannelQuote.id.asc()).all()
             if len(quotes) > 1:
@@ -146,20 +146,20 @@ class ChannelQuotes(Module):
                     if results != "":
                         results = results + ", "
                     results = results + ("#%d" % result.id)
-                event.client.msg(event.channel, "[Quote] Results found: %s" % results)
+                event.channel.msg("[Quote] Results found: %s" % results)
                 return
             if len(quotes) == 1:
                 self.sendQuote(event, quotes.pop())
                 return
-            event.client.msg(event.channel, "[Quote] No results found")
+            event.channel.msg("[Quote] No results found")
             return
 
         if event.args[0].lower() == "read":
             if not len(event.args) >= 2:
-                event.client.notice(event.user.nickname, "[Quote] You need to provide a quote id!")
+                event.user.notice("[Quote] You need to provide a quote id!")
                 return
             if not event.args[1].isdigit():
-                event.client.notice(event.user.nickname, "[Quote] Quote id needs to be a number!")
+                event.user.notice("[Quote] Quote id needs to be a number!")
                 return
 
             session = self.db.new_session()
@@ -170,7 +170,7 @@ class ChannelQuotes(Module):
 
     def sendQuote(self, event, quote):
         if not quote:
-            event.client.msg(event.channel, str(("[Quote] No such quote '%s'" % event.args[1]).encode("utf-8")))
+            event.channel.msg(str(("[Quote] No such quote '%s'" % event.args[1]).encode("utf-8")))
             return
         date = []
         dateThen = quote.timestamp.replace(tzinfo=None)
@@ -198,11 +198,11 @@ class ChannelQuotes(Module):
         else:
             suffix = ""
         date.append("%s minute%s" % (minutes, suffix))
-        event.client.msg(event.channel, str(("[Quote] Quote #%i added %s ago by %s:" % (quote.id, ", ".join(date), quote.submitter)).encode("utf-8")))
-        event.client.msg(event.channel, str(("[Quote] %s" % quote.quote).encode("utf-8")))
+        event.channel.msg(str(("[Quote] Quote #%i added %s ago by %s:" % (quote.id, ", ".join(date), quote.submitter)).encode("utf-8")))
+        event.channel.msg(str(("[Quote] %s" % quote.quote).encode("utf-8")))
 
 
-class UserQuote(Base):
+class UserQuote(storage.Base):
     __tablename__ = "bones_quotes_user"
 
     id = Column(Integer, primary_key=True)
@@ -220,7 +220,7 @@ class UserQuote(Base):
         self.timestamp = datetime.now()
 
 
-class ChannelQuote(Base):
+class ChannelQuote(storage.Base):
     __tablename__ = "bones_quotes_channel"
 
     id = Column(Integer, primary_key=True)
