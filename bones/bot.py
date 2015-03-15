@@ -693,7 +693,7 @@ class BonesBotFactory(protocol.ClientFactory):
         self.reconnectAttempts = 0
 
         self.settings = settings
-        self.channels = settings.get("bot", "channel", default="").split("\n")
+        self.channels = settings.get("server", "channel", default="").split("\n")
         self.channels = removeEmptyElementsFromList(self.channels)
         self.nicknames = settings.get("bot", "nickname", default="") \
             .split("\n")
