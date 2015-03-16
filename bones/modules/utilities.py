@@ -1,7 +1,5 @@
 # -*- encoding: utf8 -*-
 import re
-import logging
-log = logging.getLogger(__name__)
 
 import bones.event
 from bones.bot import Module
@@ -57,7 +55,7 @@ class Utilities(Module):
             from bs4 import BeautifulSoup
             self.bs = BeautifulSoup
         except ImportError:
-            log.warn(
+            self.log.warn(
                 "Unmet dependency BeautifulSoup4: The URL checkers will be "
                 "disabled."
             )

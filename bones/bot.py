@@ -923,3 +923,5 @@ class Module():
     def __init__(self, settings, factory):
         self.settings = settings
         self.factory = factory
+        self.name = "%s.%s" % (self.__module__, self.__class__.__name__)
+        self.log = logging.getLogger(self.name)

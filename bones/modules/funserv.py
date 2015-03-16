@@ -27,7 +27,6 @@ class QDB(Module):
 
     def __init__(self, settings, factory):
         Module.__init__(self, settings, factory)
-        self.log = logging.getLogger(".".join([__name__, "QDB"]))
         if not self.BeautifulSoup:
             ex = Exception(
                 "Unmet dependency: BeautifulSoup 4 not installed. This "
@@ -140,9 +139,6 @@ class Factoid(storage.Base):
 
 class Factoids(Module):
     reLearn = re.compile("(.+) is (.+)")
-    def __init__(self, *args, **kwargs):
-        Module.__init__(self, *args, **kwargs)
-        self.log = logging.getLogger(".".join([__name__, "Factoids"]))
 
     @bones.event.handler(event=storage.DatabaseInitializedEvent)
     def gotDB(self, event):
