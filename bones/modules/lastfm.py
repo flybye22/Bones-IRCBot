@@ -19,10 +19,10 @@ class Lastfm(Module):
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
-        self.apikey = self.settings.get("module.Lastfm", "apikey")
+        self.log = logging.getLogger(".".join([__name__, "Lastfm"]))
+        self.apikey = self.settings.get("module.Lastfm", "apikey", default=None)
         if not self.apikey:
             self.log.error("No API key provided. Last.fm will be disabled.")
-        self.log = logging.getLogger(".".join([__name__, "Lastfm"]))
 
     @bones.event.handler(event=storage.DatabaseInitializedEvent)
     def gotDB(self, event):
