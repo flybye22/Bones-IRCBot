@@ -1,6 +1,3 @@
-import logging
-log = logging.getLogger(__name__)
-
 from sqlalchemy import engine_from_config
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import (
@@ -38,7 +35,7 @@ class Database(Module):
     @bones.event.handler(event=bones.event.BotInitializedEvent)
     def botReady(self, event):
         self.engine = engine_from_config(self.get_config(), "sqlalchemy.")
-        log.debug("Connected to database")
+        self.log.debug("Connected to database")
         dbInitEvent = DatabaseInitializedEvent(self)
         bones.event.fire(event.factory.tag, dbInitEvent)
         self.sessionmaker = sessionmaker(bind=self.engine, autocommit=True)
