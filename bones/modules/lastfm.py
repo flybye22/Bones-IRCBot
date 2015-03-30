@@ -32,6 +32,7 @@ class Lastfm(Module):
         if not self.apikey:
             self.log.error("No API key provided. Last.fm will be disabled.")
             event.channel.msg("[Last.fm] Configuration error; check the logs for more info.")
+            return
         argc = len(event.args)
         action = None
         nickname = None
