@@ -840,8 +840,7 @@ class BonesBotFactory(protocol.ClientFactory):
 
     def connect(self):
         """Connects this bot factory to the server it is configured for.
-        Gets called automatically by the default manager at boot and by
-        the factory when reconnecting a lost or failed connection.
+        Gets called automatically by the default manager at boot.
         """
 
         serverPort = int(self.settings.get("server", "port", default="6667"))
