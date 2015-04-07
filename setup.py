@@ -14,5 +14,10 @@ bot development using modules able to handle e.g. triggers and such.""",
     install_requires=[
         'Twisted==15.0.0',
         'zope.interface==4.1.2',
-    ]
+    ],
+    entry_points={
+        "console_scripts": [
+            'bones = bones.__main__:run',
+        ],
+    },
 )

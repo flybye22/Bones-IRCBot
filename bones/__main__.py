@@ -7,7 +7,8 @@ from twisted.internet import reactor
 from bones.bot import BonesBotFactory
 from bones.config import BaseConfiguration
 
-if __name__ == "__main__":
+
+def main():
     try:
         logging.config.fileConfig(sys.argv[1])
     except Exception, ex:
@@ -41,3 +42,6 @@ https://github.com/404d/Bones-IRCBot/pull/13""")
         botFactory = BonesBotFactory(settings.server(server))
         botFactory.connect()
     reactor.run()
+
+if __name__ == "__main__":
+    main()
