@@ -457,6 +457,33 @@ class BotInitializedEvent(Event):
         self.factory = factory
 
 
+class BotInviteEvent(Event):
+    """
+    An event that is fired whenever the bot joins a new channel. The bot has
+    "joined" a channel when the server informs the bot of its presence in that
+    channel, and not when the bot calls
+    :class:`client.join("#channel")`.
+
+    .. attribute:: client
+
+        The client instance that this event applies to.
+
+    .. attribute:: channel
+
+        The channel name the bot was invited to, as a string.
+
+    .. attribute:: inviter
+
+        The user that invited the bot, as a :class:`~bones.event.User`
+        instance..
+    """
+    def __init__(self, client, channel, inviter):
+        self.client = client
+        self.channel = channel
+        self.inviter = inviter
+        self.isCancelled = False
+
+
 class BotJoinEvent(Event):
     """
     An event that is fired whenever the bot joins a new channel. The bot has
