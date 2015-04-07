@@ -542,19 +542,31 @@ class BonesBot(irc.IRCClient):
         if modes:
             channel._set_modes("".join(modes), args, True)
 
+    def irc_INVITE(self, prefix, params):
+        event = bones.event.BotInviteEvent(self, params[1],
+                                           self.get_user(prefix))
+
+        def onInviteJoin(event):
+            if self.factory.settings.get("bot", "joinOnInvite", default="false") \
+                    != "true":
+                return
+            if event.isCancelled:
+                log.debug("Got invited to '%s' on {%s} by %s, but the event "
+                          "was cancelled.", event.channel, self.tag,
+                          event.inviter)
+                return
+            log.info(
+                "Got invited to '%s' on {%s} by %s, joining.",
+                event.channel, self.tag, event.inviter
+            )
+            self.join(event.channel)
+        bones.event.fire(self.tag, event, callback=onInviteJoin)
+
     def irc_unknown(self, prefix, command, params):
         log.debug(
             "Unknown RAW: %s; %s; %s",
             prefix, command, params
         )
-        # TODO: Implement as irc_INVITE
-        if command.lower() == "invite" and self.factory.settings.get(
-                "bot", "joinOnInvite", default="false") == "true":
-            log.info(
-                "Got invited to %s, joining.",
-                params[1]
-            )
-            self.join(params[1])
         event = bones.event.IRCUnknownCommandEvent(self, prefix, command,
                                                    params)
         bones.event.fire(self.tag, event)
