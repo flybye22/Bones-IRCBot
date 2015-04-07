@@ -17,7 +17,7 @@ bot development using modules able to handle e.g. triggers and such.""",
     ],
     entry_points={
         "console_scripts": [
-            'bones = bones.__main__:run',
+            'bones = bones.__main__:main',
         ],
     },
 )
