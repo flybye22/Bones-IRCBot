@@ -293,13 +293,21 @@ class Channel(Target):
         if mode in self.server.channel_modes["list"] or \
                 [True for m, p in self.server.prefixes if m == mode]:
             if mode not in self.modes:
-                self.modes[mode] = []
-            self.modes[mode].append(args.pop(0))
+                log.debug("Creating modelist '%s' for %s", mode, self)
+                self.modes[mode] = set()
+            log.debug("Adding element '%s' to modelist '%s' in %s", args[0],
+                      mode, self)
+            self.modes[mode].add(args.pop(0))
         elif mode in self.server.channel_modes["always"]:
+            log.debug("Setting value-mode '%s' with argument '%s' in %s", mode,
+                      args[0], self)
             self.modes[mode] = args.pop(0)
         elif mode in self.server.channel_modes["set"]:
+            log.debug("Setting option-mode '%s' with argument '%s' in %s",
+                      mode, args[0], self)
             self.modes[mode] = args.pop(0)
         else:
+            log.debug("Setting boolean mode '%s' in %s", mode, self)
             self.modes[mode] = True
 
     def _unset_mode(self, mode, args):
@@ -307,17 +315,35 @@ class Channel(Target):
                 [True for m, p in self.server.prefixes if m == mode]:
             arg = args.pop(0)
             if mode in self.modes and arg in self.modes[mode]:
+                log.debug("Removing element '%s' from modelist '%s' in %s",
+                          arg, mode, self)
                 self.modes[mode].remove(arg)
+            else:
+                log.debug("Ignoring modelist '%s' removal of '%s' in %s",
+                          mode, arg, self)
         elif mode in self.server.channel_modes["always"]:
             arg = args.pop(0)
             if mode in self.modes and arg:
+                log.debug("Removing value-mode '%s' ('%s') from channel %s",
+                          mode, arg, self)
                 del self.modes[mode]
+            else:
+                log.debug("Ignoring value-mode removal of '%s' ('%s') in %s",
+                          mode, arg, self)
         elif mode in self.server.channel_modes["set"]:
             if mode in self.modes:
+                log.debug("Removing option-mode '%s' from %s", mode, self)
                 del self.modes[mode]
+            else:
+                log.debug("Ignoring option-mode removal of '%s' from %s", mode,
+                          self)
         else:
             if mode in self.modes:
+                log.debug("Removing boolean mode '%s' from %s", mode, self)
                 del self.modes[mode]
+            else:
+                log.debug("Removing boolean mode removal of '%s' from %s",
+                          mode, self)
 
     def kick(self, user, reason=None):
         """
