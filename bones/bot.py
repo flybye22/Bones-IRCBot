@@ -245,16 +245,8 @@ class BonesBot(irc.IRCClient):
 
     def modeChanged(self, user, target, set, modes, args):
         # TODO: Ditch this and override irc_MODE
-        if set:
-            setString = "+"
-        else:
-            setString = "-"
         # TODO: This should be changed as a part of the interface for mode
         # changing we'll make at one point in time.
-        log.info(
-            "Mode change in %s: %s set %s%s (%s)",
-            target, user, setString, modes, args
-        )
         if [True for x in self.channel_types if x is target[0]]:
             target = self.get_channel(target)
             args = [x for x in args if x is not None]
