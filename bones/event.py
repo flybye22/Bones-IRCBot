@@ -316,11 +316,11 @@ class Channel(Target):
             arg = args.pop(0)
             if mode in self.modes and arg in self.modes[mode]:
                 log.debug("Removing element '%s' from modelist '%s' in %s",
-                          args[0], mode, self)
+                          arg, mode, self)
                 self.modes[mode].remove(arg)
             else:
                 log.debug("Ignoring modelist '%s' removal of '%s' in %s",
-                          mode, args[0], self)
+                          mode, arg, self)
         elif mode in self.server.channel_modes["always"]:
             arg = args.pop(0)
             if mode in self.modes and arg:
