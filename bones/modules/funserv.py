@@ -160,7 +160,7 @@ class Factoids(Module):
             session.add(factoid)
             session.commit()
             session.close()
-            event.client.msg(event.channel, "%s: I understand" % event.user.nickname)
+            event.reply("I understand")
 
     @bones.event.handler(event=bones.event.IrcPrivmsgEvent)
     def queryFactoid(self, event):
@@ -170,7 +170,7 @@ class Factoids(Module):
             factoids = session.query(Factoid).filter(Factoid.topic == topic).all()
             if not factoids:
                 return
-            msg = "%s: %s is" % (event.user.nickname, topic.decode("utf-8"))
+            msg = "%s is" % topic.decode("utf-8")
             i = 0
             if len(factoids) > 1:
                 for factoid in factoids:
@@ -180,7 +180,7 @@ class Factoids(Module):
                     msg = msg + " (#%d) %s" % (i, factoid.fact)
             else:
                 msg = msg + " %s" % factoids[0].fact
-            event.client.msg(event.channel, msg.encode("utf-8"))
+            event.reply(msg.encode("utf-8"))
             session.close()
 
 
