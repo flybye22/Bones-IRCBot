@@ -293,8 +293,8 @@ class Channel(Target):
         if mode in self.server.channel_modes["list"] or \
                 [True for m, p in self.server.prefixes if m == mode]:
             if mode not in self.modes:
-                self.modes[mode] = []
-            self.modes[mode].append(args.pop(0))
+                self.modes[mode] = set()
+            self.modes[mode].add(args.pop(0))
         elif mode in self.server.channel_modes["always"]:
             self.modes[mode] = args.pop(0)
         elif mode in self.server.channel_modes["set"]:
