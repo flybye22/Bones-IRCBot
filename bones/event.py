@@ -342,7 +342,7 @@ class Channel(Target):
                 log.debug("Removing boolean mode '%s' from %s", mode, self)
                 del self.modes[mode]
             else:
-                log.debug("Removing boolean mode removal of '%s' from %s",
+                log.debug("Ignoring boolean mode removal of '%s' from %s",
                           mode, self)
 
     def kick(self, user, reason=None):
