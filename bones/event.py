@@ -396,6 +396,22 @@ class Topic():
         self.user = user
 
 
+class ModeChange():
+    def __init__(self, client, target, modechar, set):
+        self.client = client
+        self.target = target
+        self.modechar = modechar
+        self.set = set
+
+    def __repr__(self):
+        return "<Mode %s %s%s {%s}>" % (
+            self.target,
+            "+" if self.set else "-",
+            self.modechar,
+            self.client.tag,
+        )
+
+
 # ------------------------------------ #
 
 
@@ -710,6 +726,25 @@ class CTCPPongEvent(Event):
         self.client = client
         self.secs = secs
         self.user = User(user, client)
+
+
+class IrcModeEvent(Event):
+    def __init__(self, client, target, source, mode_changes, arguments):
+        self.client = client
+        self.target = target
+        self.source = source
+        self.mode_changes = mode_changes
+        self.arguments = arguments
+
+
+class BotModeChangeEvent(IrcModeEvent):
+    pass
+
+
+class ChannelModeChangeEvent(IrcModeEvent):
+    def __init__(self, ignored=False, *args):
+        IrcModeEvent.__init__(self, *args)
+        self.ignored = ignored
 
 
 class IrcPrivmsgEvent(Event):

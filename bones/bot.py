@@ -39,6 +39,7 @@ class BonesBot(irc.IRCClient):
     def __init__(self, *args, **kwargs):
         self.channels = {}
         self.users = {}
+        self.modes = {}  # Bot user modes
         # Prepare some server implementation details, to be filled out later
         # from ISUPPORT options.
         self.channel_types = "#"
@@ -242,6 +243,56 @@ class BonesBot(irc.IRCClient):
             self, user, channel, message
         )
         bones.event.fire(self.tag, event)
+
+    def irc_MODE(self, prefix, params):
+        target = params[0]
+        modes = params[1]
+        args = params[2:]
+
+        state = None
+        modechanges = []
+        for char in modes:
+            if char in ["+", "-"]:
+                state = True if char is "+" else False
+            else:
+                modechange = bones.event.ModeChange(
+                    self, target, char, state,
+                )
+                modechanges.append(modechange)
+
+        event = bones.event.IrcModeEvent(
+            self,
+            target,
+            prefix,
+            modechanges,
+            args,
+        )
+        bones.event.fire(self.tag, event)
+
+        # Update channel modes
+        if [True for x in self.channel_types if x is target[0]]:
+            target = self.get_channel(target)
+            m_args = [x for x in args if x is not None]
+            for change in modechanges:
+                target._set_modes(change.modechar, m_args, change.set)
+            return
+
+        # Update bot modes
+        if target.lower() == self.nickname.lower():
+            for change in modechanges:
+                if change.set:
+                    self.modes[change.modechar] = True
+                elif change.modechar in self.modes:
+                    del self.modes[change.modechar]
+                event = bones.event.BotModeChangeEvent(
+                    self,
+                    self,
+                    prefix,
+                    modechanges,
+                    [],
+                )
+                bones.event.fire(self.tag, event)
+            return
 
     def modeChanged(self, user, target, set, modes, args):
         # TODO: Ditch this and override irc_MODE
