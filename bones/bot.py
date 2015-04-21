@@ -383,7 +383,7 @@ class BonesBot(irc.IRCClient):
                     if mode in channel.modes and \
                             oldname in channel.modes[mode]:
                         channel.modes[mode].remove(oldname)
-                        channel.modes[mode].append(newname)
+                        channel.modes[mode].add(newname)
                         log.debug("Mode refresh in %s: -%s+%s %s %s",
                                   channel, mode, mode, oldname, newname)
             self.users[newname] = user
