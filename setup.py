@@ -10,7 +10,7 @@ bot development using modules able to handle e.g. triggers and such.""",
     author="Simen Lybekk",
     author_email="simen4000+github-bones@gmail.com",
     url="http://github.com/404d/Bones-IRCBot",
-    packages=["bones"],
+    packages=["bones", "bones.modules"],
     install_requires=[
         'Twisted==15.0.0',
         'zope.interface==4.1.2',
