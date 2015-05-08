@@ -13,9 +13,6 @@ logging.addLevelName(2, "RAW")
 log = logging.getLogger(__name__)
 log.raw = lambda *args: log.log(2, *args)
 
-urlopener = urllib2.build_opener()
-urlopener.addheaders = [('User-agent', 'urllib/2 BonesIRCBot/0.2.0-DEV')]
-
 removeEmptyElementsFromList = lambda x: [e for e in x if e]
 
 

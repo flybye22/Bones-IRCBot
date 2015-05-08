@@ -1,5 +1,7 @@
 # -*- encoding: utf8 -*-
+import json
 import re
+import urllib
 
 import bones.event
 from bones.bot import Module
@@ -71,6 +73,7 @@ class Ping(Module):
 
 class Twitter(Module):
     bs = None
+    urlopener = None
 
     reTweetLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)  # NOQA
 
@@ -122,33 +125,95 @@ class Twitter(Module):
 
 class YouTube(Module):
     bs = None
+    apikey = None
+    fetchData = lambda x: {"template": "html", "title": "Something went wrong"}
 
-    reVideoLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")  # NOQA
+    reVideoLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)(?P<id>[a-zA-Z-0-9\_\-]*)")  # NOQA
+    template_simple = u"\x0314You\x035Tube \x0314::\x03 {title} \x034::\x03 http://youtu.be/{id}"  # NOQA
+    template_api = u"\x0314You\x035Tube \x034::\x03 {title}\x0314, {snippet[channelTitle]} \x034::\x0314 {duration} {definition} \x034::\x03 http://youtu.be/{id}"  # NOQA
+
+    apiEndpoint = "https://www.googleapis.com/youtube/v3/%s?%s"
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
-        try:
-            from bs4 import BeautifulSoup
-            self.bs = BeautifulSoup
-        except ImportError:
+
+        self.apikey = self.settings.get("module.utilities", "youtube.apikey",
+                                        default=None)
+        if not self.apikey:
             self.log.warn(
-                "Unmet dependency BeautifulSoup4: The URL checkers will be "
-                "disabled."
-            )
+                "No API key provided. Video search and detailed video info "
+                "will be disabled.")
+            self.fetchData = self.fetchData_Html
+        else:
+            self.fetchData = self.fetchData_YouTubeApi
+
+        if not self.apikey:
+            try:
+                from bs4 import BeautifulSoup
+                self.bs = BeautifulSoup
+            except ImportError:
+                self.log.warn(
+                    "Unmet dependency BeautifulSoup4: The URL checkers will "
+                    "be disabled."
+                )
+
+    def api_request(self, method, **args):
+        args["key"] = self.apikey
+        url = self.apiEndpoint % (method, urllib.urlencode(args))
+        result = self.factory.urlopener.open(url).read()
+        return json.loads(result)
+
+    def fetchData_Html(self, video):
+        url = "http://youtube.com/watch?%s" % urllib.urlencode({"v": video})
+        html = self.factory.urlopener.open(url).read()
+        soup = self.bs(html)
+        title = soup.find("span", {"id": "eow-title"}).text.strip()
+        return {
+            "template": "html",
+            "id": video,
+            "title": title,
+        }
+
+    def fetchData_YouTubeApi(self, video):
+        data = self.api_request("videos",
+                                part="statistics,snippet,contentDetails",
+                                id=video)
+        if not data["items"]:
+            return
+        output = data["items"][0]
+        output.update(output["snippet"])
+        output["duration"] = output["contentDetails"]["duration"].lower()[2:]
+        output["definition"] = output["contentDetails"]["definition"].upper()
+        output["template"] = "api"
+        return output
+
+    def sendToChannel(self, channel, data):
+        if data["template"] == "api":
+            output = self.template_api
+        else:
+            output = self.template_simple
+
+        output = output.format(**data)
+        output = u"↵ ".join(output.split("\n"))
+        channel.msg(output.encode("utf-8"))
 
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
-    def eventURLInfo_YouTube(self, event):
-        if self.bs is not None:
-            if "youtu" in event.message and "http" in event.message:
-                data = self.reVideoLink.search(event.message)
-                if data:
-                    vid = data.group(5)
-                    url = "http://youtu.be/%s" % vid
-                    html = event.client.factory.urlopener.open(url).read()
-                    soup = self.bs(html)
-                    title = soup.find("span", {"id": "eow-title"}).text.strip()
-                    msg = (u"\x0314You\x035Tube \x034::\x03 %s \x034::\x03 %s"
-                           % (title, url))
-                    msg = u"↵ ".join(msg.split("\n"))
-                    if title:
-                        event.channel.msg(msg.encode("utf-8"))
+    def checkMessageForUrl(self, event):
+        if not self.bs and not self.apikey:
+            return
+        if not ("youtu" in event.message and "http" in event.message):
+            return
+
+        data = self.reVideoLink.search(event.message)
+        if not data:
+            return
+
+        video_data = self.fetchData(data.group("id"))
+        if not video_data:
+            return
+        self.sendToChannel(event.channel, video_data)
+
+    @bones.event.handler(trigger="yt")
+    @bones.event.handler(trigger="youtube")
+    def videoSearch(self, event):
+        pass  # TODO

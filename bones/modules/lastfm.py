@@ -11,7 +11,7 @@ from sqlalchemy import (
     )
 
 import bones.event
-from bones.bot import Module, urlopener
+from bones.bot import Module
 from bones.modules import storage
 
 
@@ -63,8 +63,8 @@ class Lastfm(Module):
                 "extended": 1
             })
             try:
-                data = urlopener.open("http://ws.audioscrobbler.com/2.0/?%s"
-                                      % params).read()
+                data = self.factory.urlopener.open(
+                    "http://ws.audioscrobbler.com/2.0/?%s" % params).read()
                 data = json.loads(data)
             except:
                 event.channel.msg(
