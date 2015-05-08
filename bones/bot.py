@@ -753,6 +753,7 @@ class BonesBotFactory(protocol.ClientFactory):
         package = ".".join(tmppath[:-1])
         name = tmppath[-1]
 
+        log.info("Loading module %s", path)
         try:
             module = __import__(package, fromlist=[name])
         except ImportError as ex_raised:
@@ -788,7 +789,6 @@ class BonesBotFactory(protocol.ClientFactory):
             instance = module(settings=self.settings, factory=self)
             self.modules.append(instance)
             bones.event.register(instance, self.tag)
-            log.info("Loaded module %s", path)
             bones.event.fire(self.tag, bones.event.BotModuleLoaded(module))
         else:
             ex = InvalidBonesModuleException(
