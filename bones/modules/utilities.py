@@ -42,23 +42,10 @@ class NickFix(Module):
             self.isRecovering = False
 
 
-class Utilities(Module):
-    bs = None
-
-    reYouTubeLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")  # NOQA
-    reTwitterLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)  # NOQA
-
+class Ping(Module):
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
         self.ongoingPings = {}
-        try:
-            from bs4 import BeautifulSoup
-            self.bs = BeautifulSoup
-        except ImportError:
-            self.log.warn(
-                "Unmet dependency BeautifulSoup4: The URL checkers will be "
-                "disabled."
-            )
 
     @bones.event.handler(trigger="ping")
     def cmdPing(self, event):
@@ -73,11 +60,36 @@ class Utilities(Module):
                 % self.ongoingPings[nick]
             )
 
+    @bones.event.handler(event=bones.event.CTCPPongEvent)
+    def eventPingResponseReceive(self, event):
+        nick = event.user.nickname
+        if nick in self.ongoingPings:
+            event.user.notice("%s: Your response time was %.3f seconds."
+                              % (nick, event.secs))
+            del self.ongoingPings[nick]
+
+
+class Twitter(Module):
+    bs = None
+
+    reTweetLink = re.compile("(https?\:\/\/)?twitter\.com\/[a-zA-Z0-9\-\_]+\/status\/\d+", re.IGNORECASE)  # NOQA
+
+    def __init__(self, *args, **kwargs):
+        Module.__init__(self, *args, **kwargs)
+        try:
+            from bs4 import BeautifulSoup
+            self.bs = BeautifulSoup
+        except ImportError:
+            self.log.warn(
+                "Unmet dependency BeautifulSoup4: The URL checkers will be "
+                "disabled."
+            )
+
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_Twitter(self, event):
         if self.bs is not None:
             if "twitter" in event.message and "http" in event.message:
-                data = self.reTwitterLink.search(event.message)
+                data = self.reTweetLink.search(event.message)
                 if data:
                     url = data.group(0)
                     html = event.client.factory.urlopener.open(url).read()
@@ -107,11 +119,28 @@ class Utilities(Module):
                            % (tweet, user))
                     event.channel.msg(msg.encode("utf-8"))
 
+
+class YouTube(Module):
+    bs = None
+
+    reVideoLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)([a-zA-Z-0-9\_\-]*)")  # NOQA
+
+    def __init__(self, *args, **kwargs):
+        Module.__init__(self, *args, **kwargs)
+        try:
+            from bs4 import BeautifulSoup
+            self.bs = BeautifulSoup
+        except ImportError:
+            self.log.warn(
+                "Unmet dependency BeautifulSoup4: The URL checkers will be "
+                "disabled."
+            )
+
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def eventURLInfo_YouTube(self, event):
         if self.bs is not None:
             if "youtu" in event.message and "http" in event.message:
-                data = self.reYouTubeLink.search(event.message)
+                data = self.reVideoLink.search(event.message)
                 if data:
                     vid = data.group(5)
                     url = "http://youtu.be/%s" % vid
@@ -123,11 +152,3 @@ class Utilities(Module):
                     msg = u"↵ ".join(msg.split("\n"))
                     if title:
                         event.channel.msg(msg.encode("utf-8"))
-
-    @bones.event.handler(event=bones.event.CTCPPongEvent)
-    def eventPingResponseReceive(self, event):
-        nick = event.user.nickname
-        if nick in self.ongoingPings:
-            event.user.notice("%s: Your response time was %.3f seconds."
-                              % (nick, event.secs))
-            del self.ongoingPings[nick]
