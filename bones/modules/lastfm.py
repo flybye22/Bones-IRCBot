@@ -98,10 +98,9 @@ class Lastfm(Module):
                     and track["@attr"]["nowplaying"].lower() == "true":
                 loved = ""
                 if "loved" in track and track["loved"] == "1":
-                    loved = u"\x034♥︎\x03"
-                msg = u"\x02%s\x02 ♪ %s – %s %s" % (user.username,
-                                                    tracktitle, artist,
-                                                    loved)
+                    loved = u"\x034♥\x03"
+                msg = u"\x02%s\x02 ♪ %s \x0305–\x03 %s %s"
+                msg %= (user.username, tracktitle, artist, loved)
             else:
                 timestamp = track["date"]["uts"]
                 date = []
