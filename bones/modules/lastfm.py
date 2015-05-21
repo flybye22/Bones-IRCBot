@@ -96,11 +96,11 @@ class Lastfm(Module):
             tracktitle = track["name"]
             if "@attr" in track and "nowplaying" in track["@attr"] \
                     and track["@attr"]["nowplaying"].lower() == "true":
-                loved = ""
+                icon = u"♪"
                 if "loved" in track and track["loved"] == "1":
-                    loved = u"\x034♥\x03"
-                msg = u"\x02%s\x02 ♪ %s \x0305–\x03 %s %s"
-                msg %= (user.username, tracktitle, artist, loved)
+                    icon = u"\x034♥\x03"
+                msg = u"\x02%s\x02 %s %s \x0305–\x03 %s %s"
+                msg %= (user.username, icon, tracktitle, artist)
             else:
                 timestamp = track["date"]["uts"]
                 date = []
