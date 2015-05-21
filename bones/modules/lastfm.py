@@ -99,7 +99,7 @@ class Lastfm(Module):
                 icon = u"♪"
                 if "loved" in track and track["loved"] == "1":
                     icon = u"\x034♥\x03"
-                msg = u"\x02%s\x02 %s %s \x0305–\x03 %s %s"
+                msg = u"\x02%s\x02 %s %s \x0305–\x03 %s"
                 msg %= (user.username, icon, tracktitle, artist)
             else:
                 timestamp = track["date"]["uts"]
