@@ -114,14 +114,15 @@ class Lastfm(Module):
         track = data['recenttracks']['track'][0]
         artist = track["artist"]["name"]
         tracktitle = track["name"]
-        if "@attr" in track and "nowplaying" in track["@attr"] \
-                and track["@attr"]["nowplaying"].lower() == "true":
-            icon = u"♪"
-            if "loved" in track and track["loved"] == "1":
-                icon = u"\x034♥\x03"
-            msg = u"\x02%s\x02 %s %s \x0305–\x03 %s"
-            msg %= (user.username, icon, tracktitle, artist)
-        else:
+
+        icon = u"♪"
+        if "loved" in track and track["loved"] == "1":
+            icon = u"\x034♥\x03"
+        msg = u"\x02%s\x02 %s %s \x0305–\x03 %s"
+        msg %= (user.username, icon, tracktitle, artist)
+
+        if not ("@attr" in track and "nowplaying" in track["@attr"] and
+                track["@attr"]["nowplaying"].lower() == "true"):
             timestamp = track["date"]["uts"]
             date = []
 
@@ -130,31 +131,19 @@ class Lastfm(Module):
             diff = dateNow - dateThen
 
             if diff.days > 0:
-                if diff.days != 1:
-                    suffix = "s"
-                else:
-                    suffix = ""
-                date.append("%s day%s" % (diff.days, suffix))
+                date.append("%sd" % diff.days)
 
             hours = (diff.seconds // 3600) % 24
-            if hours > 0:
-                if hours != 1:
-                    suffix = "s"
-                else:
-                    suffix = ""
-                date.append("%s hour%s" % (hours, suffix))
+            if hours > 0 or diff.days > 0:
+                date.append("%sh" % hours)
 
             minutes = (diff.seconds // 60) % 60
-            if minutes != 1:
-                suffix = "s"
-            else:
-                suffix = ""
-            date.append("%s minute%s" % (minutes, suffix))
-            msg = (
-                "'%s' is not playing anything now, but played this %s "
-                "ago: %s - %s"
-                % (user.username, ", ".join(date), tracktitle, artist)
-            )
+            if diff.seconds > 0 or hours > 0 or diff.days > 0:
+                date.append("%sm" % minutes)
+
+            date.append("%ss" % (diff.seconds % 60))
+            msg += u" \x0315⌛ %s ago" % "".join(date)
+
         event.channel.msg(str(msg.encode("utf-8")))
 
     def registerUser(self, event, username):
