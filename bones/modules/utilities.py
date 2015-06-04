@@ -129,14 +129,17 @@ class YouTube(Module):
     fetchData = lambda x: {"template": "html", "title": "Something went wrong"}
 
     reVideoLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)(?P<id>[a-zA-Z-0-9\_\-]*)")  # NOQA
-    template_simple = u"\x0314You\x035Tube \x0314::\x03 {title} \x034::\x03 http://youtu.be/{id}"  # NOQA
-    template_api = u"\x0314You\x035Tube \x034::\x03 {title}\x0314, {snippet[channelTitle]} \x034::\x0314 {duration} {definition} \x034::\x03 http://youtu.be/{id}"  # NOQA
+    __template_simple = u"\x0314You\x035Tube \x0314::\x03 {title} \x034::\x03 http://youtu.be/{id}"  # NOQA
+    __template_api = u"\x0314You\x035Tube \x034::\x03 {title}\x0314, {snippet[channelTitle]} \x034::\x0314 {duration} {definition} \x034::\x03 http://youtu.be/{id}"  # NOQA
 
     apiEndpoint = "https://www.googleapis.com/youtube/v3/%s?%s"
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
 
+
+        self.template_simple = self.settings.get("module.utilities", "youtube.template.simple", default=self.__template_simple)
+        self.template_api = self.settings.get("module.utilities", "youtube.template.api", default=self.__template_api)
         self.apikey = self.settings.get("module.utilities", "youtube.apikey",
                                         default=None)
         if not self.apikey:
