@@ -76,134 +76,143 @@ class ChannelQuotes(bones.bot.Module):
 
     @bones.event.handler(trigger="quote")
     def trigger(self, event):
-        if len(event.args) < 1 or event.args[0].lower() not in \
-                ["read", "random", "add", "delete", "search"]:
+        cmds = {
+            "add": self.cmdQuoteAdd,
+            "delete": self.cmdQuoteDelete,
+            "random": self.cmdQuoteRandom,
+            "read": self.cmdQuoteRead,
+            "search": self.cmdQuoteSearch,
+        }
+
+        if len(event.args) < 1 or event.args[0].lower() not in cmds:
             event.user.notice(str(
-                "[Quote] Need one of the following arguments: 'read', "
-                "'random', 'add', 'delete'"
+                "[Quote] Need one of the following arguments: " +
+                (", ".join(["'%s'" % cmd for cmd in cmds]))
             ))
             return
+        cmds[event.args[0].lower()](event)
 
-        if event.args[0].lower() == "add":
-            quote = " ".join(event.args[1:])
-            if quote.isspace() or quote == "":
-                event.user.notice(str("[Quote] That quote is empty!"))
-                return
-
-            cquote = ChannelQuote(
-                event.user.nickname,
-                event.channel.name,
-                quote.decode("utf-8", "ignore"),
-            )
-            session = self.db.new_session()
-            session.begin()
-            session.add(cquote)
-            session.commit()
-            event.channel.msg("Quote #%i saved." % cquote.id)
+    def cmdQuoteDelete(self, event):
+        """Deletes the quote matching the given ID."""
+        if not len(event.args) >= 2:
+            event.user.notice("[Quote] You need to provide a quote id!")
+            return
+        if not event.args[1].isdigit():
+            event.user.notice("[Quote] Quote id needs to be a number!")
             return
 
-        if event.args[0].lower() == "delete":
-            if not len(event.args) >= 2:
-                event.user.notice("[Quote] You need to provide a quote id!")
-                return
-            if not event.args[1].isdigit():
-                event.user.notice("[Quote] Quote id needs to be a number!")
-                return
+        session = self.db.new_session()
+        quote = (
+            session.query(ChannelQuote)
 
-            session = self.db.new_session()
-            quote = (
-                session.query(ChannelQuote)
+            .filter(ChannelQuote.id == event.args[1])
+            .limit(1)
+            .first()
+        )
 
-                .filter(ChannelQuote.id == event.args[1])
-                .limit(1)
-                .first()
-            )
-
-            if not quote:
-                event.channel.notice("[Quote] No such quote '%s'"
-                                     % event.args[1])
-                return
-
-            dateThen = quote.timestamp.replace(tzinfo=None)
-            dateNow = datetime.now()
-            diff = dateNow - dateThen
-            if quote.submitter != event.user.nickname:
-                event.user.notice(
-                    "[Quote] You do not have permission do delete this quote."
-                )
-                return
-            if diff.seconds > 3600:
-                event.user.notice(
-                    "[Quote] This quote has been archived and thus cannot be "
-                    "removed."
-                )
-                return
-
-            session.begin()
-            session.delete(quote)
-            session.commit()
-            event.channel.msg("[Quote] Quote #%s deleted." % event.args[1])
+        if not quote:
+            event.channel.notice("[Quote] No such quote '%s'"
+                                 % event.args[1])
             return
 
-        if event.args[0].lower() == "random":
-            session = self.db.new_session()
-            quote = (
-                session.query(ChannelQuote)
-
-                .filter(ChannelQuote.channel == event.channel.name)
-                .order_by(func.random())
-                .limit(1)
-                .first()
+        dateThen = quote.timestamp.replace(tzinfo=None)
+        dateNow = datetime.now()
+        diff = dateNow - dateThen
+        if quote.submitter != event.user.nickname:
+            event.user.notice(
+                "[Quote] You do not have permission do delete this quote."
             )
-            self.sendQuote(event, quote)
+            return
+        if diff.seconds > 3600:
+            event.user.notice(
+                "[Quote] This quote has been archived and thus cannot be "
+                "removed."
+            )
             return
 
-        if event.args[0].lower() == "search":
-            if len(event.args) < 2:
-                event.user.notice("[Quote] You need to provide a search term!")
-                return
-            term = " ".join(event.args[1:])
+        session.begin()
+        session.delete(quote)
+        session.commit()
+        event.channel.msg("[Quote] Quote #%s deleted." % event.args[1])
 
-            session = self.db.new_session()
-            quotes = (
-                session.query(ChannelQuote)
-
-                .filter(ChannelQuote.quote.like("%%%s%%" % term))
-                .order_by(ChannelQuote.id.asc())
-                .all()
-            )
-            if len(quotes) > 1:
-                results = ""
-                for result in quotes:
-                    if results != "":
-                        results = results + ", "
-                    results = results + ("#%d" % result.id)
-                event.channel.msg("[Quote] Results found: %s" % results)
-                return
-            if len(quotes) == 1:
-                self.sendQuote(event, quotes.pop())
-                return
-            event.channel.msg("[Quote] No results found")
+    def cmdQuoteAdd(self, event):
+        """Adds a quote to the quote database for the current channel."""
+        quote = " ".join(event.args[1:])
+        if quote.isspace() or quote == "":
+            event.user.notice(str("[Quote] That quote is empty!"))
             return
 
-        if event.args[0].lower() == "read":
-            if not len(event.args) >= 2:
-                event.user.notice("[Quote] You need to provide a quote id!")
-                return
-            if not event.args[1].isdigit():
-                event.user.notice("[Quote] Quote id needs to be a number!")
-                return
+        cquote = ChannelQuote(
+            event.user.nickname,
+            event.channel.name,
+            quote.decode("utf-8", "ignore"),
+        )
+        session = self.db.new_session()
+        session.begin()
+        session.add(cquote)
+        session.commit()
+        event.channel.msg("Quote #%i saved." % cquote.id)
 
-            session = self.db.new_session()
-            quote = (
-                session.query(ChannelQuote)
+    def cmdQuoteRandom(self, event):
+        """Sends a random quote from the current channel's quote database."""
+        session = self.db.new_session()
+        quote = (
+            session.query(ChannelQuote)
 
-                .filter(ChannelQuote.id == event.args[1])
-                .limit(1)
-                .first()
-            )
-            self.sendQuote(event, quote)
+            .filter(ChannelQuote.channel == event.channel.name)
+            .order_by(func.random())
+            .limit(1)
+            .first()
+        )
+        self.sendQuote(event, quote)
+
+    def cmdQuoteSearch(self, event):
+        """Searches for a quote matching the given string and returns results
+        from all channels' quote database."""
+        if len(event.args) < 2:
+            event.user.notice("[Quote] You need to provide a search term!")
             return
+        term = " ".join(event.args[1:])
+
+        session = self.db.new_session()
+        quotes = (
+            session.query(ChannelQuote)
+
+            .filter(ChannelQuote.quote.like("%%%s%%" % term))
+            .order_by(ChannelQuote.id.asc())
+            .all()
+        )
+        if len(quotes) > 1:
+            results = ""
+            for result in quotes:
+                if results != "":
+                    results = results + ", "
+                results = results + ("#%d" % result.id)
+            event.channel.msg("[Quote] Results found: %s" % results)
+            return
+        if len(quotes) == 1:
+            self.sendQuote(event, quotes.pop())
+            return
+        event.channel.msg("[Quote] No results found")
+
+    def cmdQuoteRead(self, event):
+        """Sends the quote matching the given ID to the current channel."""
+        if not len(event.args) >= 2:
+            event.user.notice("[Quote] You need to provide a quote id!")
+            return
+        if not event.args[1].isdigit():
+            event.user.notice("[Quote] Quote id needs to be a number!")
+            return
+
+        session = self.db.new_session()
+        quote = (
+            session.query(ChannelQuote)
+
+            .filter(ChannelQuote.id == event.args[1])
+            .limit(1)
+            .first()
+        )
+        self.sendQuote(event, quote)
 
     def sendQuote(self, event, quote):
         if not quote:
