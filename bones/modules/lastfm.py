@@ -1,14 +1,13 @@
 # -*- encoding: utf-8 -*-
 from datetime import datetime
 import json
-import logging
 import urllib
 
 from sqlalchemy import (
     Column,
     Integer,
     Text,
-    )
+)
 
 import bones.event
 from bones.bot import Module
@@ -19,7 +18,8 @@ class Lastfm(Module):
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
-        self.apikey = self.settings.get("module.Lastfm", "apikey", default=None)
+        self.apikey = self.settings.get("module.Lastfm", "apikey",
+                                        default=None)
         if not self.apikey:
             self.log.error("No API key provided. Last.fm will be disabled.")
 
@@ -31,145 +31,194 @@ class Lastfm(Module):
     def trigger(self, event):
         if not self.apikey:
             self.log.error("No API key provided. Last.fm will be disabled.")
-            event.channel.msg("[Last.fm] Configuration error; check the logs for more info.")
+            event.channel.msg("[Last.fm] Configuration error; check the logs "
+                              "for more info.")
             return
+
+        (nickname, username, action) = self.parseargs(event)
+
+        if not action:
+            return self.showTrack(event, nickname)
+
+        elif action == "-r":
+            return self.registerUser(event, username)
+
+        elif action == "-d":
+            return self.deleteUser(event)
+
+    def api(self, method, **args):
+        params = {
+            "method": method,
+            "api_key": self.apikey,
+            "format": "json",
+        }
+        params.update(args)
+        querystring = urllib.urlencode(params)
+
+        data = self.factory.urlopener.open(
+            "http://ws.audioscrobbler.com/2.0/?%s" % querystring).read()
+        data = json.loads(data)
+        return data
+
+    def showTrack(self, event, nickname):
+        session = self.db.new_session()
+        user = self.getUser(session, nickname, create_if_none=True)
+        if not user:
+            event.channel.msg(
+                str("%s: No user registered for nick '%s'"
+                    % (event.user.nickname, nickname))
+            )
+            return
+
+        try:
+            data = self.api("user.getRecentTracks", user=user.username, extended=1)
+        except ValueError:
+            event.channel.msg(
+                "[Last.fm] Last.fm returned an invalid response. Please "
+                "try again later."
+            )
+            self.log.exception(
+                "An error occurred while fetching user.getRecentTracks for"
+                "user %s", nickname)
+            return
+        except Exception:
+            event.channel.msg(
+                "[Last.fm] An unexpected error occurred. Please tell the "
+                "bot manager to file a bug report."
+            )
+            self.log.exception(
+                "An error occurred while fetching user.getRecentTracks for"
+                "user %s", nickname)
+            return
+
+        if "error" in data:
+            self.log.error("API error %i: %s", data["error"],
+                           data["message"])
+            event.channel.msg(
+                "[Last.fm] An error occurred while processing your "
+                "request. Please notify the bot manager"
+            )
+            return
+
+        if "track" not in data["recenttracks"] \
+                or len(data['recenttracks']['track']) < 1:
+            event.channel.msg(str(
+                "%s: No scrobbles found for user '%s'."
+                % (event.user.nickname, user.username)
+            ))
+            return
+
+        return self.sendTrackToChannel(event, user, data)
+
+    def sendTrackToChannel(self, event, user, data):
+        track = data['recenttracks']['track'][0]
+        artist = track["artist"]["name"]
+        tracktitle = track["name"]
+        if "@attr" in track and "nowplaying" in track["@attr"] \
+                and track["@attr"]["nowplaying"].lower() == "true":
+            icon = u"♪"
+            if "loved" in track and track["loved"] == "1":
+                icon = u"\x034♥\x03"
+            msg = u"\x02%s\x02 %s %s \x0305–\x03 %s"
+            msg %= (user.username, icon, tracktitle, artist)
+        else:
+            timestamp = track["date"]["uts"]
+            date = []
+
+            dateThen = datetime.fromtimestamp(float(timestamp))
+            dateNow = datetime.now()
+            diff = dateNow - dateThen
+
+            if diff.days > 0:
+                if diff.days != 1:
+                    suffix = "s"
+                else:
+                    suffix = ""
+                date.append("%s day%s" % (diff.days, suffix))
+
+            hours = (diff.seconds // 3600) % 24
+            if hours > 0:
+                if hours != 1:
+                    suffix = "s"
+                else:
+                    suffix = ""
+                date.append("%s hour%s" % (hours, suffix))
+
+            minutes = (diff.seconds // 60) % 60
+            if minutes != 1:
+                suffix = "s"
+            else:
+                suffix = ""
+            date.append("%s minute%s" % (minutes, suffix))
+            msg = (
+                "'%s' is not playing anything now, but played this %s "
+                "ago: %s - %s"
+                % (user.username, ", ".join(date), tracktitle, artist)
+            )
+        event.channel.msg(str(msg.encode("utf-8")))
+
+    def registerUser(self, event, username):
+        session = self.db.new_session()
+        if not username:
+            event.user.notice(str(
+                "[Last.fm] You need to provide a Last.fm username."))
+            return
+
+        user = self.getUser(session, event.user.nickname, create_if_none=True)
+        user.username = username
+        session.begin()
+        session.add(user)
+        session.commit()
+        event.user.notice(str(
+            "[Last.fm] Registered '%s' to your nick" % username))
+
+    def deleteUser(self, event):
+        session = self.db.new_session()
+        user = self.getUser(session, event.user.nickname)
+        if not user:
+            event.user.notice(str(
+                "[Last.fm] No user registered for nick '%s'" % event.user.nickname))
+            return
+
+        session.begin()
+        session.delete(user)
+        session.commit()
+        event.user.notice(str(
+            "[Last.fm] Unregistered your nick from '%s'" % user.username))
+
+    def parseargs(self, event):
         argc = len(event.args)
         action = None
         nickname = None
+        username = None
         if argc <= 0:
             nickname = event.user.nickname
         elif event.args[0] in ["-r", "-d"]:
             action = event.args[0]
             if len(event.args) >= 2:
-                nickname = event.args[1]
+                username = event.args[1]
         else:
             nickname = event.args[0].decode("utf-8")
+        return (nickname, username, action)
 
-        session = self.db.new_session()
-        if not action:
-            user = session.query(User).filter(User.nickname == nickname) \
-                .first()
-            if not user:
-                event.channel.msg(
-                    str("%s: No user registered for nick '%s'"
-                        % (event.user.nickname, nickname))
-                )
-                return
-            params = urllib.urlencode({
-                "method": "user.getRecentTracks",
-                "user": user.username,
-                "api_key": self.apikey,
-                "format": "json",
-                "extended": 1
-            })
-            try:
-                data = self.factory.urlopener.open(
-                    "http://ws.audioscrobbler.com/2.0/?%s" % params).read()
-                data = json.loads(data)
-            except:
-                event.channel.msg(
-                    "[Last.fm] An unexpected error occurred. Please tell the "
-                    "bot manager to file a bug report."
-                )
-                self.log.exception(
-                    "An error occurred while fetching user.getRecentTracks for"
-                    "user %s", nickname)
-                return
-            if "error" in data:
-                self.log.error("API error %i: %s", data["error"],
-                               data["message"])
-                event.channel.msg(
-                    "[Last.fm] An error occurred while processing your "
-                    "request. Please notify the bot manager"
-                )
-                return
-            if "track" not in data["recenttracks"] \
-                    or len(data['recenttracks']['track']) < 1:
-                event.channel.msg(str(
-                    "%s: No tracks found for user '%s'. Are you sure that the "
-                    "user exists?"
-                    % (event.user.nickname, user.username)
-                ))
-                return
-            track = data['recenttracks']['track'][0]
-            artist = track["artist"]["name"]
-            tracktitle = track["name"]
-            if "@attr" in track and "nowplaying" in track["@attr"] \
-                    and track["@attr"]["nowplaying"].lower() == "true":
-                icon = u"♪"
-                if "loved" in track and track["loved"] == "1":
-                    icon = u"\x034♥\x03"
-                msg = u"\x02%s\x02 %s %s \x0305–\x03 %s"
-                msg %= (user.username, icon, tracktitle, artist)
-            else:
-                timestamp = track["date"]["uts"]
-                date = []
+    def getUser(self, session, nickname, create_if_none=False):
+        user = session.query(User).filter(User.nickname == nickname) \
+            .first()
 
-                dateThen = datetime.fromtimestamp(float(timestamp))
-                dateNow = datetime.now()
-                diff = dateNow - dateThen
+        if user or not create_if_none:
+            return user
 
-                if diff.days > 0:
-                    if diff.days != 1:
-                        suffix = "s"
-                    else:
-                        suffix = ""
-                    date.append("%s day%s" % (diff.days, suffix))
+        data = self.api("user.getInfo", user=nickname)
+        if "error" in data:
+            return None
 
-                hours = (diff.seconds//3600) % 24
-                if hours > 0:
-                    if hours != 1:
-                        suffix = "s"
-                    else:
-                        suffix = ""
-                    date.append("%s hour%s" % (hours, suffix))
-
-                minutes = (diff.seconds//60) % 60
-                if minutes != 1:
-                    suffix = "s"
-                else:
-                    suffix = ""
-                date.append("%s minute%s" % (minutes, suffix))
-                msg = (
-                    "'%s' is not playing anything now, but played this %s "
-                    "ago: %s - %s"
-                    % (user.username, ", ".join(date), tracktitle, artist)
-                )
-            event.channel.msg(str(msg.encode("utf-8")))
-            return
-
-        elif action == "-r":
-            if not nickname:
-                event.user.notice(str(
-                    "[Last.fm] You need to provide a Last.fm username."))
-                return
-
-            user = session.query(User) \
-                .filter(User.nickname == event.user.nickname).first()
-            if not user:
-                user = User(event.user.nickname)
-            user.username = nickname
-            session.begin()
-            session.add(user)
-            session.commit()
-            event.user.notice(str(
-                "[Last.fm] Registered '%s' to your nick" % nickname))
-            return
-
-        elif action == "-d":
-            user = session.query(User) \
-                .filter(User.nickname == event.user.nickname).first()
-            if not user:
-                event.user.notice(str(
-                    "[Last.fm] No user registered for nick '%s'" % nickname))
-                return
-
-            session.begin()
-            session.delete(user)
-            session.commit()
-            event.channel.notice(str(
-                "[Last.fm] Unregistered your nick from '%s'" % user.username))
-            return
+        self.log.info("Found account for unknown user '%s', saving", nickname)
+        user = User(nickname)
+        user.username = nickname
+        session.begin()
+        session.add(user)
+        session.commit()
+        return user
 
 
 class User(storage.Base):
