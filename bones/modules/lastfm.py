@@ -38,7 +38,7 @@ class Lastfm(Module):
         (nickname, username, action) = self.parseargs(event)
 
         if not action:
-            return self.showTrack(event, nickname)
+            return self.showTrack(event, nickname, username)
 
         elif action == "-r":
             return self.registerUser(event, username)
@@ -60,9 +60,9 @@ class Lastfm(Module):
         data = json.loads(data)
         return data
 
-    def showTrack(self, event, nickname):
+    def showTrack(self, event, nickname, username):
         session = self.db.new_session()
-        user = self.getUser(session, nickname, create_if_none=True)
+        user = self.getUser(session, nickname, username)
         if not user:
             event.channel.msg(
                 str("%s: No user registered for nick '%s'"
@@ -164,27 +164,27 @@ class Lastfm(Module):
                 "[Last.fm] You need to provide a Last.fm username."))
             return
 
-        user = self.getUser(session, event.user.nickname, create_if_none=True)
+        user = self.getUser(session, event.user.nickname, username)
         user.username = username
         session.begin()
         session.add(user)
         session.commit()
         event.user.notice(str(
-            "[Last.fm] Registered '%s' to your nick" % username))
+            "[Last.fm] Registered '%s' to your nick." % username))
 
     def deleteUser(self, event):
         session = self.db.new_session()
         user = self.getUser(session, event.user.nickname)
         if not user:
             event.user.notice(str(
-                "[Last.fm] No user registered for nick '%s'" % event.user.nickname))
+                "[Last.fm] No user registered for nick '%s'." % event.user.nickname))
             return
 
         session.begin()
         session.delete(user)
         session.commit()
         event.user.notice(str(
-            "[Last.fm] Unregistered your nick from '%s'" % user.username))
+            "[Last.fm] Unregistered your nick from '%s'." % user.username))
 
     def parseargs(self, event):
         argc = len(event.args)
@@ -193,28 +193,32 @@ class Lastfm(Module):
         username = None
         if argc <= 0:
             nickname = event.user.nickname
+            username = nickname
         elif event.args[0] in ["-r", "-d"]:
             action = event.args[0]
             if len(event.args) >= 2:
                 username = event.args[1]
         else:
             nickname = event.args[0].decode("utf-8")
+            username = nickname
         return (nickname, username, action)
 
-    def getUser(self, session, nickname, create_if_none=False):
+    def getUser(self, session, nickname, username=None):
         user = session.query(User).filter(User.nickname == nickname) \
             .first()
 
-        if user or not create_if_none:
+        if user or not username:
             return user
 
-        data = self.api("user.getInfo", user=nickname)
+        if not username:
+            username = nickname
+        data = self.api("user.getInfo", user=username)
         if "error" in data:
             return None
 
-        self.log.info("Found account for unknown user '%s', saving", nickname)
+        self.log.info("Found account for unknown user '%s', saving.", nickname)
         user = User(nickname)
-        user.username = nickname
+        user.username = username
         session.begin()
         session.add(user)
         session.commit()
