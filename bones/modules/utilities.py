@@ -125,8 +125,7 @@ class Twitter(Module):
 
 class YouTube(Module):
     bs = None
-    apikey = None
-    fetchData = lambda x: {"template": "html", "title": "Something went wrong"}
+    __fetchData = lambda x: {"template": "html", "title": "Something went wrong"}
 
     reVideoLink = re.compile("(https?\:\/\/)?(m\.|www\.)?(youtube\.com\/watch\?(.+)?v\=|youtu\.be\/)(?P<id>[a-zA-Z-0-9\_\-]*)")  # NOQA
     __template_simple = u"\x0314You\x035Tube \x0314::\x03 {title} \x034::\x03 http://youtu.be/{id}"  # NOQA
@@ -136,7 +135,7 @@ class YouTube(Module):
 
     def __init__(self, *args, **kwargs):
         Module.__init__(self, *args, **kwargs)
-
+        self.fetchData = self.__fetchData
 
         self.template_simple = self.settings.get("module.utilities", "youtube.template.simple", default=self.__template_simple)
         self.template_api = self.settings.get("module.utilities", "youtube.template.api", default=self.__template_api)
