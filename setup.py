@@ -14,16 +14,15 @@ bot development using modules able to handle e.g. triggers and such.""",
     install_requires=[
         'Twisted>=15.2.1',
     ],
-    extras_requires={
+    extras_require={
         'all': [
-            'Bones-IRC-Bot[db]',
-            'Bones-IRC-Bot[modules]',
-            'Bones-IRC-Bot[ssl]',
+            'SQLAlchemy>=1.0.5',
+            'beautifulsoup4>=4.3.2',
+            'pyOpenSSL>=0.15.1',
         ],
         'modules': [
-            'Bones-IRC-Bot[twitter]',
-            'Bones-IRC-Bot[qdb]',
-            'Bones-IRC-Bot[youtube]',
+            'SQLAlchemy>=1.0.5',
+            'beautifulsoup4>=4.3.2',
         ],
 
         'db': ['SQLAlchemy>=1.0.5'],
@@ -32,9 +31,9 @@ bot development using modules able to handle e.g. triggers and such.""",
         'qdb': ['beautifulsoup4>=4.3.2'],
         'youtube': ['beautifulsoup4>=4.3.2'],
         'twitter': ['beautifulsoup4>=4.3.2'],
-        'lastfm': ['Bones-IRC-Bot[db]'],
-        'factoid': ['Bones-IRC-Bot[db]'],
-        'quotes': ['Bones-IRC-Bot[db]'],
+        'lastfm': ['SQLAlchemy>=1.0.5'],
+        'factoid': ['SQLAlchemy>=1.0.5'],
+        'quotes': ['SQLAlchemy>=1.0.5'],
     },
     entry_points={
         "console_scripts": [
