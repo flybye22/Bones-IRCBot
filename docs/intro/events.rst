@@ -32,6 +32,7 @@ off, we should import the package :mod:`bones.event`. Add the following line
 just below the import you've already got:
 
 .. code:: python
+
     import bones.event
 
 Now we're getting close to something, but it's still not doing anything. Now,
