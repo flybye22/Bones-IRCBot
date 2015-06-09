@@ -177,10 +177,21 @@ class YouTube(Module):
             "title": title,
         }
 
-    def fetchData_YouTubeApi(self, video):
-        data = self.api_request("videos",
+    def api_videoDetails(self, video):
+        return self.api_request("videos",
                                 part="statistics,snippet,contentDetails",
                                 id=video)
+
+    def api_videoSearch(self, term):
+        data = self.api_request("search", part="id", safeSearch="none",
+                                order="relevance", type="video",
+                                maxResults="1", q=term)
+        if not data or "items" not in data or len(data["items"]) < 1:
+            return None
+        return self.fetchData_YouTubeApi(data["items"][0]["id"]["videoId"])
+
+    def fetchData_YouTubeApi(self, video):
+        data = self.api_videoDetails(video)
         if not data["items"]:
             return
         output = data["items"][0]
@@ -219,4 +230,10 @@ class YouTube(Module):
     @bones.event.handler(trigger="yt")
     @bones.event.handler(trigger="youtube")
     def videoSearch(self, event):
-        pass  # TODO
+        if not self.apikey:
+            return
+        term = " ".join(event.args)
+        video = self.api_videoSearch(term)
+        if not video:
+            event.reply("No such results.")
+        self.sendToChannel(event.channel, video)
