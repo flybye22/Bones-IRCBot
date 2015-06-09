@@ -13,8 +13,29 @@ bot development using modules able to handle e.g. triggers and such.""",
     packages=["bones", "bones.modules"],
     install_requires=[
         'Twisted>=15.2.1',
-        'zope.interface>=4.1.2',
     ],
+    extras_requires={
+        'all': [
+            'Bones-IRC-Bot[db]',
+            'Bones-IRC-Bot[modules]',
+            'Bones-IRC-Bot[ssl]',
+        ],
+        'modules': [
+            'Bones-IRC-Bot[twitter]',
+            'Bones-IRC-Bot[qdb]',
+            'Bones-IRC-Bot[youtube]',
+        ],
+
+        'db': ['SQLAlchemy>=1.0.5'],
+        'ssl': ['pyOpenSSL>=0.15.1'],
+
+        'qdb': ['beautifulsoup4>=4.3.2'],
+        'youtube': ['beautifulsoup4>=4.3.2'],
+        'twitter': ['beautifulsoup4>=4.3.2'],
+        'lastfm': ['Bones-IRC-Bot[db]'],
+        'factoid': ['Bones-IRC-Bot[db]'],
+        'quotes': ['Bones-IRC-Bot[db]'],
+    },
     entry_points={
         "console_scripts": [
             'bones = bones.__main__:main',
