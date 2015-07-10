@@ -606,6 +606,104 @@ class BotPreQuitEvent(Event):
         self.quitMessage = quitMessage
 
 
+class ConnectionClosedEvent(Event):
+    """
+    Called by a bot factory whenever its connection gets closed.
+
+    .. attribute:: factory
+
+        The bot factory whose connection was closed.
+
+    .. attribute:: connector
+
+        The :class:`twisted.internet.tcp.Connector` instance that represents
+        the closed connection.
+
+    .. attribute:: reason
+
+        A Twisted error instance representing the reason that the connection
+        was closed.
+
+    """
+    def __init__(self, factory, connector, reason):
+        self.factory = factory
+        self.connector = connector
+        self.reason = reason
+
+
+class ConnectionFailedEvent(ConnectionClosedEvent):
+    """
+    Called by a bot factory whenever its connection fails.
+
+    .. attribute:: factory
+
+        The bot factory whose connection failed.
+
+    .. attribute:: connector
+
+        The :class:`twisted.internet.tcp.Connector` instance that represents
+        the failed connection.
+
+    .. attribute:: reason
+
+        A Twisted error instance representing the reason that the connection
+        failed.
+
+    """
+    pass
+
+
+class ConnectionLostEvent(ConnectionClosedEvent):
+    """
+    Called by a bot factory whenever its connection was lost.
+
+    .. attribute:: factory
+
+        The bot factory whose connection was lost.
+
+    .. attribute:: connector
+
+        The :class:`twisted.internet.tcp.Connector` instance that represents
+        the lost connection.
+
+    .. attribute:: reason
+
+        A Twisted error instance representing the reason that the connection
+        was lost.
+
+    """
+    pass
+
+
+class ConnectionStartedEvent(Event):
+    """
+    Called by a bot factory when it's done preparing a server connection.
+
+    .. attribute:: factory
+
+        The bot factory whose connection has been prepared.
+
+    .. attribute:: host
+
+        A string representation of the host address the bot will connect to.
+
+    .. attribute:: port
+
+        The port of the target host that we're connecting to.
+
+    .. attribute:: bind_address
+
+        An address-port tuple (string, int) representing the local address the
+        bot will bind to.
+
+    """
+    def __init__(self, factory, host, port, bind_address):
+        self.factory = factory
+        self.host = host
+        self.port = port
+        self.bind_address = bind_address
+
+
 class PreNicknameInUseError(Event):
     """
     An event that is fired before the bot's username is changed because
