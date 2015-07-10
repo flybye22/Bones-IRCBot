@@ -808,10 +808,17 @@ class BonesBotFactory(protocol.ClientFactory):
         will take care of reconnecting the bot to the server after a variable
         time period.
         """
+        event_args = (self, connector, reason)
+        bones.event.fire(self.tag,
+                         bones.event.ConnectionClosedEvent(*event_args))
+
         if not self.reconnect:
             reactor.callLater(0.0, self.shutdown_deferred.callback, 1)
             return
         self.client = None
+
+        bones.event.fire(self.tag,
+                         bones.event.ConnectionLostEvent(*event_args))
 
         time = 10.0 * self.reconnectAttempts
         self.reconnectAttempts += 1
@@ -826,10 +833,17 @@ class BonesBotFactory(protocol.ClientFactory):
         will take care of reconnecting the bot to the server after a variable
         time period.
         """
+        event_args = (self, connector, reason)
+        bones.event.fire(self.tag,
+                         bones.event.ConnectionClosedEvent(*event_args))
+
         if not self.reconnect:
             reactor.callLater(0.0, self.shutdown_deferred.callback, 1)
             return
         self.client = None
+
+        bones.event.fire(self.tag,
+                         bones.event.ConnectionFailedEvent(*event_args))
 
         time = 30.0 * self.reconnectAttempts
         self.reconnectAttempts += 1
@@ -867,6 +881,11 @@ class BonesBotFactory(protocol.ClientFactory):
                 bind_address = (bind_address[0][1:-1], bind_address[1])
         else:
             bind_address = None
+
+        bones.event.fire(self.tag, bones.event.ConnectionStartedEvent(
+            self, serverHost, serverPort, bind_address
+        ))
+
         if self.settings.get("server", "useSSL", default="false") == "true":
             log.info("Connecting to server %s:+%i", log_serverHost, serverPort)
             try:
