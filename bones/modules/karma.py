@@ -44,9 +44,9 @@ class Karmabot(bones.bot.Module):
             conn = sqlite3.connect('stats.db')
             c = conn.cursor()
             c.execute("SELECT dest, count(*) FROM stats GROUP BY dest ORDER BY count(*) DESC")
-            result = "List of Karmas:\n"
+            result = "List of Karmas:\r"
             for person in c.fetchall():
-                result += person[0] + ": " + person[1] + "\n" 
+                result += str(person[0]) + ": " + str(person[1]) + "\r" 
             conn.close()
             event.user.msg(result)
         else:
