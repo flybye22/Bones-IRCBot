@@ -40,6 +40,14 @@ class Karmabot(bones.bot.Module):
     # registers an event handler for whenever somebody private messages the bot
     @bones.event.handler(event=bones.event.UserMessageEvent)
     def privMessage(self, event):
-        event.user.msg(
-            "Why are you sending me private messages?"
-        )
+        if(event.message == "totals"):
+            conn = sqlite3.connect('stats.db')
+            c = conn.cursor()
+            c.execute("SELECT dest, count(*) FROM stats GROUP BY dest ORDER BY count(*) DESC")
+            result = "List of Karmas:\n"
+            for person in c.fetchall():
+                result += person[0] + ": " + person[1] + "\n" 
+            conn.close()
+            event.user.msg(result)
+        else:
+            event.user.msg("I don't support any private command besides 'totals' right now")
