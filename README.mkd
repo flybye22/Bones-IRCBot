@@ -1,4 +1,4 @@
-# CCLub Karmabot
+# CClub Karmabot
 
 Requires pip and setuptools
 
