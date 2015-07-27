@@ -4,7 +4,7 @@ Requires pip and setuptools
 
 use pip to install twisted and sqlalchemy
 
-The only real file to edit is /bones/modules/karma.py
+The only real file to edit is bones/modules/karma.py
 
 For development testing just run ```python bones/__main__.py test.ini``` the bot will start up and join ##cclub-bot 
 
@@ -14,7 +14,7 @@ run ```easy-install .``` (may need to be run as root depending on how you did se
 
 run ```bones config.ini``` and the bot will start up and join the channel ##cclub
 
-Information about the core bot is below
+Information about the core bot:
 ======
 ## Bones IRC Bot
 The Bones IRC Bot is a bare bones IRC Bot made with extensibility
