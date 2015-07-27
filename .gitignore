@@ -41,3 +41,5 @@ nosetests.xml
 *.esproj
 /include
 
+stats.db
+stats.db-journal
