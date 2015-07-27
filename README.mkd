@@ -1,4 +1,22 @@
-# Bones IRC Bot
+# CCLub Karmabot
+
+Requires pip and setuptools
+
+use pip to install twisted and sqlalchemy
+
+The only real file to edit is /bones/modules/karma.py
+
+For development testing just run ```python bones/__main__.py test.ini``` the bot will start up and join ##cclub-bot 
+
+To create and run a final executable:
+
+run ```easy-install .``` (may need to be run as root depending on how you did setuptools)
+
+run ```bones config.ini``` and the bot will start up and join the channel ##cclub
+
+Information about the core bot is below
+======
+## Bones IRC Bot
 The Bones IRC Bot is a bare bones IRC Bot made with extensibility
 in mind. It provides an easy to use API for writing :term:`Bones modules`
 which is the base of the bot itself. The bot is by default an empty shell
@@ -20,10 +38,10 @@ class Greeter(bones.bot.Module):
         )
 ```
 
-## Getting started
+### Getting started
 If you want to get right down to business you can head over to the [installation guide][howto-install] over at [Read The Docs][docs].
 
-## Documentation
+### Documentation
 The Bones IRC Bot documentation may be found over at [Read The Docs][docs].
 
 [howto-install]: http://bones-irc-bot.readthedocs.org/en/latest/intro/installation.html
