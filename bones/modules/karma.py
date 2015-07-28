@@ -9,30 +9,25 @@ NICK_RE = "[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]{1,15}"
 
 class Karmabot(bones.bot.Module):
 
+    def __init__(self, factory, settings):
+        self.conn = sqlite3.connect('stats.db', check_same_thread = False)
+        self.cursor = self.conn.cursor()
+
     def getUserScore(self, user):
-        conn = sqlite3.connect('stats.db')
-        c = conn.cursor()
-        c.execute("SELECT count(*) FROM stats WHERE dest LIKE '%s'" % (user))
-        result = c.fetchone()[0]
-        conn.close()
+        self.cursor.execute("SELECT count(*) FROM stats WHERE dest LIKE '%s'" % (user))
+        result = self.cursor.fetchone()[0]
         return result
 
     def getAllScores(self):
-        conn = sqlite3.connect('stats.db')
-        c = conn.cursor()
-        c.execute("SELECT dest, count(*) FROM stats GROUP BY dest ORDER BY count(*) DESC")
-        result = c.fetchall()
-        conn.close()
+        self.cursor.execute("SELECT dest, count(*) FROM stats GROUP BY dest ORDER BY count(*) DESC")
+        result = self.cursor.fetchall()
         return result
 
     def addKarmaEntry(self, source, dest, kind):
-        conn = sqlite3.connect('stats.db')
-        c = conn.cursor()
-        c.execute("INSERT INTO stats VALUES (NULL, '%s', '%s', %d)" % (source, dest, kind))
-        conn.commit()
-        conn.close()
+        self.cursor.execute("INSERT INTO stats VALUES (NULL, '%s', '%s', %d)" % (source, dest, kind))
+        self.conn.commit()
 
-    # searches, assumes username match will be the first group
+    # searches, assumes username match will be the first group if any
     def searchAndAdd(self, regex, event, kind):
         s = re.search(regex, event.message)
         if(s):
