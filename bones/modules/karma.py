@@ -15,13 +15,15 @@ class Karmabot(bones.bot.Module):
 
     def getUserScore(self, user):
         self.cursor.execute("SELECT count(*) FROM stats WHERE dest LIKE '%s'" % (user))
-        result = self.cursor.fetchone()[0]
-        return result
+        return self.cursor.fetchone()[0]
 
     def getAllScores(self):
         self.cursor.execute("SELECT dest, count(*) FROM stats GROUP BY dest ORDER BY count(*) DESC")
-        result = self.cursor.fetchall()
-        return result
+        return self.cursor.fetchall()
+
+    def getUserScoreByPerson(self, user):
+        self.cursor.execute("SELECT source, count(*) FROM stats WHERE dest LIKE '%s' GROUP BY source ORDER BY count(*) DESC" % user)
+        return self.cursor.fetchall()
 
     def addKarmaEntry(self, source, dest, kind, event):
         if(source == dest):
@@ -56,8 +58,16 @@ class Karmabot(bones.bot.Module):
         if(search):
             val = self.getUserScore(search.group(1))
             #slightly vulnerable to sql injection
-            event.channel.msg("%s has %d karma" % (search.group(1), val))            
-        
+            event.channel.msg("%s has %d karma" % (search.group(1), val))
+            
+        search = re.search("\A\.karmabreakdown (%s)" % (NICK_RE), event.message)
+        if(search):
+            result = search.group(1) + " has "
+            for person in self.getUserScoreByPerson(search.group(1)):
+                result += str(person[1]) + " from " + str(person[0]) + ", "
+            result = result[:-2]
+            event.channel.msg(result)
+
     # registers an event handler for whenever somebody private messages the bot
     @bones.event.handler(event=bones.event.UserMessageEvent)
     def privMessage(self, event):
