@@ -59,14 +59,6 @@ class Karmabot(bones.bot.Module):
             val = self.getUserScore(search.group(1))
             #slightly vulnerable to sql injection
             event.channel.msg("%s has %d karma" % (search.group(1), val))
-            
-        search = re.search("\A\.karmabreakdown (%s)" % (NICK_RE), event.message)
-        if(search):
-            result = search.group(1) + " has "
-            for person in self.getUserScoreByPerson(search.group(1)):
-                result += str(person[1]) + " from " + str(person[0]) + ", "
-            result = result[:-2]
-            event.channel.msg(result)
 
     # registers an event handler for whenever somebody private messages the bot
     @bones.event.handler(event=bones.event.UserMessageEvent)
@@ -76,5 +68,11 @@ class Karmabot(bones.bot.Module):
             for person in self.getAllScores():
                 result += str(person[0]) + ": " + str(person[1]) + "\r" 
             event.user.msg(result)
+        elif(event.message == "breakdown"):
+            result = "You have "
+            for person in self.getUserScoreByPerson(event.user.name):
+                result += str(person[1]) + " from " + str(person[0]) + ", "
+            result = result[:-2]
+            event.channel.msg(result)
         else:
-            event.user.msg("I don't support any private command besides 'totals' right now")
+            event.user.msg("I don't support any private commands besides 'totals' and 'breakdown' right now")
