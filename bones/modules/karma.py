@@ -12,7 +12,6 @@ class Karmabot(bones.bot.Module):
     def __init__(self, factory, settings):
         self.conn = sqlite3.connect('stats.db', check_same_thread = False)
         self.cursor = self.conn.cursor()
-        self.channel = self.getChannel(
 
     def getUserScore(self, user):
         self.cursor.execute("SELECT count(*) FROM stats WHERE dest LIKE '%s'" % (user))
@@ -37,21 +36,27 @@ class Karmabot(bones.bot.Module):
         # various ++ and == rules
         search = re.search("^(%s):? ?\+\+" % (NICK_RE), event.message)
         if(search):
-            addKarmaEntry(event.user.name, search.group(1), 0, event)
+            self.addKarmaEntry(event.user.name, search.group(1), 0, event)
+            return
         search = re.search("(%s)\+\+" % (NICK_RE), event.message)
         if(search):
-            addKarmaEntry(event.user.name, search.group(1), 0, event)
+            self.addKarmaEntry(event.user.name, search.group(1), 0, event)
+            return
         search = re.search("^== ?(%s)" % (NICK_RE), event.message)
         if(search):
-            addKarmaEntry(event.user.name, search.group(1), 1, event)
+            self.addKarmaEntry(event.user.name, search.group(1), 1, event)
+            return
         search = re.search("==(%s)" % (NICK_RE), event.message)
         if(search):
-            addKarmaEntry(event.user.name, search.group(1), 1, event)
+            self.addKarmaEntry(event.user.name, search.group(1), 1, event)
+            return
+
+        # commands
         search = re.search("\A\.karma (%s)" % (NICK_RE), event.message)
         if(search):
-            val = self.getUserScore(s.group(1))
+            val = self.getUserScore(search.group(1))
             #slightly vulnerable to sql injection
-            event.channel.msg("%s has %d karma" % (s.group(1), val))            
+            event.channel.msg("%s has %d karma" % (search.group(1), val))            
         
     # registers an event handler for whenever somebody private messages the bot
     @bones.event.handler(event=bones.event.UserMessageEvent)
