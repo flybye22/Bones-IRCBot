@@ -12,6 +12,7 @@ class Karmabot(bones.bot.Module):
     def __init__(self, factory, settings):
         self.conn = sqlite3.connect('stats.db', check_same_thread = False)
         self.cursor = self.conn.cursor()
+        self.channel = self.getChannel(
 
     def getUserScore(self, user):
         self.cursor.execute("SELECT count(*) FROM stats WHERE dest LIKE '%s'" % (user))
@@ -23,40 +24,34 @@ class Karmabot(bones.bot.Module):
         result = self.cursor.fetchall()
         return result
 
-    def addKarmaEntry(self, source, dest, kind):
-        self.cursor.execute("INSERT INTO stats VALUES (NULL, '%s', '%s', %d)" % (source, dest, kind))
-        self.conn.commit()
-
-    # searches, assumes username match will be the first group if any
-    def searchAndAdd(self, regex, event, kind):
-        s = re.search(regex, event.message)
-        if(s):
-            if(event.user.name == s.group(1)):
-                event.channel.msg("You can't karma yourself")
-            else:
-                self.addKarmaEntry(event.user.name, s.group(1), kind)
-            return True
-        return False
+    def addKarmaEntry(self, source, dest, kind, event):
+        if(source == dest):
+            event.channel.msg("You can't karma yourself")
+        else:
+            self.cursor.execute("INSERT INTO stats VALUES (NULL, '%s', '%s', %d)" % (source, dest, kind))
+            self.conn.commit()
 
     # registers an event handler for whenever somebody speaks in channel
     @bones.event.handler(event=bones.event.ChannelMessageEvent)
     def publicMessage(self, event):
         # various ++ and == rules
-        if(self.searchAndAdd("^(%s):? ?\+\+" % (NICK_RE), event, 0)):
-            pass
-        elif(self.searchAndAdd("(%s)\+\+" % (NICK_RE), event, 0)):
-            pass
-        elif(self.searchAndAdd("^== ?(%s)" % (NICK_RE), event, 1)):
-            pass
-        elif(self.searchAndAdd("==(%s)" % (NICK_RE), event, 1)):
-            pass
-        
-        # matches start of line ".karma SOMENICK"
-        # is slighlty vulnerable to SQL injection
-        s = re.search("\A\.karma (%s)" % (NICK_RE), event.message)
-        if(s):
+        search = re.search("^(%s):? ?\+\+" % (NICK_RE), event.message)
+        if(search):
+            addKarmaEntry(event.user.name, search.group(1), 0, event)
+        search = re.search("(%s)\+\+" % (NICK_RE), event.message)
+        if(search):
+            addKarmaEntry(event.user.name, search.group(1), 0, event)
+        search = re.search("^== ?(%s)" % (NICK_RE), event.message)
+        if(search):
+            addKarmaEntry(event.user.name, search.group(1), 1, event)
+        search = re.search("==(%s)" % (NICK_RE), event.message)
+        if(search):
+            addKarmaEntry(event.user.name, search.group(1), 1, event)
+        search = re.search("\A\.karma (%s)" % (NICK_RE), event.message)
+        if(search):
             val = self.getUserScore(s.group(1))
-            event.channel.msg("%s has %d karma" % (s.group(1), val))
+            #slightly vulnerable to sql injection
+            event.channel.msg("%s has %d karma" % (s.group(1), val))            
         
     # registers an event handler for whenever somebody private messages the bot
     @bones.event.handler(event=bones.event.UserMessageEvent)
