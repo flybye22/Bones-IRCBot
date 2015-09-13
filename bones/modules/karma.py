@@ -3,7 +3,7 @@ import bones.event
 import sqlite3
 import re
 
-NICK_RE = "[a-z_\-\[\]\\^{}|`][a-z0-9_\-\[\]\\^{}|`]{1,15}"
+NICK_RE = "[a-zA-Z_\-\[\]\\^{}|`][a-zA-Z0-9_\-\[\]\\^{}|`]{1,15}"
 # DB table created using
 # CREATE TABLE stats(Id INTEGER PRIMARY KEY , source TEXT, dest TEXT, type INT)
 
